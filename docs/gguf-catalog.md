@@ -36,7 +36,9 @@ and parameters at one million. Because byte values are f64-backed, u64 fields
 outside configured exact bounds fail closed.
 
 Big-endian v3, metadata arrays, floating and signed-64 metadata, decoded scalar
-metadata values beyond architecture/alignment, exact extent rules for
-quantized types, payload decoding, and quantization blocks remain later work.
+metadata values beyond architecture/alignment, and exact extent rules for
+quantized types remain later work. A separate [selective decoder](gguf-slice.md)
+now reads catalog-validated I8/I16 payloads; floating and quantization-block
+decode remain unsupported.
 Exact name tables avoid hash collisions but intentionally trade quadratic
 comparison work for simple fail-closed behavior under small count budgets.

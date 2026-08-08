@@ -1,0 +1,22 @@
+include "gguf_catalog.mlpl";
+
+def u:gguf_find_tensor(catalog, name) { "Resolve one tensor name exactly against padded catalog bytes.";
+  candidate = tokenize_bytes(name); index = 0; found = -1; table = reshape(catalog.tensor_name_bytes,[catalog.tensor_count,64]);
+  while lt(index,catalog.tensor_count) { length = take(catalog.tensor_name_lengths,0,index); prior = compress(lt(range(64),length),take(table,0,index)); if equal(candidate,prior) { found = index } else { 0 }; index = index + 1 };
+  if lt(found,0) { err("GGUF tensor name was not found") } else { ok(found) }
+}
+
+def u:gguf_decode_signed(bytes, width) { "Decode I8 or little-endian I16 bytes into signed MLPL values.";
+  index = 0; values = fill([0],0); limit = if eq(width,1) { 128 } else { 32768 }; modulus = limit * 2;
+  while lt(index,tally(bytes)) { unsigned = if eq(width,1) { take(bytes,0,index) } else { take(bytes,0,index) + 256 * take(bytes,0,index + 1) }; value = if gt(unsigned,limit - 1) { unsigned - modulus } else { unsigned }; values = concat(values,value); index = index + width };
+  values
+}
+
+def u:read_gguf_tensor(path, name, max_catalog_bytes, max_metadata, max_tensors, max_string_bytes, max_rank, max_parameters, max_read_bytes) { "Selectively read and decode one cataloged I8/I16 GGUF tensor.";
+  if (1 - eq(rank(max_read_bytes),0)) + (1 - eq(max_read_bytes,floor(max_read_bytes))) + lt(max_read_bytes,0) + gt(max_read_bytes,9007199254740991) { err("invalid GGUF selective read budget") } else {
+  catalog = u:catalog_gguf(path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?; index = u:gguf_find_tensor(catalog,name)?; row = take(catalog.tensor_rows,0,index); type_id = take(row,0,2); byte_count = take(row,0,3);
+  if (1 - eq(type_id,24)) * (1 - eq(type_id,25)) { err("GGUF selective decoder supports only I8 and I16") } else {
+  if lt(byte_count,0) + gt(byte_count,max_read_bytes) { err("GGUF tensor exceeds the configured selective read budget") } else { width = if eq(type_id,24) { 1 } else { 2 }; if 1 - eq(mod(byte_count,width),0) { err("GGUF tensor extent is not element-aligned") } else {
+  file_offset = catalog.catalog_bytes + take(row,0,0); bytes = read_bytes(path,file_offset,byte_count)?; if 1 - eq(tally(bytes),byte_count) { err("GGUF selective payload read was short") } else { ok({name: name, type_id: type_id, width: width, parameters: take(row,0,1), byte_count: byte_count, file_offset: file_offset, values: u:gguf_decode_signed(bytes,width)}) }
+  } } } }
+}

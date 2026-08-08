@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+"$repo_root/scripts/generate-gguf-fixtures" --check >/dev/null
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/gguf-slice.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS GGUF selective unquantized slices'
+echo "Internal I8/I16 golden decode and fail-closed selection validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/gguf/tensor_slice.mlpl"

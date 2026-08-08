@@ -22,6 +22,7 @@ check_demo safetensors-slice scripts/run-safetensors-slice
 check_demo safetensors-statistics scripts/run-safetensors-statistics
 check_demo safetensors-summary scripts/run-safetensors-summary
 check_demo gguf-catalog scripts/run-gguf-catalog
+check_demo gguf-slice scripts/run-gguf-slice
 
 for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
   grep -Fq "$marker" "$repo_root/scripts/run-sparse-safetensors-acceptance" || { echo "sparse acceptance output lacks $marker" >&2; exit 1; }

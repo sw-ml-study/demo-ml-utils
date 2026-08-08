@@ -1,6 +1,6 @@
 number = 4
 slug = "gguf-unquantized-slices"
-status = "pending"
+status = "in-progress"
 description = "Implement selective bounded GGUF tensor reads and golden decoding for a delib..."
 role = "production"
 context_files = []

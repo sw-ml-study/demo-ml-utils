@@ -53,6 +53,10 @@ safetensors-summary:
 gguf-catalog:
     ./scripts/run-gguf-catalog
 
+# Demonstrate an exact-name, bounded GGUF I8/I16 tensor payload read.
+gguf-slice:
+    ./scripts/run-gguf-slice
+
 # Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
 sparse-acceptance:
     ./scripts/run-sparse-safetensors-acceptance
