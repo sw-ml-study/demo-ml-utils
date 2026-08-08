@@ -11,6 +11,7 @@ u:require(equal(actual, expected), "byte round trip changed values")?;
 u:require(equal(type_of(actual), "array"), "byte reads must currently return an array")?;
 u:require(equal(file_size(path)?, 4), "file_size mismatch")?;
 u:require(equal(read_bytes(path, 1, 2)?, [1,127]), "bounded byte range mismatch")?;
+u:require(equal(tally(read_bytes(path, 0, 0)?), 0), "zero-length read must be empty")?;
 u:require(equal(read_bytes(path, 3, 100)?, [255]), "bounded read must clamp at EOF")?;
 u:require(equal(tally(read_bytes(path, 4, 8)?), 0), "read at EOF must be empty")?;
 u:require(equal(tally(read_bytes(path, 99, 8)?), 0), "read beyond EOF must be empty")?;
@@ -46,6 +47,8 @@ remove_path(path)?;
 u:require(is_err(read_bytes(path)), "missing byte path must return Err")?;
 u:require(is_err(read_bytes(path, 0, 8)), "missing ranged byte path must return Err")?;
 u:require(is_err(file_size(path)), "missing file size must return Err")?;
+u:require(is_err(read_bytes("../sandbox-escape.bin", 0, 1)), "range read must reject sandbox traversal")?;
+u:require(is_err(file_size("../sandbox-escape.bin")), "file_size must reject sandbox traversal")?;
 
 print("CAPABILITY byte_io=whole-file-and-bounded-range-result-array");
 print("CAPABILITY file_size=metadata-result");

@@ -21,8 +21,8 @@ append-only `.agentrail/` state.
    limitations, and decide whether Saga 2 is unblocked.
 
 Steps 1–4 are complete, including the bounded arbitrary-name Safetensors
-catalog. The remaining foundation steps reconcile the upstream contract and
-produce the closeout report.
+catalog. The upstream contract is now fulfilled and reconciled; the remaining
+foundation step produces the closeout report.
 
 ## Saga 2 — `bounded-safetensors-analysis`
 

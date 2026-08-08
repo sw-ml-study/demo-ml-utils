@@ -28,6 +28,11 @@ if $mlpl --source-dir "$repo_root" "$repo_root/probes/bit-domain-error.mlpl" >/d
   exit 1
 fi
 
+if $mlpl --source-dir "$repo_root" "$repo_root/probes/range-domain-error.mlpl" >/dev/null 2>&1; then
+  echo "bounded byte reads accepted a negative offset" >&2
+  exit 1
+fi
+
 [ ! -e "$probe_file" ] || {
   echo "capability probe did not clean up its byte fixture" >&2
   exit 1

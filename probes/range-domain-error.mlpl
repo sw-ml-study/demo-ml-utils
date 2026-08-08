@@ -1,0 +1,2 @@
+# Negative offsets are programmer errors and must fail loudly before I/O.
+read_bytes("fixtures/safetensors/valid-small.safetensors", 0 - 1, 2)

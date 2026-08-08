@@ -24,6 +24,8 @@ The [capability report](docs/capabilities.md) records executable observations
 from the configured interpreter and the resulting Safetensors constraints.
 The [bounded Safetensors catalog](docs/safetensors-catalog.md) documents its
 validation, attribution, output, and complexity contracts.
+The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
+decode budgets, and record discovery to executable downstream evidence.
 
 Safetensors header inspection uses bounded range reads and `file_size`, so its
 memory depends on the configured header budget rather than total model size.

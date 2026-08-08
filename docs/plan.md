@@ -66,6 +66,10 @@ reducers remain MLPL wherever the language can express them.
 - Record the smallest upstream contract for bounded `read_range`/seek-like
   access, including Result errors, sandbox rules, offsets, overflow, and EOF.
 
+Status: fulfilled by bounded `read_bytes`, `file_size`, the decode-budget trio,
+duplicate-key rejection, and deterministic `record_keys`; see
+[upstream-contract.md](upstream-contract.md) for conformance evidence.
+
 Acceptance: `just check` runs deterministic repository checks, and every
 planned claim is marked executable, gated, or external.
 

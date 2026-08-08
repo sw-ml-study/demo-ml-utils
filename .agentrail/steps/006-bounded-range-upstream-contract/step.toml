@@ -1,6 +1,6 @@
 number = 6
 slug = "bounded-range-upstream-contract"
-status = "pending"
+status = "in-progress"
 description = "Using executable evidence from the preceding demos, write the minimal separat..."
 role = "meta"
 context_files = []
