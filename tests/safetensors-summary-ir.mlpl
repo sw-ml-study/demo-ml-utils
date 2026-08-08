@@ -1,0 +1,20 @@
+include "../src/visualization/safetensors_summary.mlpl";
+
+def u:require_summary(condition, message) { "Return Ok for a true summary invariant."; if condition { ok(1) } else { err(message) } }
+def u:build_summary(objects, bytes) { "Build the deterministic golden summary."; u:safetensors_summary_json("fixtures/safetensors/valid-decode.safetensors", "fixture-decode", "i16_values", 4096, 256, 1000000, 4, objects, bytes) }
+
+summary = u:build_summary(4, 4096)?;
+u:require_summary(equal(summary.ir.tensor.id, "fixture-decode:tensor:i16_values"), "stable tensor ID")?;
+u:require_summary(equal(summary.ir.tensor.statistics, {count: 3, minimum: -32768, maximum: 32767, sum: -3, mean: -1, variance: 715806038}), "statistics payload")?;
+u:require_summary(equal(parse_json(summary.json)?, summary.ir), "headless JSON round trip")?;
+golden = "{\"provenance\":{\"analyzer\":\"mlpl-bounded-integer-statistics\",\"artifact_id\":\"fixture-decode\",\"format\":\"safetensors\",\"source\":\"fixtures/safetensors/valid-decode.safetensors\"},\"schema\":\"sw-ml-study.safetensors-summary\",\"tensor\":{\"byte_count\":6,\"dtype\":\"I16\",\"id\":\"fixture-decode:tensor:i16_values\",\"name\":\"i16_values\",\"shape\":[3],\"statistics\":{\"count\":3,\"maximum\":32767,\"mean\":-1,\"minimum\":-32768,\"sum\":-3,\"variance\":715806038}},\"version\":1}";
+u:require_summary(equal(summary.json, golden), "deterministic golden JSON encoding")?;
+u:require_summary(is_err(u:build_summary(3, 4096)), "object budget rejection")?;
+u:require_summary(is_err(u:build_summary(4, 128)), "output preflight rejection")?;
+u:require_summary(is_err(u:summary_validate({schema: "wrong"}, 4)), "schema rejection")?;
+wrong_id = {schema: summary.ir.schema, version: summary.ir.version, provenance: summary.ir.provenance, tensor: {id: "wrong", name: summary.ir.tensor.name, dtype: summary.ir.tensor.dtype, shape: summary.ir.tensor.shape, byte_count: summary.ir.tensor.byte_count, statistics: summary.ir.tensor.statistics}};
+u:require_summary(is_err(u:summary_validate(wrong_id, 4)), "stable ID rejection")?;
+
+print(summary.json);
+print("PASS Safetensors visualization summary IR");
+ok(1)

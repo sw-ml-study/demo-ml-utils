@@ -44,6 +44,10 @@ safetensors-slice:
 safetensors-statistics:
     ./scripts/run-safetensors-statistics
 
+# Build and headlessly validate the renderer-neutral Safetensors summary IR.
+safetensors-summary:
+    ./scripts/run-safetensors-summary
+
 # Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
 sparse-acceptance:
     ./scripts/run-sparse-safetensors-acceptance

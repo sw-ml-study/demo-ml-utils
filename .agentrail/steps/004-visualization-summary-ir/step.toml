@@ -1,6 +1,6 @@
 number = 4
 slug = "visualization-summary-ir"
-status = "pending"
+status = "in-progress"
 description = "Implement a versioned renderer-neutral JSON visualization-summary IR for the ..."
 role = "production"
 context_files = []

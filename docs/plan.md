@@ -89,7 +89,8 @@ memory budget while staying below a documented high-water mark.
 
 Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
 payload selection, U8/I8/U16/I16 decoding, fixed-chunk mergeable statistics,
-and opt-in sparse-artifact high-water acceptance are runnable. The completed
+opt-in sparse-artifact high-water acceptance, and a headlessly validated
+single-tensor visualization summary IR are runnable. The completed
 [binary-format foundation report](foundation-report.md) records the acceptance
 evidence, attribution, complexity, limitations, and exact Saga 2 gate state.
 
@@ -160,7 +161,7 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue the active `bounded-safetensors-analysis` saga in
-[sagas.md](sagas.md) with the versioned, budgeted JSON visualization-summary
-IR. Range-reader conformance and bounded-memory acceptance are already covered
-and should be carried forward as evidence rather than reimplemented.
+Complete the active `bounded-safetensors-analysis` saga in
+[sagas.md](sagas.md) with its acceptance report and GGUF gate decision.
+Range-reader conformance and bounded-memory acceptance are already covered and
+should be carried forward as evidence rather than reimplemented.

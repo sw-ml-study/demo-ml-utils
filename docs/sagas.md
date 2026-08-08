@@ -37,7 +37,8 @@ record enumeration are shipped and covered by the repository gate.
 3. Mergeable statistics with fixed chunk size — runnable in the default gate.
 4. Sparse large-artifact acceptance and measured peak memory — opt-in and
    passing on supported platforms.
-5. JSON visualization-summary IR and headless validation.
+5. Versioned, budgeted JSON visualization-summary IR and headless validation —
+   runnable without a renderer dependency.
 
 ## Saga 3 — `gguf-inspection`
 

@@ -15,6 +15,7 @@ sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 "$repo_root/scripts/run-safetensors-catalog" >/dev/null
 "$repo_root/scripts/run-safetensors-slice" >/dev/null
 "$repo_root/scripts/run-safetensors-statistics" >/dev/null
+"$repo_root/scripts/run-safetensors-summary" >/dev/null
 git -C "$repo_root" diff --check
 
 echo "PASS pre-commit"

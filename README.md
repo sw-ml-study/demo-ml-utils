@@ -33,6 +33,8 @@ The [bounded statistics demo](docs/safetensors-statistics.md) adds fixed-chunk
 mergeable reductions without reading a complete tensor at once.
 Its opt-in sparse-artifact acceptance recipe measures and enforces peak RSS
 without downloading or committing a large model.
+The [visualization summary IR](docs/safetensors-summary-ir.md) provides a
+versioned, budgeted JSON handoff without coupling analysis to a renderer.
 The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
 decode budgets, and record discovery to executable downstream evidence.
 

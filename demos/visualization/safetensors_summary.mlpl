@@ -1,0 +1,6 @@
+include "../../src/visualization/safetensors_summary.mlpl";
+
+summary = u:safetensors_summary_json("fixtures/safetensors/valid-decode.safetensors", "fixture-decode", "i16_values", 4096, 256, 1000000, 4, 4, 4096)?;
+print("Renderer-neutral Safetensors summary JSON:");
+print(summary.json);
+ok(summary.ir)

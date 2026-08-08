@@ -3,6 +3,7 @@ capability-probe	probes/capabilities.mlpl	runtime	binary-capability-probe	mlpl	n
 safetensors-catalog	demos/safetensors/catalog.mlpl	safetensors	metadata-catalog	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,parse_json,record-keys	runnable
 safetensors-slice	demos/safetensors/tensor_slice.mlpl	safetensors	selective-integer-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode	runnable
 safetensors-statistics	demos/safetensors/statistics.mlpl	safetensors	tensor-statistics	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode,mergeable-statistics	runnable
+safetensors-summary	demos/visualization/safetensors_summary.mlpl	scene-ir	tensor-summary-json	mlpl-native	chunk-bounded	yes	bounded-range-io,mergeable-statistics,to_json,scene-ir	runnable
 gguf-catalog	demos/gguf/catalog.mlpl	gguf	metadata-catalog	mlpl-native	chunk-bounded	no	bounded-range-io	gated
 model-scene	demos/visualization/model_scene.mlpl	scene-ir	model-map	mlpl-native	chunk-bounded	no	bounded-range-io,scene-ir	gated
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated
