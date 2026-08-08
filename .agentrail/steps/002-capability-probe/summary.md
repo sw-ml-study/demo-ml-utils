@@ -1,0 +1,1 @@
+Added executable capability probes for byte Result semantics, fixed-width bit operations, the f64 2^53 precision boundary, and budgeted JSON parsing. Recorded binary version 0.20.0 commit 5ef1ef72 and explicitly gated typed-byte and bounded-range claims. just check passes; commit 2a6d4d7 is pushed to origin/main.
