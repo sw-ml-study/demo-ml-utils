@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+
+catalog=${1:?usage: validate-catalog PATH}
+expected='id\tpath\tformat\toperation\timplementation_layer\tmemory_bound\tdefault_gate\trequired_features\tstatus'
+
+[ -f "$catalog" ] || { echo "catalog not found: $catalog" >&2; exit 1; }
+[ "$(sed -n '1p' "$catalog")" = "$(printf '%b' "$expected")" ] || {
+  echo "invalid catalog header: $catalog" >&2
+  exit 1
+}
+
+awk -F '\t' '
+NR == 1 { next }
+NF != 9 { printf "catalog line %d: expected 9 fields, found %d\n", NR, NF > "/dev/stderr"; failed=1; next }
+$1 !~ /^[a-z0-9][a-z0-9_-]*$/ { printf "catalog line %d: invalid id %s\n", NR, $1 > "/dev/stderr"; failed=1 }
+seen_id[$1]++ { printf "catalog line %d: duplicate id %s\n", NR, $1 > "/dev/stderr"; failed=1 }
+seen_path[$2]++ { printf "catalog line %d: duplicate path %s\n", NR, $2 > "/dev/stderr"; failed=1 }
+$2 !~ /^demos\/[a-z0-9_\/-]+\.mlpl$/ { printf "catalog line %d: invalid demo path %s\n", NR, $2 > "/dev/stderr"; failed=1 }
+$5 !~ /^(mlpl|mlpl-native|external)$/ { printf "catalog line %d: invalid implementation layer %s\n", NR, $5 > "/dev/stderr"; failed=1 }
+$6 !~ /^(whole-file|chunk-bounded|not-applicable)$/ { printf "catalog line %d: invalid memory bound %s\n", NR, $6 > "/dev/stderr"; failed=1 }
+$7 !~ /^(yes|no)$/ { printf "catalog line %d: invalid default gate %s\n", NR, $7 > "/dev/stderr"; failed=1 }
+$9 !~ /^(runnable|constrained|gated|external)$/ { printf "catalog line %d: invalid status %s\n", NR, $9 > "/dev/stderr"; failed=1 }
+END { exit failed }
+' "$catalog"
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+tab=$(printf '\t')
+while IFS="$tab" read -r id path format operation layer memory gate features status; do
+  [ "$id" = id ] && continue
+  case "$status" in
+    runnable|constrained|external)
+      [ -f "$repo_root/$path" ] || {
+        echo "catalog entry $id requires missing file: $path" >&2
+        exit 1
+      }
+      ;;
+  esac
+  [ "$gate" = no ] || [ "$status" != gated ] || {
+    echo "catalog entry $id: gated demos cannot run in the default gate" >&2
+    exit 1
+  }
+done < "$catalog"
+
+echo "PASS catalog"

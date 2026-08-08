@@ -16,6 +16,11 @@ This repository is at the planning and capability-probing stage. See
 [the delivery plan](docs/plan.md), [the saga queue](docs/sagas.md), and
 [the peer repository audit](docs/peer-repository-audit.md).
 
+Development uses a thin `justfile`; [the development guide](docs/development.md)
+documents the validation gate, fixture policy, and non-installing sw-MLPL
+binary selection. The [demo catalog](catalog/README.md) records format,
+implementation layer, memory contract, required capabilities, and status.
+
 Large-file support is a target, not a current claim: sw-MLPL currently offers
 whole-file byte reads, while bounded range/seek I/O remains an upstream gate.
 

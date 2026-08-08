@@ -1,0 +1,40 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+links_file=$(mktemp "${TMPDIR:-/tmp}/demo-ml-utils-links.XXXXXX")
+trap 'rm -f "$links_file"' EXIT HUP INT TERM
+failed=0
+
+find "$repo_root" \( -path "$repo_root/.git" -o -path "$repo_root/.agentrail" \) -prune -o -type f -name '*.md' -print |
+while IFS= read -r document; do
+  awk -v document="$document" '
+  {
+    line = $0
+    while (match(line, /\]\([^)]+\)/)) {
+      target = substr(line, RSTART + 2, RLENGTH - 3)
+      print document "\t" target
+      line = substr(line, RSTART + RLENGTH)
+    }
+  }
+  ' "$document"
+done > "$links_file"
+
+tab=$(printf '\t')
+while IFS="$tab" read -r document target; do
+  case "$target" in
+    ''|'#'*|http://*|https://*|mailto:*|app://*) continue ;;
+  esac
+  target=${target%%#*}
+  case "$target" in
+    /*) resolved=$target ;;
+    *) resolved=$(dirname -- "$document")/$target ;;
+  esac
+  if [ ! -e "$resolved" ]; then
+    echo "broken local link: ${document#"$repo_root"/} -> $target" >&2
+    failed=1
+  fi
+done < "$links_file"
+
+[ "$failed" -eq 0 ] || exit 1
+echo "PASS documentation links"

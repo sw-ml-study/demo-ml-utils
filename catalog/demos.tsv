@@ -1,0 +1,6 @@
+id	path	format	operation	implementation_layer	memory_bound	default_gate	required_features	status
+safetensors-catalog	demos/safetensors/catalog.mlpl	safetensors	metadata-catalog	mlpl	whole-file	no	read_bytes,parse_json	gated
+safetensors-statistics	demos/safetensors/statistics.mlpl	safetensors	tensor-statistics	mlpl-native	chunk-bounded	no	bounded-range-io	gated
+gguf-catalog	demos/gguf/catalog.mlpl	gguf	metadata-catalog	mlpl-native	chunk-bounded	no	bounded-range-io	gated
+model-scene	demos/visualization/model_scene.mlpl	scene-ir	model-map	mlpl-native	chunk-bounded	no	bounded-range-io,scene-ir	gated
+checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated

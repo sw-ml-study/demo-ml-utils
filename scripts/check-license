@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+notice='Copyright (c) 2026 Michael A Wright'
+
+test "$(cat "$repo_root/COPYRIGHT")" = "$notice"
+grep -Fqx 'MIT License' "$repo_root/LICENSE"
+grep -Fqx "$notice" "$repo_root/LICENSE"
+grep -Fq '[COPYRIGHT](COPYRIGHT)' "$repo_root/README.md"
+grep -Fq '[MIT License](LICENSE)' "$repo_root/README.md"
+
+echo "PASS license"

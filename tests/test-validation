@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+test_root=$(mktemp -d "${TMPDIR:-/tmp}/demo-ml-utils-test.XXXXXX")
+trap 'rm -rf "$test_root"' EXIT HUP INT TERM
+
+"$repo_root/scripts/validate-catalog" "$repo_root/catalog/demos.tsv" >/dev/null
+selected=$(MLPL=/bin/sh "$repo_root/scripts/select-mlpl")
+test "$selected" = /bin/sh
+
+cp "$repo_root/catalog/demos.tsv" "$test_root/bad.tsv"
+printf 'duplicate\tdemos/a.mlpl\tsafetensors\tinspect\tmlpl\twhole-file\tno\tcurrent\tgated\n' >> "$test_root/bad.tsv"
+printf 'duplicate\tdemos/b.mlpl\tgguf\tinspect\tmlpl\twhole-file\tno\tcurrent\tgated\n' >> "$test_root/bad.tsv"
+if "$repo_root/scripts/validate-catalog" "$test_root/bad.tsv" >/dev/null 2>&1; then
+  echo "catalog validator accepted duplicate ids" >&2
+  exit 1
+fi
+
+if MLPL=relative/mlpl "$repo_root/scripts/select-mlpl" >/dev/null 2>&1; then
+  echo "MLPL selector accepted a relative override" >&2
+  exit 1
+fi
+
+echo "PASS validation tests"

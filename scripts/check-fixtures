@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+max_fixture_bytes=1048576
+
+if [ -d "$repo_root/fixtures" ]; then
+  if find "$repo_root/fixtures" -type l -print | grep -q .; then
+    echo "fixtures must not be symbolic links" >&2
+    exit 1
+  fi
+  oversized=$(find "$repo_root/fixtures" -type f -size +${max_fixture_bytes}c -print)
+  if [ -n "$oversized" ]; then
+    echo "fixtures exceed $max_fixture_bytes bytes:" >&2
+    echo "$oversized" >&2
+    exit 1
+  fi
+fi
+
+tracked_artifacts=$(git -C "$repo_root" ls-files '*.gguf' '*.safetensors' '*.pt' '*.pth' '*.bin' |
+  awk '$0 !~ /^fixtures\// { print }')
+if [ -n "$tracked_artifacts" ]; then
+  echo "model-format artifacts must be tiny fixtures under fixtures/:" >&2
+  echo "$tracked_artifacts" >&2
+  exit 1
+fi
+
+echo "PASS fixtures"
