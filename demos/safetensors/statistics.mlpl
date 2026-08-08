@@ -3,6 +3,11 @@ include "../../src/formats/safetensors_statistics.mlpl";
 path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-decode.safetensors");
 name = unwrap_or(list_get(args(), 1), "i16_values");
 statistics = u:safetensors_tensor_statistics(path, name, 4096, 256, 1000000, 4, 6)?;
-print("Bounded Safetensors tensor statistics:");
+print("DEMO: fixed-chunk mergeable Safetensors statistics");
+print("Scenario: reduce [-32768, -2, 32767] using 4-byte chunks, forcing more than one payload read.");
+print("Native boundary: aligned bounded reads. MLPL work: integer decode, iterative Welford updates, and parallel-state merges.");
+print("Budgets: 4096 header bytes, 4 payload bytes per read, and exactly six output fields.");
+print("Population-statistics result:");
 print(statistics);
-ok(statistics)
+print("Interpretation: count=3 and sum=-3 give mean=-1; extrema retain the signed endpoints, and variance is m2/count.");
+ok(1)

@@ -3,6 +3,11 @@ include "../../src/formats/safetensors_slice.mlpl";
 path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-decode.safetensors");
 name = unwrap_or(list_get(args(), 1), "i16_values");
 decoded = u:read_safetensors_tensor(path, name, 4096, 256, 1000000, 4096)?;
-print("Selectively decoded Safetensors tensor:");
-print(decoded);
-ok(decoded)
+print("DEMO: selective Safetensors integer tensor decode");
+print("Scenario: read only i16_values from a mixed-dtype file and decode its signed little-endian values.");
+print("Native boundary: validated bounded range I/O. MLPL work: tensor selection, dtype policy, little-endian assembly, and two's-complement conversion.");
+print("Budgets: 4096 header bytes, 256 header elements, 1,000,000 parameters, and at most 4096 selected payload bytes.");
+print("Selected tensor descriptor:"); print({name: decoded.name, dtype: decoded.dtype, shape: decoded.shape, file_offset: decoded.file_offset, byte_count: decoded.byte_count});
+print("Decoded values:"); print(decoded.values);
+print("Interpretation: bytes 00 80, FE FF, FF 7F become -32768, -2, and 32767; unrelated tensors were not read as payload.");
+ok(1)

@@ -6,8 +6,6 @@ mlpl=$("$repo_root/scripts/select-mlpl")
 
 "$repo_root/scripts/generate-safetensors-fixtures" --check >/dev/null
 test_output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/safetensors-summary-ir.mlpl")
-printf '%s\n' "$test_output"
 printf '%s\n' "$test_output" | grep -Fqx 'PASS Safetensors visualization summary IR'
-
-$mlpl --source-dir "$repo_root" "$repo_root/demos/visualization/safetensors_summary.mlpl" >/dev/null
-echo "PASS Safetensors visualization summary demo"
+echo "Internal schema/budget/golden-JSON round-trip validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/visualization/safetensors_summary.mlpl"

@@ -1,6 +1,6 @@
 number = 3
 slug = "self-describing-demo-output"
-status = "pending"
+status = "in-progress"
 description = "Make every user-invoked just demo in this repository demonstratable rather th..."
 role = "production"
 context_files = []

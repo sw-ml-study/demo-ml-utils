@@ -20,36 +20,36 @@ tests:
 mlpl-path:
     ./scripts/select-mlpl
 
-# Probe the configured sw-MLPL binary's binary-format capabilities.
+# Demonstrate the configured binary's verified capabilities and limitations.
 capabilities:
     ./scripts/run-capability-probe
 
-# Regenerate committed tiny Safetensors fixtures.
+# Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write
     ./scripts/generate-gguf-fixtures --write
 
-# Run the bounded Safetensors header decoder tests.
+# Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
 
-# Run the deterministic bounded Safetensors metadata catalog.
+# Demonstrate a deterministic bounded Safetensors metadata catalog.
 safetensors-catalog:
     ./scripts/run-safetensors-catalog
 
-# Selectively read and decode one bounded Safetensors tensor.
+# Demonstrate selective signed-integer tensor decoding.
 safetensors-slice:
     ./scripts/run-safetensors-slice
 
-# Compute fixed-chunk mergeable Safetensors tensor statistics.
+# Demonstrate fixed-chunk mergeable tensor statistics.
 safetensors-statistics:
     ./scripts/run-safetensors-statistics
 
-# Build and headlessly validate the renderer-neutral Safetensors summary IR.
+# Demonstrate a renderer-neutral, headlessly validated summary IR.
 safetensors-summary:
     ./scripts/run-safetensors-summary
 
-# Run the bounded conservative GGUF v3 metadata catalog.
+# Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog
 

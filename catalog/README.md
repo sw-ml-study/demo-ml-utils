@@ -27,3 +27,8 @@ Implementation layers describe where the substantive operation occurs:
   I/O, transport, or rendering;
 - `external`: a named external tool performs the operation as an explicit
   oracle, baseline, compatibility path, or fallback.
+
+Runnable demo recipes are not test transcripts. Internal assertions may gate
+execution, but displayed output must narrate the scenario, implementation
+boundary, resource budgets, representative result, and interpretation without
+ending at a bare PASS or dumping an unexplained internal structure.

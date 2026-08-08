@@ -48,7 +48,6 @@ case $(uname -s) in
     ;;
 esac
 
-cat "$program_output"
 grep -Fqx 'PASS sparse Safetensors bounded-memory acceptance' "$program_output"
 [ -n "$max_rss" ] || {
   echo "peak RSS was not reported; run the opt-in recipe where /usr/bin/time can access platform metrics" >&2
@@ -60,4 +59,9 @@ grep -Fqx 'PASS sparse Safetensors bounded-memory acceptance' "$program_output"
   exit 1
 }
 
-echo "PASS sparse artifact bytes=$payload_bytes chunk_bytes=$chunk_bytes peak_rss_bytes=$max_rss ceiling_bytes=$max_rss_bytes"
+echo "DEMO: measured sparse-artifact bounded-memory acceptance"
+echo "Scenario: analyze a temporary sparse U8 tensor much larger than each read, without committing or downloading a model."
+echo "Native boundary: sparse-file creation, bounded reads, and /usr/bin/time RSS measurement. MLPL work: chunk iteration, decode, Welford reduction, and merge."
+echo "Budgets: artifact_bytes=$payload_bytes chunk_bytes=$chunk_bytes peak_rss_ceiling_bytes=$max_rss_bytes"
+echo "Observed result: count=$payload_bytes all values zero, peak_rss_bytes=$max_rss"
+echo "Interpretation: the artifact is $((payload_bytes / chunk_bytes)) times the chunk budget and stayed below the process ceiling; the temporary artifact has been scheduled for cleanup."

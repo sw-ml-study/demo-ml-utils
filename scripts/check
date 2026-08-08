@@ -10,13 +10,7 @@ sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 "$repo_root/scripts/check-fixtures"
 "$repo_root/scripts/check-sources"
 "$repo_root/tests/test-validation"
-"$repo_root/scripts/run-capability-probe" >/dev/null
-"$repo_root/scripts/run-safetensors-header-tests" >/dev/null
-"$repo_root/scripts/run-safetensors-catalog" >/dev/null
-"$repo_root/scripts/run-safetensors-slice" >/dev/null
-"$repo_root/scripts/run-safetensors-statistics" >/dev/null
-"$repo_root/scripts/run-safetensors-summary" >/dev/null
-"$repo_root/scripts/run-gguf-catalog" >/dev/null
+"$repo_root/tests/test-demo-output" >/dev/null
 git -C "$repo_root" diff --check
 
 echo "PASS pre-commit"

@@ -1,0 +1,30 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/demo-output.XXXXXX")
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+
+check_demo() {
+  name=$1
+  script=$2
+  output="$work_dir/$name.txt"
+  "$repo_root/$script" >"$output"
+  for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
+    grep -Fq "$marker" "$output" || { echo "$name demo output lacks $marker" >&2; exit 1; }
+  done
+}
+
+check_demo capabilities scripts/run-capability-probe
+check_demo safetensors-headers scripts/run-safetensors-header-tests
+check_demo safetensors-catalog scripts/run-safetensors-catalog
+check_demo safetensors-slice scripts/run-safetensors-slice
+check_demo safetensors-statistics scripts/run-safetensors-statistics
+check_demo safetensors-summary scripts/run-safetensors-summary
+check_demo gguf-catalog scripts/run-gguf-catalog
+
+for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
+  grep -Fq "$marker" "$repo_root/scripts/run-sparse-safetensors-acceptance" || { echo "sparse acceptance output lacks $marker" >&2; exit 1; }
+done
+
+echo "PASS self-describing demo output"

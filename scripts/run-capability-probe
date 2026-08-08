@@ -7,7 +7,12 @@ probe_file="$repo_root/.capability-probe.bin"
 trap 'rm -f "$probe_file"' EXIT HUP INT TERM
 
 version=$($mlpl --version)
-printf '%s\n' "$version" | sed -n '1,6p'
+echo "DEMO: executable binary-format capability contract"
+echo "Scenario: prove which generic primitives downstream artifact demos may rely on, including their failure boundaries."
+echo "Native boundary: the runtime provides generic I/O, JSON, bit, and record operations; MLPL assertions verify exact behavior without claiming format parsing."
+echo "Budgets: a 4-byte probe file, exact range/EOF cases, JSON byte/depth/element limits, and the f64 exact-integer boundary at 2^53."
+echo "Representative selected binary:"
+printf '%s\n' "$version" | sed -n '1,9p'
 
 output=$($mlpl --source-dir "$repo_root" "$repo_root/probes/capabilities.mlpl")
 printf '%s\n' "$output"
@@ -38,4 +43,5 @@ fi
   exit 1
 }
 
-echo "PASS capability probe"
+echo "Interpretation: bounded range I/O and decode budgets are available; bytes remain f64-backed arrays, so typed-byte and zero-copy optimizations are still absent."
+echo "Internal negative checks also rejected a 2^53 bit operand and a negative range offset."

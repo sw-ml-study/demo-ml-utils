@@ -3,8 +3,14 @@ include "../../src/formats/safetensors_catalog.mlpl";
 path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-catalog.safetensors");
 catalog = u:catalog_safetensors(path, 4096, 256, 1000000)?;
 
-print("Safetensors tensor names (sorted header keys; __metadata__ is not a tensor):");
+print("DEMO: deterministic bounded Safetensors metadata catalog");
+print("Scenario: discover arbitrary tensor names and validate the complete metadata layout without reading tensor data.");
+print("Native boundary: file_size, bounded read_bytes, budgeted parse_json, and sorted record_keys. MLPL work: dtype/shape/offset validation and aggregates.");
+print("Budgets: 4096 header bytes, 256 decoded elements, and 1,000,000 parameters.");
+print("Sorted header keys (__metadata__ is provenance, not a tensor):");
 print(catalog.header_keys);
-print("Safetensors aggregate catalog:");
+print("Aggregate result:");
 print({tensor_count: catalog.tensor_count, parameter_count: catalog.parameter_count, tensor_bytes: catalog.tensor_bytes, data_bytes: catalog.data_bytes, metadata_present: catalog.metadata_present});
-ok(catalog)
+print("Name-ordered rows are [start_byte, end_byte, parameters, dtype_bytes]:"); print(catalog.rows_by_name);
+print("Interpretation: three tensors contain four parameters in six contiguous payload bytes; the zero-length F32 tensor is valid and visible.");
+ok(1)

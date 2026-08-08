@@ -6,8 +6,6 @@ mlpl=$("$repo_root/scripts/select-mlpl")
 
 "$repo_root/scripts/generate-safetensors-fixtures" --check >/dev/null
 test_output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/safetensors-slice.mlpl")
-printf '%s\n' "$test_output"
 printf '%s\n' "$test_output" | grep -Fqx 'PASS Safetensors selective slice decoder'
-
-$mlpl --source-dir "$repo_root" "$repo_root/demos/safetensors/tensor_slice.mlpl" >/dev/null
-echo "PASS Safetensors selective slice demo"
+echo "Internal signed/unsigned golden decode and fail-closed validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/safetensors/tensor_slice.mlpl"

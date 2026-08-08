@@ -6,8 +6,6 @@ mlpl=$("$repo_root/scripts/select-mlpl")
 
 "$repo_root/scripts/generate-safetensors-fixtures" --check >/dev/null
 test_output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/safetensors-statistics.mlpl")
-printf '%s\n' "$test_output"
 printf '%s\n' "$test_output" | grep -Fqx 'PASS Safetensors mergeable statistics'
-
-$mlpl --source-dir "$repo_root" "$repo_root/demos/safetensors/statistics.mlpl" >/dev/null
-echo "PASS Safetensors statistics demo"
+echo "Internal single-pass/chunked/partition-merge parity validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/safetensors/statistics.mlpl"

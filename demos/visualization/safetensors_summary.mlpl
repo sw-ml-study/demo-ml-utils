@@ -1,6 +1,11 @@
 include "../../src/visualization/safetensors_summary.mlpl";
 
 summary = u:safetensors_summary_json("fixtures/safetensors/valid-decode.safetensors", "fixture-decode", "i16_values", 4096, 256, 1000000, 4, 4, 4096)?;
-print("Renderer-neutral Safetensors summary JSON:");
+print("DEMO: renderer-neutral Safetensors visualization summary");
+print("Scenario: turn bounded analysis into a stable JSON handoff without coupling it to a browser or 3D engine.");
+print("Native boundary: generic to_json and budgeted parse_json. MLPL work: provenance, stable IDs, schema construction, preflight, and validation.");
+print("Budgets: four IR objects, 4096 output bytes, decode depth 8, and bounded tensor statistics underneath.");
+print("Versioned JSON result:");
 print(summary.json);
-ok(summary.ir)
+print("Interpretation: fixture-decode:tensor:i16_values is stable across renderers; provenance and six aggregate fields are sufficient for a headless summary card.");
+ok(1)
