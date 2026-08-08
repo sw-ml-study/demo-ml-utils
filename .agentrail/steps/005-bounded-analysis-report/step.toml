@@ -1,8 +1,9 @@
 number = 5
 slug = "bounded-analysis-report"
-status = "in-progress"
+status = "completed"
 description = "Run the full default repository gate and opt-in sparse acceptance, then produ..."
 role = "validation"
 context_files = []
 created_at = "2026-08-08T13:48:12"
-commits = []
+completed_at = "2026-08-08T13:56:05"
+commits = ["fb08ebc4aa29554c715506bf16de02ed2dede992"]
