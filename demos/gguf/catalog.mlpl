@@ -1,0 +1,4 @@
+include "../../src/formats/gguf_catalog.mlpl";
+path = unwrap_or(list_get(args(), 0), "fixtures/gguf/valid-small.gguf");
+catalog = u:catalog_gguf(path, 4096, 8, 4, 256, 4, 1000000)?;
+print("Bounded GGUF v3 catalog:"); print(catalog); ok(catalog)

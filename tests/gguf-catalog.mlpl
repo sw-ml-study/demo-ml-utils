@@ -1,0 +1,16 @@
+include "../src/formats/gguf_catalog.mlpl";
+def u:gguf_fixture(name) { "Catalog one GGUF fixture with teaching budgets."; u:catalog_gguf(name, 4096, 8, 4, 256, 4, 1000000) }
+def u:require_gguf(value, message) { "Require a GGUF test invariant."; if value { ok(1) } else { err(message) } }
+
+catalog = u:gguf_fixture("fixtures/gguf/valid-small.gguf")?;
+u:require_gguf(equal([catalog.version,catalog.metadata_count,catalog.tensor_count,catalog.alignment,catalog.data_bytes,catalog.tensor_type,catalog.parameters], [3,2,1,32,16,0,4]), "GGUF catalog aggregates")?;
+u:require_gguf(equal(catalog.architecture, "demo") * equal(catalog.tensor_name, "weight") * equal(catalog.tensor_shape, [4]), "GGUF catalog strings and shape")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/bad-magic.gguf")), "GGUF magic rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/truncated.gguf")), "GGUF truncation rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-version.gguf")), "GGUF version rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/excessive-count.gguf")), "GGUF count budget rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-metadata-type.gguf")), "GGUF metadata type rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/misaligned-offset.gguf")), "GGUF offset alignment rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-tensor-type.gguf")), "GGUF unsupported tensor type rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/invalid-alignment.gguf")), "GGUF alignment rejection")?;
+print("PASS GGUF v3 catalog foundation"); ok(1)

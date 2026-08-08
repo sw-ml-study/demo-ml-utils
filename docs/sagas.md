@@ -42,9 +42,9 @@ record enumeration are shipped and covered by the repository gate.
 
 ## Saga 3 — `gguf-inspection`
 
-Status: unblocked, not started. The first slice is a budgeted GGUF v3
-envelope, conservative metadata subset, and tensor-directory catalog over tiny
-generated fixtures; payload decoding remains later work. See the
+Status: active. The first budgeted GGUF v3 envelope, conservative metadata
+subset, and single-F32 tensor-directory catalog is runnable over tiny generated
+fixtures; payload decoding remains later work. See the
 [bounded-analysis report](bounded-analysis-report.md) for the gate evidence.
 
 1. GGUF header, metadata, tensor directory, and alignment fixtures/parser.

@@ -1,0 +1,40 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mode=${1:---check}
+fixture_dir="$repo_root/fixtures/gguf"
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/gguf-fixtures.XXXXXX")
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+
+u32() { value=$1; file=$2; i=0; while [ "$i" -lt 4 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
+u64() { value=$1; file=$2; i=0; while [ "$i" -lt 8 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
+string() { text_value=$1; file=$2; text_length=${#text_value}; u64 "$text_length" "$file"; printf '%s' "$text_value" >> "$file"; }
+
+write_valid() {
+  file=$1; offset=${2:-0}; type=${3:-0}; alignment=${4:-32}
+  : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 1 "$file"; u64 2 "$file"
+  string general.architecture "$file"; u32 8 "$file"; string demo "$file"
+  string general.alignment "$file"; u32 4 "$file"; u32 "$alignment" "$file"
+  string weight "$file"; u32 1 "$file"; u64 4 "$file"; u32 "$type" "$file"; u64 "$offset" "$file"
+  bytes=$(wc -c < "$file" | tr -d ' '); pad=$(((alignment - (bytes % alignment)) % alignment)); i=0
+  while [ "$i" -lt "$pad" ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+  i=0; while [ "$i" -lt 16 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+}
+
+write_valid "$work_dir/valid-small.gguf"
+write_valid "$work_dir/misaligned-offset.gguf" 1
+write_valid "$work_dir/unsupported-tensor-type.gguf" 0 8
+write_valid "$work_dir/invalid-alignment.gguf" 0 0 7
+cp "$work_dir/valid-small.gguf" "$work_dir/bad-magic.gguf"; printf 'BAD!' | dd of="$work_dir/bad-magic.gguf" bs=1 count=4 conv=notrunc 2>/dev/null
+dd if="$work_dir/valid-small.gguf" of="$work_dir/truncated.gguf" bs=1 count=20 2>/dev/null
+: > "$work_dir/unsupported-version.gguf"; printf 'GGUF' >> "$work_dir/unsupported-version.gguf"; u32 2 "$work_dir/unsupported-version.gguf"; u64 0 "$work_dir/unsupported-version.gguf"; u64 0 "$work_dir/unsupported-version.gguf"
+: > "$work_dir/excessive-count.gguf"; printf 'GGUF' >> "$work_dir/excessive-count.gguf"; u32 3 "$work_dir/excessive-count.gguf"; u64 5 "$work_dir/excessive-count.gguf"; u64 0 "$work_dir/excessive-count.gguf"
+: > "$work_dir/unsupported-metadata-type.gguf"; printf 'GGUF' >> "$work_dir/unsupported-metadata-type.gguf"; u32 3 "$work_dir/unsupported-metadata-type.gguf"; u64 0 "$work_dir/unsupported-metadata-type.gguf"; u64 1 "$work_dir/unsupported-metadata-type.gguf"; string general.architecture "$work_dir/unsupported-metadata-type.gguf"; u32 9 "$work_dir/unsupported-metadata-type.gguf"
+
+case "$mode" in
+  --write) mkdir -p "$fixture_dir"; for generated in "$work_dir"/*; do cp "$generated" "$fixture_dir/$(basename -- "$generated")"; done ;;
+  --check) [ -d "$fixture_dir" ] || { echo "GGUF fixture directory missing" >&2; exit 1; }; for generated in "$work_dir"/*; do committed="$fixture_dir/$(basename -- "$generated")"; [ -f "$committed" ] && cmp -s "$generated" "$committed" || { echo "GGUF fixture drift: ${committed#"$repo_root"/}" >&2; exit 1; }; done; committed_count=$(find "$fixture_dir" -type f -name '*.gguf' | wc -l | tr -d ' '); generated_count=$(find "$work_dir" -type f | wc -l | tr -d ' '); [ "$committed_count" -eq "$generated_count" ] || { echo "unexpected committed GGUF fixture" >&2; exit 1; } ;;
+  *) echo "usage: generate-gguf-fixtures [--check|--write]" >&2; exit 2 ;;
+esac
+echo "PASS GGUF fixtures $mode"

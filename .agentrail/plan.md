@@ -1,11 +1,11 @@
-# Bounded Safetensors Analysis
+# GGUF Inspection
 
-Build bounded tensor-payload analysis on the completed range-I/O and metadata-catalog foundation. MLPL owns dtype decoding, reductions, and summary construction; native builtins remain generic bounded I/O and JSON services. Default tests use tiny generated fixtures, while large sparse acceptance remains opt-in and measured.
+Build a bounded, fail-closed GGUF v3 inspection path using the shipped range-I/O and measured-memory foundation. MLPL owns format parsing, validation, cataloging, decoding, and reductions; native builtins remain generic filesystem and serialization boundaries. Default fixtures are tiny, generated, and redistributable.
 
-1. `selective-slice-dtype-decode` — Add selective tensor-region reads and golden decoding for an intentionally small byte-aligned dtype set. Validate alignment, range, exactness, and read budgets; update catalog and attribution docs.
-2. `mergeable-chunk-statistics` — Compute count, min, max, sum, mean, and variance from fixed-size chunks with mergeable state and deterministic parity tests.
-3. `sparse-large-artifact-acceptance` — Generate an opt-in sparse Safetensors artifact larger than the configured memory budget and record measured peak memory while preserving the chunk bound.
-4. `visualization-summary-ir` — Emit a versioned, budgeted JSON summary IR and validate it headlessly without adding a renderer dependency.
-5. `bounded-analysis-report` — Run the full suite, reconcile complexity and limitations, decide the GGUF saga gate, close the saga, and stop.
+1. `gguf-v3-catalog-foundation` — Pin the authoritative format contract, generate valid and malformed tiny fixtures, and parse a conservative GGUF v3 envelope, scalar metadata subset, alignment, and tensor directory without reading tensor payloads.
+2. `gguf-catalog-type-coverage` — Expand bounded metadata and tensor-type catalog coverage while retaining unsupported entries without pretending to decode them.
+3. `gguf-unquantized-slices` — Selectively decode a small unquantized dtype set with golden vectors and fixed read budgets.
+4. `gguf-q8-0-golden` — Decode Q8_0 golden blocks in MLPL and compare with an explicitly named reference oracle.
+5. `gguf-bounded-statistics-report` — Add bounded sampling/statistics, measured acceptance, reconcile the catalog and roadmap, decide the visualization saga gate, close the saga, and stop.
 
-Acceptance: selected supported tensors decode and reduce without reading the complete artifact or exceeding documented chunk memory; malformed and unsupported inputs fail closed; implementation-layer claims remain explicit.
+Acceptance: GGUF metadata and tensor directories are inspectable without payload materialization; selected supported payloads decode under bounded reads; unsupported types fail closed or remain catalog-visible as documented; format-specific work is attributed to MLPL.

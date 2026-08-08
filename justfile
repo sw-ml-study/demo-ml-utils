@@ -27,6 +27,7 @@ capabilities:
 # Regenerate committed tiny Safetensors fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write
+    ./scripts/generate-gguf-fixtures --write
 
 # Run the bounded Safetensors header decoder tests.
 safetensors-headers:
@@ -47,6 +48,10 @@ safetensors-statistics:
 # Build and headlessly validate the renderer-neutral Safetensors summary IR.
 safetensors-summary:
     ./scripts/run-safetensors-summary
+
+# Run the bounded conservative GGUF v3 metadata catalog.
+gguf-catalog:
+    ./scripts/run-gguf-catalog
 
 # Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
 sparse-acceptance:

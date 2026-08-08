@@ -1,0 +1,1 @@
+Completed and pushed as commits fb08ebc and eb2f075; GGUF metadata inspection gate is satisfied.
