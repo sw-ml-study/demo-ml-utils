@@ -23,6 +23,7 @@ implementation’s broader defensive limits. It is enough for deterministic
 teaching fixtures and ensures the decoder rejects before an inexact f64
 multiplication or allocation can occur.
 
-These tests use whole-file `read_bytes`. Their memory complexity is O(file
-size), not O(header size) or O(chunk size); bounded inspection remains gated on
-range I/O.
+These tests call `file_size`, read the eight-byte prefix, validate the declared
+length against file size and the 4096-byte budget, then read only that header
+range. Their memory complexity is O(max header bytes), independent of tensor
+data and total file size.

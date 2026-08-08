@@ -9,6 +9,11 @@ write_bytes(path, expected)?;
 actual = read_bytes(path)?;
 u:require(equal(actual, expected), "byte round trip changed values")?;
 u:require(equal(type_of(actual), "array"), "byte reads must currently return an array")?;
+u:require(equal(file_size(path)?, 4), "file_size mismatch")?;
+u:require(equal(read_bytes(path, 1, 2)?, [1,127]), "bounded byte range mismatch")?;
+u:require(equal(read_bytes(path, 3, 100)?, [255]), "bounded read must clamp at EOF")?;
+u:require(equal(tally(read_bytes(path, 4, 8)?), 0), "read at EOF must be empty")?;
+u:require(equal(tally(read_bytes(path, 99, 8)?), 0), "read beyond EOF must be empty")?;
 
 invalid_range = is_err(write_bytes(path, [0,256]));
 invalid_fraction = is_err(write_bytes(path, [0,1.5]));
@@ -31,14 +36,19 @@ header = "{\"tensor\":{\"dtype\":\"F32\",\"shape\":[1]}}";
 u:require(is_ok(parse_json(header, {max_depth: 4, max_bytes: 64})), "bounded JSON header should parse")?;
 u:require(is_err(parse_json(header, {max_depth: 4, max_bytes: 16})), "max_bytes must reject oversized JSON")?;
 u:require(is_err(parse_json(header, {max_depth: 1, max_bytes: 64})), "max_depth must reject nested JSON")?;
+u:require(is_ok(parse_json("[1,2,3]", {max_depth: 2, max_bytes: 16, max_elements: 3})), "max_elements boundary should parse")?;
+u:require(is_err(parse_json("[1,2,3]", {max_depth: 2, max_bytes: 16, max_elements: 2})), "max_elements must reject oversized collections")?;
+u:require(is_err(parse_json("{\"a\":1,\"a\":2}")), "duplicate JSON keys must return Err")?;
 u:require(is_err(parse_json("{")), "malformed JSON must return Err")?;
 
 remove_path(path)?;
 u:require(is_err(read_bytes(path)), "missing byte path must return Err")?;
+u:require(is_err(read_bytes(path, 0, 8)), "missing ranged byte path must return Err")?;
+u:require(is_err(file_size(path)), "missing file size must return Err")?;
 
-print("CAPABILITY byte_io=whole-file-result-array");
+print("CAPABILITY byte_io=whole-file-and-bounded-range-result-array");
+print("CAPABILITY file_size=metadata-result");
 print("CAPABILITY bit_ops=unsigned-exact-below-2^53");
-print("CAPABILITY json=budgeted-result");
+print("CAPABILITY json=depth-byte-element-budgeted-result-duplicate-safe");
 print("LIMITATION typed_byte_arrays=absent");
-print("LIMITATION bounded_range_io=absent");
-ok({byte_io: 1, bit_ops: 1, json_budgets: 1, max_exact_boundary: 9007199254740992})
+ok({bounded_range_io: 1, file_size: 1, bit_ops: 1, json_budgets: 1, max_exact_boundary: 9007199254740992})

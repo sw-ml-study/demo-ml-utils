@@ -1,4 +1,4 @@
-number = 4
+number = 5
 slug = "safetensors-catalog"
 status = "blocked"
 description = "Implement the small-file MLPL Safetensors metadata catalog. Validate bounded ..."

@@ -30,3 +30,15 @@ def u:safetensors_header_bytes(file_bytes, max_header_bytes) { "Return the decla
   indices = range(tally(file_bytes));
   ok(compress(gt(indices, 7) * lt(indices, 8 + header_length), file_bytes))
 }
+
+def u:read_safetensors_header(path, max_header_bytes) { "Read only a Safetensors prefix and its budgeted declared header, independent of tensor-data size.";
+  size = file_size(path)?;
+  if lt(size, 8) { err("Safetensors file is shorter than the eight-byte header prefix") } else {
+  prefix = read_bytes(path, 0, 8)?;
+  header_length = u:decode_safetensors_length(prefix, max_header_bytes)?;
+  if lt(size, 8 + header_length) { err("Safetensors file is truncated within its declared header") } else {
+  header_bytes = read_bytes(path, 8, header_length)?;
+  if 1 - eq(tally(header_bytes), header_length) { err("Safetensors bounded header read returned fewer bytes than declared") } else {
+  ok({file_size: size, header_length: header_length, header_bytes: header_bytes})
+  } } }
+}

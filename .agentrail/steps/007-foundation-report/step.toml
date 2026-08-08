@@ -1,4 +1,4 @@
-number = 6
+number = 7
 slug = "foundation-report"
 status = "pending"
 description = "Run the full repository suite and produce the binary-format foundation report..."

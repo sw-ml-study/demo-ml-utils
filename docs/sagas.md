@@ -22,8 +22,9 @@ append-only `.agentrail/` state.
 
 ## Saga 2 — `bounded-safetensors-analysis`
 
-Gate: separately authorized upstream bounded range I/O is available in the
-configured sw-MLPL binary.
+Gate satisfied: bounded range I/O and `file_size` are available and covered by
+the repository capability probe. Record enumeration remains a separate catalog
+gate.
 
 1. Range-reader conformance and adversarial EOF/overflow tests.
 2. Selective tensor slice reads and dtype decoding.

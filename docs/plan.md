@@ -22,19 +22,20 @@ No demo may describe layer 2 or 3 work as a native MLPL implementation.
 
 The adjacent sw-MLPL language currently documents:
 
-- sandboxed `read_bytes(path)` and `write_bytes(path, bytes)`, but reads
-  materialize the entire file;
+- sandboxed whole-file and bounded `read_bytes(path, offset, length)`,
+  `file_size(path)`, and `write_bytes(path, bytes)`;
 - f64-backed byte values and fixed-width numeric bit operations such as
   `band`, `bor`, `bxor`, `bnot`, `shl`, and `shr`;
-- JSON parsing/encoding and ordinary array reductions;
+- JSON parsing/encoding with depth, byte, and element budgets and ordinary
+  array reductions;
 - browser/server metric streaming, which is not a consumable binary-file
   stream and must not be presented as one.
 
-The first executable work must probe these facts against the configured
-binary. Large-file acceptance is blocked until bounded range/seek reads are
-available. First-class typed arrays, reinterpretation, and streaming folds are
-valuable follow-ups, but the minimal upstream request should be driven by an
-executable failing need rather than assumed in advance.
+Executable probes pin these facts against the configured binary. Bounded
+Safetensors header inspection is available; arbitrary tensor discovery remains
+blocked on deterministic record-key enumeration. First-class typed arrays,
+reinterpretation, and streaming folds remain valuable follow-ups driven by
+executable need.
 
 ## Architecture
 

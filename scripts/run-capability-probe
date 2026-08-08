@@ -13,11 +13,11 @@ output=$($mlpl --source-dir "$repo_root" "$repo_root/probes/capabilities.mlpl")
 printf '%s\n' "$output"
 
 for expected in \
-  'CAPABILITY byte_io=whole-file-result-array' \
+  'CAPABILITY byte_io=whole-file-and-bounded-range-result-array' \
+  'CAPABILITY file_size=metadata-result' \
   'CAPABILITY bit_ops=unsigned-exact-below-2^53' \
-  'CAPABILITY json=budgeted-result' \
-  'LIMITATION typed_byte_arrays=absent' \
-  'LIMITATION bounded_range_io=absent'
+  'CAPABILITY json=depth-byte-element-budgeted-result-duplicate-safe' \
+  'LIMITATION typed_byte_arrays=absent'
 do
   printf '%s\n' "$output" | grep -Fqx "$expected"
 done

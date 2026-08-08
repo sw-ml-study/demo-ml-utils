@@ -40,9 +40,10 @@ Capability probes record the selected binary’s version and observed behavior.
 They do not install dependencies or assume that a stable binary has features
 from the adjacent development checkout.
 
-Run the executable capability contract with `just capabilities`. The routine
-`just check` gate also runs it, so the configured interpreter is now a required
-development prerequisite.
+Run the executable capability contract with `just capabilities`. It verifies
+whole-file and bounded range reads, `file_size`, EOF behavior, duplicate JSON
+rejection, and all three decode budgets. The routine `just check` gate also runs
+it, so the configured interpreter is a required development prerequisite.
 
 Safetensors fixtures are generated without Python or downloaded model data:
 
