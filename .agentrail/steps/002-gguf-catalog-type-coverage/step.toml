@@ -1,8 +1,9 @@
 number = 2
 slug = "gguf-catalog-type-coverage"
-status = "in-progress"
+status = "completed"
 description = "Expand the bounded GGUF v3 catalog from the conservative foundation to multip..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T14:03:03"
-commits = []
+completed_at = "2026-08-08T14:09:36"
+commits = ["bb64888067d9993a5cad7c113bf36ae8d9449122"]

@@ -1,0 +1,8 @@
+number = 3
+slug = "self-describing-demo-output"
+status = "pending"
+description = "Make every user-invoked just demo in this repository demonstratable rather th..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T14:09:36"
+commits = []
