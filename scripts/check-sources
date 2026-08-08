@@ -3,9 +3,9 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
-sh -n "$repo_root"/scripts/* "$repo_root"/tests/*
+sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 
-for script in "$repo_root"/scripts/* "$repo_root"/tests/*; do
+for script in "$repo_root"/scripts/* "$repo_root"/tests/test-*; do
   [ -x "$script" ] || {
     echo "script is not executable: ${script#"$repo_root"/}" >&2
     exit 1

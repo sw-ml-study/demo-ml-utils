@@ -1,0 +1,78 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mode=${1:---check}
+fixture_dir="$repo_root/fixtures/safetensors"
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/safetensors-fixtures.XXXXXX")
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+
+write_u64_le() {
+  value=$1
+  output=$2
+  : > "$output"
+  index=0
+  while [ "$index" -lt 8 ]; do
+    byte=$((value % 256))
+    printf "\\$(printf '%03o' "$byte")" >> "$output"
+    value=$((value / 256))
+    index=$((index + 1))
+  done
+}
+
+write_prefixed() {
+  name=$1
+  header=$2
+  data=${3-}
+  header_length=${#header}
+  write_u64_le "$header_length" "$work_dir/$name"
+  printf '%s' "$header" >> "$work_dir/$name"
+  [ -z "$data" ] || printf "$data" >> "$work_dir/$name"
+}
+
+valid_header='{"weight":{"dtype":"U8","shape":[4],"data_offsets":[0,4]}}'
+write_prefixed valid-small.safetensors "$valid_header" '\000\001\177\377'
+write_prefixed valid-empty.safetensors '{}'
+: > "$work_dir/empty.safetensors"
+printf '\020\000\000\000' > "$work_dir/truncated-prefix.safetensors"
+write_u64_le 16 "$work_dir/truncated-header.safetensors"
+printf '{}' >> "$work_dir/truncated-header.safetensors"
+write_prefixed malformed-json.safetensors '{"tensor":'
+write_u64_le 4097 "$work_dir/oversized-header.safetensors"
+printf '\377\377\377\377\377\377\377\377' > "$work_dir/overflow-length.safetensors"
+write_u64_le 4096 "$work_dir/boundary-header.safetensors"
+awk 'BEGIN { printf "{}"; for (i = 2; i < 4096; i++) printf " " }' >> "$work_dir/boundary-header.safetensors"
+
+case "$mode" in
+  --write)
+    mkdir -p "$fixture_dir"
+    for generated in "$work_dir"/*; do
+      cp "$generated" "$fixture_dir/$(basename -- "$generated")"
+    done
+    ;;
+  --check)
+    [ -d "$fixture_dir" ] || {
+      echo "fixture directory missing; run scripts/generate-safetensors-fixtures --write" >&2
+      exit 1
+    }
+    for generated in "$work_dir"/*; do
+      committed="$fixture_dir/$(basename -- "$generated")"
+      [ -f "$committed" ] && cmp -s "$generated" "$committed" || {
+        echo "fixture drift: ${committed#"$repo_root"/}" >&2
+        exit 1
+      }
+    done
+    committed_count=$(find "$fixture_dir" -type f -name '*.safetensors' | wc -l | tr -d ' ')
+    generated_count=$(find "$work_dir" -type f | wc -l | tr -d ' ')
+    [ "$committed_count" -eq "$generated_count" ] || {
+      echo "unexpected committed Safetensors fixture" >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "usage: generate-safetensors-fixtures [--check|--write]" >&2
+    exit 2
+    ;;
+esac
+
+echo "PASS Safetensors fixtures $mode"

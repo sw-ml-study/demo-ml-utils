@@ -3,7 +3,7 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
-sh -n "$repo_root"/scripts/* "$repo_root"/tests/*
+sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 "$repo_root/scripts/validate-catalog" "$repo_root/catalog/demos.tsv"
 "$repo_root/scripts/check-license"
 "$repo_root/scripts/check-doc-links"
@@ -11,6 +11,7 @@ sh -n "$repo_root"/scripts/* "$repo_root"/tests/*
 "$repo_root/scripts/check-sources"
 "$repo_root/tests/test-validation"
 "$repo_root/scripts/run-capability-probe" >/dev/null
+"$repo_root/scripts/run-safetensors-header-tests" >/dev/null
 git -C "$repo_root" diff --check
 
 echo "PASS pre-commit"

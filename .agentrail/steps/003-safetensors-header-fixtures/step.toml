@@ -1,6 +1,6 @@
 number = 3
 slug = "safetensors-header-fixtures"
-status = "pending"
+status = "in-progress"
 description = "Generate tiny redistributable Safetensors fixtures covering valid, empty, tru..."
 role = "production"
 context_files = []

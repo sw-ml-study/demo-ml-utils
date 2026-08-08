@@ -36,6 +36,12 @@ Small fixtures can be inspected with `read_bytes`, bit operations, byte-to-text
 decoding, and budgeted JSON today. Such an implementation has O(file size)
 memory and must be cataloged as `whole-file`.
 
+The first implementation uses a 4096-byte header budget and decodes each byte
+only after proving it cannot exceed the remaining budget. This prevents an
+inexact multiplication even when a hostile prefix encodes u64 maximum. The
+fixture suite covers the exact budget, one byte over it, truncation, malformed
+JSON, and the 2^53 precision boundary.
+
 ## Explicitly absent
 
 - bounded byte-range reads, seekable handles, or consumable file chunks;

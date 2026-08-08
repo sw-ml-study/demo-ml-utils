@@ -1,0 +1,32 @@
+# Bounded Safetensors u64 little-endian header-length decoding.
+
+def u:decode_safetensors_length_from(bytes, index, multiplier, total, max_header_bytes) { "Decode eight little-endian bytes without performing an inexact multiplication.";
+  if eq(index, 8) { ok(total) } else {
+    byte = take(bytes, 0, index);
+    if (1 - eq(byte, floor(byte))) + lt(byte, 0) + gt(byte, 255) { err("Safetensors header length contains a non-byte value") } else {
+    allowed = floor((max_header_bytes - total) / multiplier);
+    if gt(byte, allowed) { err("Safetensors header length exceeds the configured exact budget") } else {
+    u:decode_safetensors_length_from(bytes, index + 1, multiplier * 256, total + byte * multiplier, max_header_bytes)
+  } } }
+}
+
+def u:decode_safetensors_length(prefix, max_header_bytes) { "Decode an eight-byte u64 prefix only when its value fits the configured exact budget.";
+  if (1 - eq(rank(prefix), 1)) + (1 - eq(tally(prefix), 8)) { err("Safetensors header length prefix must contain exactly eight bytes") } else {
+  if (1 - eq(rank(max_header_bytes), 0)) + (1 - eq(max_header_bytes, floor(max_header_bytes))) + lt(max_header_bytes, 2) + gt(max_header_bytes, 9007199254740991) { err("Safetensors header budget must be an exact integer from 2 through 2^53-1") } else {
+  u:decode_safetensors_length_from(prefix, 0, 1, 0, max_header_bytes)
+  } }
+}
+
+def u:safetensors_header_length(file_bytes, max_header_bytes) { "Validate file availability and return its budgeted header length.";
+  if (1 - eq(rank(file_bytes), 1)) + lt(tally(file_bytes), 8) { err("Safetensors file is shorter than the eight-byte header prefix") } else {
+  prefix = compress(lt(range(tally(file_bytes)), 8), file_bytes);
+  header_length = u:decode_safetensors_length(prefix, max_header_bytes)?;
+  if lt(tally(file_bytes), 8 + header_length) { err("Safetensors file is truncated within its declared header") } else { ok(header_length) }
+  }
+}
+
+def u:safetensors_header_bytes(file_bytes, max_header_bytes) { "Return the declared header bytes after bounded length and truncation checks.";
+  header_length = u:safetensors_header_length(file_bytes, max_header_bytes)?;
+  indices = range(tally(file_bytes));
+  ok(compress(gt(indices, 7) * lt(indices, 8 + header_length), file_bytes))
+}

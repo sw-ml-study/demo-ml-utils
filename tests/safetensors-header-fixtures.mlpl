@@ -1,0 +1,36 @@
+include "../src/formats/safetensors_header.mlpl";
+
+def u:require_header(condition, message) { "Return Ok for a true fixture invariant, otherwise a named error."; if condition { ok(1) } else { err(message) } }
+
+max_header_bytes = 4096;
+
+valid = read_bytes("fixtures/safetensors/valid-small.safetensors")?;
+valid_length = u:safetensors_header_length(valid, max_header_bytes)?;
+valid_header = u:safetensors_header_bytes(valid, max_header_bytes)?;
+u:require_header(gt(valid_length, 2), "valid tensor header length")?;
+u:require_header(is_ok(parse_json(decode_bytes(valid_header), {max_depth: 8, max_bytes: max_header_bytes})), "valid tensor JSON")?;
+
+valid_empty = read_bytes("fixtures/safetensors/valid-empty.safetensors")?;
+u:require_header(equal(u:safetensors_header_length(valid_empty, max_header_bytes)?, 2), "empty map header length")?;
+u:require_header(is_ok(parse_json(decode_bytes(u:safetensors_header_bytes(valid_empty, max_header_bytes)?))), "empty map JSON")?;
+
+boundary = read_bytes("fixtures/safetensors/boundary-header.safetensors")?;
+u:require_header(equal(u:safetensors_header_length(boundary, max_header_bytes)?, max_header_bytes), "maximum allowed header length")?;
+u:require_header(is_ok(parse_json(decode_bytes(u:safetensors_header_bytes(boundary, max_header_bytes)?), {max_depth: 8, max_bytes: max_header_bytes})), "padded boundary JSON")?;
+
+u:require_header(is_err(u:safetensors_header_length(read_bytes("fixtures/safetensors/empty.safetensors")?, max_header_bytes)), "empty file rejection")?;
+u:require_header(is_err(u:safetensors_header_length(read_bytes("fixtures/safetensors/truncated-prefix.safetensors")?, max_header_bytes)), "truncated prefix rejection")?;
+u:require_header(is_err(u:safetensors_header_length(read_bytes("fixtures/safetensors/truncated-header.safetensors")?, max_header_bytes)), "truncated header rejection")?;
+u:require_header(is_err(u:safetensors_header_length(read_bytes("fixtures/safetensors/oversized-header.safetensors")?, max_header_bytes)), "oversized header rejection")?;
+u:require_header(is_err(u:safetensors_header_length(read_bytes("fixtures/safetensors/overflow-length.safetensors")?, max_header_bytes)), "u64 overflow rejection")?;
+
+malformed = read_bytes("fixtures/safetensors/malformed-json.safetensors")?;
+malformed_header = u:safetensors_header_bytes(malformed, max_header_bytes)?;
+u:require_header(is_err(parse_json(decode_bytes(malformed_header), {max_depth: 8, max_bytes: max_header_bytes})), "malformed JSON rejection")?;
+
+u:require_header(equal(u:decode_safetensors_length([0,16,0,0,0,0,0,0], max_header_bytes)?, 4096), "little-endian boundary decode")?;
+u:require_header(is_err(u:decode_safetensors_length([1,16,0,0,0,0,0,0], max_header_bytes)), "one byte over boundary")?;
+u:require_header(is_err(u:decode_safetensors_length([0,0,0,0,0,0,32,0], max_header_bytes)), "2^53 length rejection")?;
+
+print("PASS Safetensors header fixtures");
+ok(1)

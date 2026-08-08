@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+
+"$repo_root/scripts/generate-safetensors-fixtures" --check >/dev/null
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/safetensors-header-fixtures.mlpl")
+printf '%s\n' "$output"
+printf '%s\n' "$output" | grep -Fqx 'PASS Safetensors header fixtures'
+
+echo "PASS Safetensors header tests"

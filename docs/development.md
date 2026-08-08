@@ -43,3 +43,13 @@ from the adjacent development checkout.
 Run the executable capability contract with `just capabilities`. The routine
 `just check` gate also runs it, so the configured interpreter is now a required
 development prerequisite.
+
+Safetensors fixtures are generated without Python or downloaded model data:
+
+```sh
+just generate-fixtures
+just safetensors-headers
+```
+
+The routine gate checks that committed fixture bytes exactly match fresh
+generation before running the MLPL decoder tests.

@@ -24,6 +24,14 @@ mlpl-path:
 capabilities:
     ./scripts/run-capability-probe
 
+# Regenerate committed tiny Safetensors fixtures.
+generate-fixtures:
+    ./scripts/generate-safetensors-fixtures --write
+
+# Run the bounded Safetensors header decoder tests.
+safetensors-headers:
+    ./scripts/run-safetensors-header-tests
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check
