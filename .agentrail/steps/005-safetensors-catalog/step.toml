@@ -1,8 +1,9 @@
 number = 5
 slug = "safetensors-catalog"
-status = "in-progress"
+status = "completed"
 description = "Implement the small-file MLPL Safetensors metadata catalog. Validate bounded ..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T10:48:17"
-commits = []
+completed_at = "2026-08-08T12:40:04"
+commits = ["7053fc2dbb2227ebc7b4989e3c83c796a4a83881"]
