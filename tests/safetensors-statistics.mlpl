@@ -1,0 +1,20 @@
+include "../src/formats/safetensors_statistics.mlpl";
+
+def u:require_statistics(condition, message) { "Return Ok for a true statistics invariant."; if condition { ok(1) } else { err(message) } }
+def u:stats(name, chunk) { "Analyze a golden fixture tensor with repository budgets."; u:safetensors_tensor_statistics("fixtures/safetensors/valid-decode.safetensors", name, 4096, 256, 1000000, chunk, 6) }
+
+single = u:stats("u16_values", 4)?; chunked = u:stats("u16_values", 2)?;
+expected = {count: 2, minimum: 1, maximum: 65535, sum: 65536, mean: 32768, variance: 1073676289};
+u:require_statistics(equal(single, expected), "single-pass golden statistics")?;
+u:require_statistics(equal(chunked, expected), "chunked statistics parity")?;
+
+left = u:statistics_values([1,2], 0, u:statistics_empty()); right = u:statistics_values([3,4], 0, u:statistics_empty());
+merged = u:statistics_result(u:statistics_merge(left, right));
+u:require_statistics(equal(merged, {count: 4, minimum: 1, maximum: 4, sum: 10, mean: 2.5, variance: 1.25}), "partition merge parity")?;
+u:require_statistics(equal(u:stats("i16_values", 2)?.count, 3), "one-element chunks")?;
+u:require_statistics(is_err(u:stats("u16_values", 1)), "sub-element chunk rejection")?;
+u:require_statistics(is_err(u:safetensors_tensor_statistics("fixtures/safetensors/valid-decode.safetensors", "u8_values", 4096, 256, 1000000, 0, 6)), "zero chunk rejection")?;
+u:require_statistics(is_err(u:safetensors_tensor_statistics("fixtures/safetensors/valid-decode.safetensors", "u8_values", 4096, 256, 1000000, 2, 5)), "output budget rejection")?;
+
+print("PASS Safetensors mergeable statistics");
+ok(1)

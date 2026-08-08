@@ -1,0 +1,40 @@
+include "safetensors_slice.mlpl";
+
+def u:statistics_empty() { "Return the merge identity for Welford statistics."; {count: 0, minimum: 0, maximum: 0, sum: 0, mean: 0, m2: 0} }
+
+def u:statistics_add(state, value) { "Add one value using the numerically stable Welford recurrence.";
+  count = state.count + 1; delta = value - state.mean; mean = state.mean + delta / count; delta2 = value - mean;
+  {count: count, minimum: if eq(state.count, 0) + lt(value, state.minimum) { value } else { state.minimum }, maximum: if eq(state.count, 0) + gt(value, state.maximum) { value } else { state.maximum }, sum: state.sum + value, mean: mean, m2: state.m2 + delta * delta2}
+}
+
+def u:statistics_values(values, index, state) { "Fold decoded values into a mergeable statistics state.";
+  if eq(index, tally(values)) { state } else { u:statistics_values(values, index + 1, u:statistics_add(state, take(values, 0, index))) }
+}
+
+def u:statistics_merge(left, right) { "Merge independent Welford states without replaying their values.";
+  if eq(left.count, 0) { right } else { if eq(right.count, 0) { left } else {
+  count = left.count + right.count; delta = right.mean - left.mean;
+  {count: count, minimum: if lt(left.minimum, right.minimum) { left.minimum } else { right.minimum }, maximum: if gt(left.maximum, right.maximum) { left.maximum } else { right.maximum }, sum: left.sum + right.sum, mean: left.mean + delta * right.count / count, m2: left.m2 + right.m2 + delta * delta * left.count * right.count / count}
+  } }
+}
+
+def u:statistics_result(state) { "Return the fixed six-field public population-statistics result.";
+  {count: state.count, minimum: state.minimum, maximum: state.maximum, sum: state.sum, mean: state.mean, variance: if eq(state.count, 0) { 0 } else { state.m2 / state.count }}
+}
+
+def u:safetensors_tensor_statistics(path, name, max_header_bytes, max_elements, max_parameters, chunk_bytes, max_output_fields) { "Compute mergeable statistics using only aligned bounded payload reads.";
+  if (1 - eq(rank(chunk_bytes), 0)) + (1 - eq(chunk_bytes, floor(chunk_bytes))) + lt(chunk_bytes, 1) + gt(chunk_bytes, 9007199254740991) { err("Safetensors statistics chunk budget must be a positive exact integer") } else {
+  if (1 - eq(rank(max_output_fields), 0)) + (1 - eq(max_output_fields, floor(max_output_fields))) + lt(max_output_fields, 6) { err("Safetensors statistics output budget must allow six fields") } else {
+  descriptor = u:safetensors_tensor_descriptor(path, name, max_header_bytes, max_elements, max_parameters)?;
+  if lt(chunk_bytes, descriptor.width) { err("Safetensors statistics chunk budget is smaller than one element") } else {
+  aligned_chunk = floor(chunk_bytes / descriptor.width) * descriptor.width; offset = 0; state = u:statistics_empty();
+  while lt(offset, descriptor.byte_count) {
+    remaining = descriptor.byte_count - offset; length = if lt(remaining, aligned_chunk) { remaining } else { aligned_chunk };
+    bytes = read_bytes(path, descriptor.file_offset + offset, length)?;
+    if 1 - eq(tally(bytes), length) { return err("Safetensors statistics payload read returned fewer bytes than validated") } else { 0 };
+    values = u:decode_slice_values(bytes, descriptor.dtype, descriptor.width, 0, fill([0], 0));
+    state = u:statistics_merge(state, u:statistics_values(values, 0, u:statistics_empty())); offset = offset + length
+  };
+  ok(u:statistics_result(state))
+  } } }
+}

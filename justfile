@@ -40,6 +40,10 @@ safetensors-catalog:
 safetensors-slice:
     ./scripts/run-safetensors-slice
 
+# Compute fixed-chunk mergeable Safetensors tensor statistics.
+safetensors-statistics:
+    ./scripts/run-safetensors-statistics
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check

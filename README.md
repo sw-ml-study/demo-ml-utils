@@ -29,6 +29,8 @@ The [bounded Safetensors catalog](docs/safetensors-catalog.md) documents its
 validation, attribution, output, and complexity contracts.
 The [selective tensor decoder](docs/safetensors-slice.md) documents bounded
 integer payload reads, implementation attribution, and current dtype limits.
+The [bounded statistics demo](docs/safetensors-statistics.md) adds fixed-chunk
+mergeable reductions without reading a complete tensor at once.
 The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
 decode budgets, and record discovery to executable downstream evidence.
 

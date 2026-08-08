@@ -34,7 +34,7 @@ record enumeration are shipped and covered by the repository gate.
    EOF/overflow evidence.
 2. Selective tensor slice reads and initial U8/I8/U16/I16 decoding — runnable
    in the default gate.
-3. Mergeable streaming statistics with fixed chunk size.
+3. Mergeable statistics with fixed chunk size — runnable in the default gate.
 4. Sparse large-artifact acceptance and measured peak memory.
 5. JSON visualization-summary IR and headless validation.
 

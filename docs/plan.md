@@ -88,8 +88,8 @@ later large-file test analyzes a sparse artifact larger than the configured
 memory budget while staying below a documented high-water mark.
 
 Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
-payload selection and U8/I8/U16/I16 decoding are runnable; mergeable statistics
-remain later work. The completed
+payload selection, U8/I8/U16/I16 decoding, and fixed-chunk mergeable statistics
+are runnable. Sparse-artifact high-water measurement remains later work. The completed
 [binary-format foundation report](foundation-report.md) records the acceptance
 evidence, attribution, complexity, limitations, and exact Saga 2 gate state.
 
@@ -161,7 +161,7 @@ only. Documentation says the serialization path is risky—not the weights.
 ## Recommended next increment
 
 Continue the active `bounded-safetensors-analysis` saga in
-[sagas.md](sagas.md) by layering fixed-chunk mergeable statistics over the
-runnable selective integer decoder. Range-reader conformance is already
-covered by the completed foundation and should be carried forward as evidence
-rather than reimplemented.
+[sagas.md](sagas.md) with opt-in sparse-artifact acceptance and measured peak
+memory for the runnable fixed-chunk statistics path. Range-reader conformance
+is already covered by the completed foundation and should be carried forward
+as evidence rather than reimplemented.

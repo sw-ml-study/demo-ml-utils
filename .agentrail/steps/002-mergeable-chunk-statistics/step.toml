@@ -1,6 +1,6 @@
 number = 2
 slug = "mergeable-chunk-statistics"
-status = "pending"
+status = "in-progress"
 description = "Implement mergeable Safetensors tensor statistics over repeated fixed-size bo..."
 role = "production"
 context_files = []

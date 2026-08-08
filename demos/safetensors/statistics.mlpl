@@ -1,0 +1,8 @@
+include "../../src/formats/safetensors_statistics.mlpl";
+
+path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-decode.safetensors");
+name = unwrap_or(list_get(args(), 1), "i16_values");
+statistics = u:safetensors_tensor_statistics(path, name, 4096, 256, 1000000, 4, 6)?;
+print("Bounded Safetensors tensor statistics:");
+print(statistics);
+ok(statistics)
