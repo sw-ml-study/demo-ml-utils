@@ -10,6 +10,7 @@ sh -n "$repo_root"/scripts/* "$repo_root"/tests/*
 "$repo_root/scripts/check-fixtures"
 "$repo_root/scripts/check-sources"
 "$repo_root/tests/test-validation"
+"$repo_root/scripts/run-capability-probe" >/dev/null
 git -C "$repo_root" diff --check
 
 echo "PASS pre-commit"

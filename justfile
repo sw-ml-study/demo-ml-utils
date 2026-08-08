@@ -20,6 +20,10 @@ tests:
 mlpl-path:
     ./scripts/select-mlpl
 
+# Probe the configured sw-MLPL binary's binary-format capabilities.
+capabilities:
+    ./scripts/run-capability-probe
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check

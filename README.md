@@ -20,6 +20,8 @@ Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL
 binary selection. The [demo catalog](catalog/README.md) records format,
 implementation layer, memory contract, required capabilities, and status.
+The [capability report](docs/capabilities.md) records executable observations
+from the configured interpreter and the resulting Safetensors constraints.
 
 Large-file support is a target, not a current claim: sw-MLPL currently offers
 whole-file byte reads, while bounded range/seek I/O remains an upstream gate.

@@ -1,0 +1,2 @@
+# Bit operations reject operands at 2^53 because their domain is below 2^53.
+band(9007199254740992, 1)

@@ -39,3 +39,7 @@ just mlpl-path
 Capability probes record the selected binary’s version and observed behavior.
 They do not install dependencies or assume that a stable binary has features
 from the adjacent development checkout.
+
+Run the executable capability contract with `just capabilities`. The routine
+`just check` gate also runs it, so the configured interpreter is now a required
+development prerequisite.

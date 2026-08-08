@@ -6,7 +6,7 @@ and future runners. It has nine tab-separated columns:
 | Column | Contract |
 |---|---|
 | `id` | Stable lowercase identifier |
-| `path` | Repository-relative `.mlpl` path under `demos/` |
+| `path` | Repository-relative `.mlpl` path under `demos/` or `probes/` |
 | `format` | Primary artifact format or protocol |
 | `operation` | User-visible utility operation |
 | `implementation_layer` | `mlpl`, `mlpl-native`, or `external` |

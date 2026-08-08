@@ -1,6 +1,6 @@
 number = 2
 slug = "capability-probe"
-status = "pending"
+status = "in-progress"
 description = "Add executable, deterministic probes against the configured sw-MLPL binary fo..."
 role = "validation"
 context_files = []

@@ -1,0 +1,44 @@
+# Executable contract for binary-format capabilities available today.
+
+def u:require(condition, message) { "Return Ok when condition is true, otherwise a named probe failure."; if condition { ok(1) } else { err(message) } }
+
+path = ".capability-probe.bin";
+expected = [0,1,127,255];
+
+write_bytes(path, expected)?;
+actual = read_bytes(path)?;
+u:require(equal(actual, expected), "byte round trip changed values")?;
+u:require(equal(type_of(actual), "array"), "byte reads must currently return an array")?;
+
+invalid_range = is_err(write_bytes(path, [0,256]));
+invalid_fraction = is_err(write_bytes(path, [0,1.5]));
+retained = read_bytes(path)?;
+u:require(invalid_range * invalid_fraction, "invalid byte writes must return Err")?;
+u:require(equal(retained, expected), "invalid byte writes must retain prior contents")?;
+
+u:require(equal(band(12,10), 8), "band mismatch")?;
+u:require(equal(bor(12,10), 14), "bor mismatch")?;
+u:require(equal(bxor(12,10), 6), "bxor mismatch")?;
+u:require(equal(bnot(0,8), 255), "bnot mismatch")?;
+u:require(equal(shl(15,4,8), 240), "shl mismatch")?;
+u:require(equal(shr(240,4), 15), "shr mismatch")?;
+u:require(equal(from_bits(bits(165,8)), 165), "bit view round trip mismatch")?;
+
+# f64 cannot distinguish the next mathematical integer after 2^53.
+u:require(equal(9007199254740992,9007199254740993), "expected f64 integer precision boundary")?;
+
+header = "{\"tensor\":{\"dtype\":\"F32\",\"shape\":[1]}}";
+u:require(is_ok(parse_json(header, {max_depth: 4, max_bytes: 64})), "bounded JSON header should parse")?;
+u:require(is_err(parse_json(header, {max_depth: 4, max_bytes: 16})), "max_bytes must reject oversized JSON")?;
+u:require(is_err(parse_json(header, {max_depth: 1, max_bytes: 64})), "max_depth must reject nested JSON")?;
+u:require(is_err(parse_json("{")), "malformed JSON must return Err")?;
+
+remove_path(path)?;
+u:require(is_err(read_bytes(path)), "missing byte path must return Err")?;
+
+print("CAPABILITY byte_io=whole-file-result-array");
+print("CAPABILITY bit_ops=unsigned-exact-below-2^53");
+print("CAPABILITY json=budgeted-result");
+print("LIMITATION typed_byte_arrays=absent");
+print("LIMITATION bounded_range_io=absent");
+ok({byte_io: 1, bit_ops: 1, json_budgets: 1, max_exact_boundary: 9007199254740992})
