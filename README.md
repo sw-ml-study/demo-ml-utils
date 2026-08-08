@@ -12,10 +12,12 @@ but documentation must identify which layer performs the substantive work.
 
 ## Project status
 
-The binary-format foundation is complete: the repository has executable
-capability probes, bounded Safetensors header inspection, and a deterministic
-arbitrary-name metadata catalog. Bounded tensor-payload analysis is unblocked
-but has not started. See [the foundation report](docs/foundation-report.md),
+The bounded Safetensors analysis vertical slice is complete: the repository
+has executable capability probes, metadata cataloging, selective integer
+decoding, fixed-chunk statistics, measured sparse-artifact acceptance, and a
+versioned summary IR. GGUF metadata inspection is unblocked but has not
+started. See [the bounded-analysis report](docs/bounded-analysis-report.md),
+[the foundation report](docs/foundation-report.md),
 [the delivery plan](docs/plan.md), [the saga queue](docs/sagas.md), and
 [the peer repository audit](docs/peer-repository-audit.md).
 

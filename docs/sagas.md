@@ -26,7 +26,7 @@ evidence and limitations needed for closeout.
 
 ## Saga 2 — `bounded-safetensors-analysis`
 
-Status: active. The gate is satisfied: bounded range I/O,
+Status: complete. Bounded range I/O,
 `file_size`, budgeted JSON decoding, duplicate-key rejection, and deterministic
 record enumeration are shipped and covered by the repository gate.
 
@@ -41,6 +41,11 @@ record enumeration are shipped and covered by the repository gate.
    runnable without a renderer dependency.
 
 ## Saga 3 — `gguf-inspection`
+
+Status: unblocked, not started. The first slice is a budgeted GGUF v3
+envelope, conservative metadata subset, and tensor-directory catalog over tiny
+generated fixtures; payload decoding remains later work. See the
+[bounded-analysis report](bounded-analysis-report.md) for the gate evidence.
 
 1. GGUF header, metadata, tensor directory, and alignment fixtures/parser.
 2. Catalog-only operation for supported and unsupported tensor types.

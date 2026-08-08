@@ -7,8 +7,8 @@ Observed binary:
 
 ```text
 mlpl-repl 0.20.0
-Commit: 6156e869
-Timestamp: 2026-08-08T12:29:42-0700
+Commit: 22f69d47
+Timestamp: 2026-08-08T13:21:48-0700
 ```
 
 These are executable observations, not promises about every sw-MLPL binary.

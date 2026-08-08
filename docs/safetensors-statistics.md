@@ -35,8 +35,8 @@ explicit skip. A supported platform fails if timing metrics are unavailable,
 the result is wrong, or peak RSS exceeds 16 MiB. Run it outside a restricted
 sandbox when the platform timing tool cannot query process metrics.
 
-Observed on 2026-08-08 with `mlpl-repl 0.20.0` commit `6156e869` on macOS:
-10,403,840 bytes maximum RSS for the 1,048,576-byte artifact and 256-byte
+Observed on 2026-08-08 with `mlpl-repl 0.20.0` commit `22f69d47` on macOS:
+10,158,080 bytes maximum RSS for the 1,048,576-byte artifact and 256-byte
 chunks, below the 16,777,216-byte ceiling. This is acceptance evidence for
 that binary and platform, not a universal runtime guarantee; the recipe
 remeasures rather than trusting the recorded number.

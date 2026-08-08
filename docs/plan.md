@@ -91,8 +91,8 @@ Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
 payload selection, U8/I8/U16/I16 decoding, fixed-chunk mergeable statistics,
 opt-in sparse-artifact high-water acceptance, and a headlessly validated
 single-tensor visualization summary IR are runnable. The completed
-[binary-format foundation report](foundation-report.md) records the acceptance
-evidence, attribution, complexity, limitations, and exact Saga 2 gate state.
+[bounded-analysis report](bounded-analysis-report.md) records acceptance,
+attribution, complexity, limitations, and the exact GGUF gate decision.
 
 ### Phase 2 — GGUF inspection and decoding
 
@@ -161,7 +161,7 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Complete the active `bounded-safetensors-analysis` saga in
-[sagas.md](sagas.md) with its acceptance report and GGUF gate decision.
-Range-reader conformance and bounded-memory acceptance are already covered and
-should be carried forward as evidence rather than reimplemented.
+Initialize `gguf-inspection` from [sagas.md](sagas.md). Begin with tiny GGUF v3
+envelope/metadata/directory fixtures and a catalog-only parser; carry forward
+the existing bounded-reader and measured-memory evidence rather than
+reimplementing it.

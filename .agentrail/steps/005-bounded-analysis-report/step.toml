@@ -1,6 +1,6 @@
 number = 5
 slug = "bounded-analysis-report"
-status = "pending"
+status = "in-progress"
 description = "Run the full default repository gate and opt-in sparse acceptance, then produ..."
 role = "validation"
 context_files = []
