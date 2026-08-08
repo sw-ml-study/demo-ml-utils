@@ -1,8 +1,9 @@
 number = 4
 slug = "gguf-unquantized-slices"
-status = "in-progress"
+status = "completed"
 description = "Implement selective bounded GGUF tensor reads and golden decoding for a delib..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T14:15:27"
-commits = []
+completed_at = "2026-08-08T14:44:19"
+commits = ["1a136da615230bc3af271f0980606ee0a81f22b1"]

@@ -1,0 +1,8 @@
+number = 5
+slug = "gguf-q8-0-golden"
+status = "pending"
+description = "Implement exact bounded GGUF Q8_0 block decoding in MLPL using TDD and the of..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T14:44:19"
+commits = []
