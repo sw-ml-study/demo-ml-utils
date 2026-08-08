@@ -4,6 +4,6 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 mlpl=$("$repo_root/scripts/select-mlpl")
 "$repo_root/scripts/generate-gguf-fixtures" --check >/dev/null
 output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/gguf-catalog.mlpl")
-printf '%s\n' "$output"; printf '%s\n' "$output" | grep -Fqx 'PASS GGUF v3 catalog foundation'
-$mlpl --source-dir "$repo_root" "$repo_root/demos/gguf/catalog.mlpl" >/dev/null
-echo "PASS GGUF catalog demo"
+printf '%s\n' "$output" | grep -Fqx 'PASS GGUF v3 catalog coverage'
+echo "Internal golden and adversarial fixture validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/gguf/catalog.mlpl"

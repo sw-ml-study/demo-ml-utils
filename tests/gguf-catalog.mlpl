@@ -3,8 +3,14 @@ def u:gguf_fixture(name) { "Catalog one GGUF fixture with teaching budgets."; u:
 def u:require_gguf(value, message) { "Require a GGUF test invariant."; if value { ok(1) } else { err(message) } }
 
 catalog = u:gguf_fixture("fixtures/gguf/valid-small.gguf")?;
-u:require_gguf(equal([catalog.version,catalog.metadata_count,catalog.tensor_count,catalog.alignment,catalog.data_bytes,catalog.tensor_type,catalog.parameters], [3,2,1,32,16,0,4]), "GGUF catalog aggregates")?;
-u:require_gguf(equal(catalog.architecture, "demo") * equal(catalog.tensor_name, "weight") * equal(catalog.tensor_shape, [4]), "GGUF catalog strings and shape")?;
+u:require_gguf(equal([catalog.version,catalog.metadata_count,catalog.tensor_count,catalog.alignment,catalog.data_bytes], [3,2,1,32,16]), "GGUF catalog aggregates")?;
+u:require_gguf(equal(catalog.architecture, "demo") * equal(catalog.tensor_name_lengths, [6]) * equal(catalog.tensor_rows, reshape([0,4,0,16],[1,4])), "GGUF foundation tensor row")?;
+
+expanded = u:gguf_fixture("fixtures/gguf/valid-catalog.gguf")?;
+u:require_gguf(equal([expanded.metadata_count,expanded.tensor_count,expanded.data_bytes], [4,3,72]), "expanded GGUF aggregates")?;
+u:require_gguf(equal(expanded.metadata_type_counts, [0,0,0,0,2,0,0,1,1,0,0,0,0]), "metadata scalar type coverage")?;
+u:require_gguf(equal(expanded.tensor_name_lengths, [5,5,4]), "deterministic tensor name lengths")?;
+u:require_gguf(equal(expanded.tensor_rows, reshape([0,4,0,16, 32,32,8,-1, 64,4,25,8],[3,4])), "catalog-visible tensor types and known extents")?;
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/bad-magic.gguf")), "GGUF magic rejection")?;
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/truncated.gguf")), "GGUF truncation rejection")?;
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-version.gguf")), "GGUF version rejection")?;
@@ -13,4 +19,7 @@ u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-metadata-type.gg
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/misaligned-offset.gguf")), "GGUF offset alignment rejection")?;
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/unsupported-tensor-type.gguf")), "GGUF unsupported tensor type rejection")?;
 u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/invalid-alignment.gguf")), "GGUF alignment rejection")?;
-print("PASS GGUF v3 catalog foundation"); ok(1)
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/duplicate-metadata.gguf")), "GGUF duplicate metadata rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/duplicate-tensor.gguf")), "GGUF duplicate tensor rejection")?;
+u:require_gguf(is_err(u:gguf_fixture("fixtures/gguf/overlapping-known.gguf")), "GGUF known extent overlap rejection")?;
+print("PASS GGUF v3 catalog coverage"); ok(1)

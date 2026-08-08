@@ -105,10 +105,10 @@ attribution, complexity, limitations, and the exact GGUF gate decision.
 Acceptance: arbitrary unsupported tensor types are cataloged without decode;
 supported selected regions decode within the same bounded-memory contract.
 
-Current status: the first conservative GGUF v3 catalog is runnable for required
-architecture metadata, alignment, and zero/one F32 descriptor. Broader
-metadata/tensor type visibility remains the next step; payload decoding has
-not started.
+Current status: bounded GGUF v3 scalar metadata and multiple-tensor cataloging
+are runnable. Active tensor type IDs remain visible without decode; known
+simple extents receive overlap/file-bound validation. Payload decoding has not
+started.
 
 ### Phase 3 — hierarchical 3D visualization
 
@@ -166,6 +166,7 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue active `gguf-inspection` from [sagas.md](sagas.md) by expanding
-catalog-only metadata and tensor-type visibility while keeping unsupported
-payload types explicitly undecoded.
+Before payload decoding, make every user-invoked `just` demo narrate its
+scenario, implementation boundary, budgets, and output meaning. Then continue
+active `gguf-inspection` from [sagas.md](sagas.md) with bounded unquantized
+tensor slices.

@@ -21,9 +21,9 @@ started. See [the bounded-analysis report](docs/bounded-analysis-report.md),
 [the delivery plan](docs/plan.md), [the saga queue](docs/sagas.md), and
 [the peer repository audit](docs/peer-repository-audit.md).
 
-The first [bounded GGUF v3 catalog](docs/gguf-catalog.md) is now runnable for
-a conservative metadata and single-F32-tensor subset; broader type cataloging
-remains the next increment.
+The [bounded GGUF v3 catalog](docs/gguf-catalog.md) now handles a safe scalar
+metadata subset and multiple tensor descriptors while preserving active type
+IDs without claiming payload decode.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

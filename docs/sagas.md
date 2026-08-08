@@ -42,13 +42,14 @@ record enumeration are shipped and covered by the repository gate.
 
 ## Saga 3 — `gguf-inspection`
 
-Status: active. The first budgeted GGUF v3 envelope, conservative metadata
-subset, and single-F32 tensor-directory catalog is runnable over tiny generated
-fixtures; payload decoding remains later work. See the
+Status: active. Bounded GGUF v3 scalar metadata and multiple-tensor cataloging
+are runnable over tiny generated fixtures; active type IDs remain visible but
+payload decoding remains later work. See the
 [bounded-analysis report](bounded-analysis-report.md) for the gate evidence.
 
 1. GGUF header, metadata, tensor directory, and alignment fixtures/parser.
-2. Catalog-only operation for supported and unsupported tensor types.
+2. Multiple-tensor cataloging, scalar metadata coverage, and catalog-visible
+   active tensor type IDs — runnable without payload reads.
 3. Unquantized selective tensor decoding.
 4. Q8_0 golden block decode and reference parity.
 5. Bounded tensor sampling/statistics and acceptance report.

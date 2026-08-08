@@ -6,4 +6,6 @@ They contain one conservative little-endian v3 catalog with
 `general.architecture`, `general.alignment`, and one F32 tensor descriptor,
 plus bad-magic, unsupported-version, excessive-count, unsupported-metadata,
 truncated, invalid-alignment, misaligned-offset, and unsupported-tensor-type
-variants. Tensor bytes are synthetic zeros.
+variants. The expanded fixture adds multiple tensor descriptors, scalar
+metadata types, duplicate names, a catalog-visible Q8_0 type, and a known
+extent overlap. Tensor bytes are synthetic zeros.

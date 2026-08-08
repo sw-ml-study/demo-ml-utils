@@ -1,4 +1,12 @@
 include "../../src/formats/gguf_catalog.mlpl";
-path = unwrap_or(list_get(args(), 0), "fixtures/gguf/valid-small.gguf");
+path = unwrap_or(list_get(args(), 0), "fixtures/gguf/valid-catalog.gguf");
 catalog = u:catalog_gguf(path, 4096, 8, 4, 256, 4, 1000000)?;
-print("Bounded GGUF v3 catalog:"); print(catalog); ok(catalog)
+print("DEMO: bounded GGUF v3 metadata and tensor-directory catalog");
+print("This reads only header fields and aligned padding; tensor payload bytes remain untouched.");
+print("metadata_type_counts indexes the official scalar type IDs; tensor_rows are [relative_offset, parameters, ggml_type_id, known_bytes], where -1 means cataloged but not decoded.");
+print("Model-level summary:"); print({version: catalog.version, architecture: catalog.architecture, alignment: catalog.alignment, metadata_count: catalog.metadata_count, tensor_count: catalog.tensor_count, catalog_bytes: catalog.catalog_bytes, data_bytes: catalog.data_bytes});
+print("Metadata type histogram (IDs 0 through 12):"); print(catalog.metadata_type_counts);
+print("Tensor name lengths (matching descriptor order):"); print(catalog.tensor_name_lengths);
+print("Tensor descriptor rows:"); print(catalog.tensor_rows);
+print("Interpretation: alpha is F32 with 16 known bytes; quant is Q8_0 and stays visible with -1 unknown bytes; ints is I16 with 8 known bytes.");
+ok(1)

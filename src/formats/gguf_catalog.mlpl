@@ -22,7 +22,44 @@ def u:gguf_shape(state, dimensions, index, product, maximum_parameters, values) 
   }
 }
 
-def u:catalog_gguf(path, max_catalog_bytes, max_metadata, max_tensors, max_string_bytes, max_rank, max_parameters) { "Catalog the conservative GGUF v3 foundation subset without reading tensor payloads.";
+def u:gguf_name_duplicate(name, table, lengths, count, width) { "Check an exact padded byte-name table without hashes or native maps.";
+  candidate = tokenize_bytes(name); index = 0; duplicate = 0;
+  while lt(index, count) { row = take(reshape(table, [count,width]), 0, index); length = take(lengths, 0, index); prior = compress(lt(range(width), length), row); if equal(candidate, prior) { duplicate = 1 } else { 0 }; index = index + 1 };
+  duplicate
+}
+
+def u:gguf_append_name(name, table, lengths, width) { "Append one exact string as a fixed-width byte row.";
+  bytes = tokenize_bytes(name); {table: concat(table, concat(bytes, fill([width - tally(bytes)], 0))), lengths: concat(lengths, tally(bytes))}
+}
+
+def u:gguf_scalar_value(state, type_id, max_string_bytes, maximum_scalar) { "Consume the supported non-array GGUF scalar subset.";
+  if eq(type_id, 0) + eq(type_id, 1) { value = u:gguf_uint(state, 1, 255)?; ok({state: value.state, numeric: value.value, text: ""}) } else {
+  if eq(type_id, 2) + eq(type_id, 3) { value = u:gguf_uint(state, 2, 65535)?; ok({state: value.state, numeric: value.value, text: ""}) } else {
+  if eq(type_id, 4) + eq(type_id, 5) { value = u:gguf_uint(state, 4, 4294967295)?; ok({state: value.state, numeric: value.value, text: ""}) } else {
+  if eq(type_id, 7) { value = u:gguf_uint(state, 1, 1)?; ok({state: value.state, numeric: value.value, text: ""}) } else {
+  if eq(type_id, 8) { value = u:gguf_string(state, max_string_bytes)?; ok({state: value.state, numeric: 0, text: value.text}) } else {
+  if eq(type_id, 10) { value = u:gguf_uint(state, 8, maximum_scalar)?; ok({state: value.state, numeric: value.value, text: ""}) } else { err("unsupported GGUF scalar metadata type") }
+  } } } } }
+}
+
+def u:gguf_type_active(type_id) { "Recognize catalog-visible active ggml type IDs from the pinned specification.";
+  gt(type_id, -1) * lt(type_id, 40) * (1 - eq(type_id,4)) * (1 - eq(type_id,5)) * (1 - eq(type_id,31)) * (1 - eq(type_id,32)) * (1 - eq(type_id,33)) * (1 - eq(type_id,36)) * (1 - eq(type_id,37)) * (1 - eq(type_id,38))
+}
+
+def u:gguf_known_tensor_bytes(type_id, parameters, maximum_parameters) { "Return exact bytes for simple unquantized layouts, or -1 for catalog-only types.";
+  if eq(type_id,0) + eq(type_id,26) { width = 4 } else { if eq(type_id,1) + eq(type_id,25) + eq(type_id,30) { width = 2 } else { if eq(type_id,24) { width = 1 } else { if eq(type_id,27) + eq(type_id,28) { width = 8 } else { return ok(-1) } } } };
+  if gt(parameters, floor(maximum_parameters / width)) { err("GGUF tensor byte budget exceeded") } else { ok(parameters * width) }
+}
+
+def u:gguf_layout(rows, index, data_bytes) { "Validate sorted tensor starts and all extents whose byte layout is known.";
+  count = take(shape(rows),0,0);
+  if eq(index, count) { ok(1) } else { row = take(rows,0,index); start = take(row,0,0); known = take(row,0,3); next_start = if eq(index + 1, count) { data_bytes } else { take(take(rows,0,index + 1),0,0) };
+  if gt(start, data_bytes) + gt(start, next_start) { err("GGUF tensor offset exceeds or reverses the data buffer") } else {
+  if (gt(index + 1, count) * eq(start, next_start)) + (gt(known, -1) * gt(start + known, next_start)) { err("GGUF known tensor extents overlap or exceed the data buffer") } else { u:gguf_layout(rows, index + 1, data_bytes) }
+  } }
+}
+
+def u:catalog_gguf(path, max_catalog_bytes, max_metadata, max_tensors, max_string_bytes, max_rank, max_parameters) { "Catalog bounded GGUF v3 scalar metadata and multiple tensor descriptors without reading payloads.";
   size = file_size(path)?;
   if (1 - eq(max_catalog_bytes, floor(max_catalog_bytes))) + lt(max_catalog_bytes, 24) + gt(max_catalog_bytes, 9007199254740991) { err("invalid GGUF catalog byte budget") } else {
   state = {path: path, file_size: size, cursor: 0, max_catalog_bytes: max_catalog_bytes}; magic = u:gguf_read(state, 4)?;
@@ -30,34 +67,34 @@ def u:catalog_gguf(path, max_catalog_bytes, max_metadata, max_tensors, max_strin
   state = {path: magic.path, file_size: magic.file_size, cursor: magic.cursor, max_catalog_bytes: magic.max_catalog_bytes}; version = u:gguf_uint(state, 4, 3)?;
   if 1 - eq(version.value, 3) { err("only GGUF v3 is supported") } else {
   tensors = u:gguf_uint(version.state, 8, max_tensors)?; metadata = u:gguf_uint(tensors.state, 8, max_metadata)?;
-  if gt(tensors.value, 1) { err("foundation GGUF catalog supports at most one tensor") } else {
-  state = metadata.state; metadata_index = 0; architecture = ""; alignment = 32; seen_architecture = 0; seen_alignment = 0;
+  state = metadata.state; metadata_index = 0; architecture = ""; alignment = 32; seen_architecture = 0; seen_alignment = 0; metadata_names = fill([0],0); metadata_lengths = fill([0],0); metadata_type_counts = fill([13],0);
   while lt(metadata_index, metadata.value) {
     key = u:gguf_string(state, max_string_bytes)?; type_value = u:gguf_uint(key.state, 4, 12)?;
-    if equal(key.text, "general.architecture") {
-      if seen_architecture + (1 - eq(type_value.value, 8)) { return err("GGUF architecture metadata is duplicate or not a string") } else { 0 };
-      value = u:gguf_string(type_value.state, max_string_bytes)?; architecture = value.text; state = value.state; seen_architecture = 1
-    } else { if equal(key.text, "general.alignment") {
-      if seen_alignment + (1 - eq(type_value.value, 4)) { return err("GGUF alignment metadata is duplicate or not u32") } else { 0 };
-      value = u:gguf_uint(type_value.state, 4, 9007199254740991)?; alignment = value.value; state = value.state; seen_alignment = 1
-    } else { return err("unsupported GGUF foundation metadata key") } };
+    if lt(key.length,1) + u:gguf_name_duplicate(key.text, metadata_names, metadata_lengths, metadata_index, max_string_bytes) { return err("GGUF metadata key is empty or duplicate") } else { 0 };
+    scalar = u:gguf_scalar_value(type_value.state, type_value.value, max_string_bytes, max_parameters)?; state = scalar.state;
+    if equal(key.text, "general.architecture") { if 1 - eq(type_value.value,8) { return err("GGUF architecture metadata must be a string") } else { architecture = scalar.text; seen_architecture = 1 } } else { 0 };
+    if equal(key.text, "general.alignment") { if 1 - eq(type_value.value,4) { return err("GGUF alignment metadata must be u32") } else { alignment = scalar.numeric; seen_alignment = 1 } } else { 0 };
+    appended = u:gguf_append_name(key.text, metadata_names, metadata_lengths, max_string_bytes); metadata_names = appended.table; metadata_lengths = appended.lengths; metadata_type_counts = scatter(metadata_type_counts, type_value.value, take(metadata_type_counts,0,type_value.value) + 1);
     metadata_index = metadata_index + 1
   };
   if (1 - seen_architecture) + lt(tally(tokenize_bytes(architecture)), 1) { err("GGUF general.architecture is required") } else {
   if lt(alignment, 8) + (1 - eq(mod(alignment, 8), 0)) { err("GGUF alignment must be a positive multiple of eight") } else {
-  tensor_name = ""; tensor_type = -1; tensor_offset = 0; tensor_shape = fill([0],0); parameters = 0;
-  if eq(tensors.value, 1) {
+  tensor_names = fill([0],0); tensor_name_lengths = fill([0],0); rows = fill([0],0); tensor_index = 0;
+  while lt(tensor_index, tensors.value) {
     name = u:gguf_string(state, 64)?; dimensions = u:gguf_uint(name.state, 4, max_rank)?;
+    if lt(name.length,1) + u:gguf_name_duplicate(name.text, tensor_names, tensor_name_lengths, tensor_index, 64) { return err("GGUF tensor name is empty or duplicate") } else { 0 };
     if lt(dimensions.value, 1) { return err("GGUF tensor rank must be positive") } else { 0 };
     shaped = u:gguf_shape(dimensions.state, dimensions.value, 0, 1, max_parameters, fill([0],0))?;
     type_read = u:gguf_uint(shaped.state, 4, 39)?; offset_read = u:gguf_uint(type_read.state, 8, 9007199254740991)?;
-    if 1 - eq(type_read.value, 0) { return err("foundation GGUF catalog supports only F32 tensor descriptors") } else { 0 };
+    if 1 - u:gguf_type_active(type_read.value) { return err("GGUF tensor type ID is removed or unknown") } else { 0 };
     if 1 - eq(mod(offset_read.value, alignment), 0) { return err("GGUF tensor offset is not aligned") } else { 0 };
-    tensor_name = name.text; tensor_type = type_read.value; tensor_offset = offset_read.value; tensor_shape = shaped.shape; parameters = shaped.parameters; state = offset_read.state
-  } else { 0 };
+    known_bytes = u:gguf_known_tensor_bytes(type_read.value, shaped.parameters, max_parameters)?;
+    appended = u:gguf_append_name(name.text, tensor_names, tensor_name_lengths, 64); tensor_names = appended.table; tensor_name_lengths = appended.lengths;
+    rows = concat(rows, [offset_read.value,shaped.parameters,type_read.value,known_bytes]); state = offset_read.state; tensor_index = tensor_index + 1
+  };
   data_start = state.cursor + mod(alignment - mod(state.cursor, alignment), alignment); padding = u:gguf_read(state, data_start - state.cursor)?;
   if 1 - equal(padding.bytes, fill([tally(padding.bytes)], 0)) { err("GGUF catalog padding must be zero") } else {
-  if gt(data_start + tensor_offset + parameters * 4, size) { err("GGUF F32 tensor range exceeds the file") } else {
-  ok({version: 3, metadata_count: metadata.value, tensor_count: tensors.value, architecture: architecture, alignment: alignment, catalog_bytes: data_start, data_bytes: size - data_start, tensor_name: tensor_name, tensor_type: tensor_type, tensor_offset: tensor_offset, tensor_shape: tensor_shape, parameters: parameters})
-  } } } } } } } }
+  table = reshape(rows,[tensors.value,4]); ordered = if eq(tensors.value,0) { table } else { gather_rows(table, grade_up(take(table,1,0))) }; data_bytes = size - data_start; u:gguf_layout(ordered,0,data_bytes)?;
+  ok({version: 3, metadata_count: metadata.value, tensor_count: tensors.value, architecture: architecture, alignment: alignment, catalog_bytes: data_start, data_bytes: data_bytes, metadata_name_bytes: metadata_names, metadata_name_lengths: metadata_lengths, metadata_type_counts: metadata_type_counts, tensor_name_bytes: tensor_names, tensor_name_lengths: tensor_name_lengths, tensor_rows: table})
+  } } } } } }
 }

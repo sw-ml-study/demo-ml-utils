@@ -9,27 +9,34 @@ claiming full GGUF compatibility.
 
 `demos/gguf/catalog.mlpl` accepts little-endian v3, requires
 `general.architecture`, supports optional `general.alignment` u32 (default 32),
-and catalogs zero or one F32 tensor. It rejects all other metadata keys/value
-types and tensor types in this first slice. Names, strings, counts, rank,
-parameter products, cursor movement, padding, offsets, and file bounds are
-checked under caller budgets. Tensor payload bytes are never requested; only
-the final F32 range is proven to fit the file.
+and consumes arbitrary unique metadata keys whose scalar tags are U8/I8,
+U16/I16, U32/I32, BOOL, STRING, or budgeted U64. Architecture and alignment
+values are retained; other values contribute to a deterministic type
+histogram in this catalog-oriented slice.
+
+Multiple unique tensor descriptors are retained as name-byte tables and rows
+of `[relative_offset, parameters, ggml_type_id, known_bytes]`. Active type IDs
+from the pinned specification remain catalog-visible. `known_bytes` is `-1`
+when this project has not established the type's block-size rule, explicitly
+meaning “cataloged, not decoded.” Simple F32/F16/BF16 and signed integer extents
+are computed, sorted by offset for layout validation, and rejected if they
+overlap or exceed the data buffer. Tensor payload bytes are never requested.
 
 Native code supplies generic sandboxed `file_size` and exact bounded
 `read_bytes`. MLPL owns little-endian decoding, cursor movement, format/type
 policy, metadata parsing, alignment, shape arithmetic, descriptor validation,
 and catalog construction. No external GGUF parser is used.
 
-For M metadata items, T tensors, R total dimensions, S total catalog string
-bytes, and K catalog bytes, logical time is O(M + T + R + S + K) and retained
-memory is O(R + S + largest field read). Current teaching budgets cap catalog
-reads at 4096 bytes, metadata at 8, tensors at 4 (while the subset additionally
-allows at most one), strings at 256 bytes, rank at 4, and parameters at one
-million. Because byte values are f64-backed, u64 fields outside configured
-exact bounds fail closed.
+For M metadata items, T tensors, R total dimensions, S maximum string width,
+and K catalog bytes, parsing is O(K + R), exact padded-name duplicate checks
+are O(M²S + T²S), and tensor ordering is O(T log T). Retained memory is O(MS +
+TS + T + R + largest field read). Current teaching budgets cap catalog reads
+at 4096 bytes, metadata at 8, tensors at 4, strings at 256 bytes, rank at 4,
+and parameters at one million. Because byte values are f64-backed, u64 fields
+outside configured exact bounds fail closed.
 
-Big-endian v3, arbitrary metadata, arrays, floating metadata, multiple tensor
-names, non-F32 types, overlapping tensor extents, payload decoding, and
-quantization blocks remain later work. The next catalog-coverage step should
-retain unsupported tensor type IDs visibly where bounds can be validated,
-rather than describing them as decoded.
+Big-endian v3, metadata arrays, floating and signed-64 metadata, decoded scalar
+metadata values beyond architecture/alignment, exact extent rules for
+quantized types, payload decoding, and quantization blocks remain later work.
+Exact name tables avoid hash collisions but intentionally trade quadratic
+comparison work for simple fail-closed behavior under small count budgets.

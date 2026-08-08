@@ -1,6 +1,6 @@
 number = 2
 slug = "gguf-catalog-type-coverage"
-status = "pending"
+status = "in-progress"
 description = "Expand the bounded GGUF v3 catalog from the conservative foundation to multip..."
 role = "production"
 context_files = []
