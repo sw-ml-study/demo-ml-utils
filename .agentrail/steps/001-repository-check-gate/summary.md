@@ -1,0 +1,1 @@
+Added the repository validation foundation: thin just recipes, POSIX pre-commit checks for license/docs/fixtures/sources/catalog, focused failure tests, a layer-and-memory-aware demo catalog, and safe non-installing MLPL binary selection. just check passes; commit be3803f is pushed to origin/main.
