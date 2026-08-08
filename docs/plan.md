@@ -32,10 +32,9 @@ The adjacent sw-MLPL language currently documents:
   stream and must not be presented as one.
 
 Executable probes pin these facts against the configured binary. Bounded
-Safetensors header inspection is available; arbitrary tensor discovery remains
-blocked on deterministic record-key enumeration. First-class typed arrays,
-reinterpretation, and streaming folds remain valuable follow-ups driven by
-executable need.
+Safetensors header inspection and arbitrary tensor discovery are available.
+First-class typed arrays, reinterpretation, and streaming folds remain
+valuable follow-ups driven by executable need.
 
 ## Architecture
 
@@ -89,7 +88,9 @@ later large-file test analyzes a sparse artifact larger than the configured
 memory budget while staying below a documented high-water mark.
 
 Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
-payload statistics remain later work.
+payload statistics are unblocked but remain later work. The completed
+[binary-format foundation report](foundation-report.md) records the acceptance
+evidence, attribution, complexity, limitations, and exact Saga 2 gate state.
 
 ### Phase 2 — GGUF inspection and decoding
 
@@ -156,10 +157,10 @@ only. Documentation says the serialization path is risky—not the weights.
   authorization. This repository records executable requests and remains a
   consumer.
 
-## Recommended starting point
+## Recommended next increment
 
-Begin with the `binary-format-foundations` saga in [sagas.md](sagas.md). It
-delivers useful, honest Safetensors metadata inspection on small fixtures while
-turning bounded range I/O into a precise upstream contract. This produces more
-learning and less architectural risk than starting with graphics, GGUF
-K-quants, or pickle semantics.
+Initialize the `bounded-safetensors-analysis` saga in [sagas.md](sagas.md).
+Begin its remaining work with selective tensor slice reads and byte-aligned
+dtype decoding, then layer fixed-chunk mergeable statistics over that decoder.
+Range-reader conformance is already covered by the completed foundation and
+should be carried forward as evidence rather than reimplemented.

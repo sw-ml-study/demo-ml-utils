@@ -20,17 +20,18 @@ append-only `.agentrail/` state.
 6. `foundation-report` — catalog runnable demos, document complexity and
    limitations, and decide whether Saga 2 is unblocked.
 
-Steps 1–4 are complete, including the bounded arbitrary-name Safetensors
-catalog. The upstream contract is now fulfilled and reconciled; the remaining
-foundation step produces the closeout report.
+Complete. The bounded arbitrary-name Safetensors catalog, fulfilled upstream
+contract, and [foundation report](foundation-report.md) provide the acceptance
+evidence and limitations needed for closeout.
 
 ## Saga 2 — `bounded-safetensors-analysis`
 
-Gate satisfied: bounded range I/O and `file_size` are available and covered by
-the repository capability probe. Record enumeration remains a separate catalog
-gate.
+Status: unblocked, not started. The gate is satisfied: bounded range I/O,
+`file_size`, budgeted JSON decoding, duplicate-key rejection, and deterministic
+record enumeration are shipped and covered by the repository gate.
 
-1. Range-reader conformance and adversarial EOF/overflow tests.
+1. Carry forward the completed range-reader conformance and adversarial
+   EOF/overflow evidence.
 2. Selective tensor slice reads and dtype decoding.
 3. Mergeable streaming statistics with fixed chunk size.
 4. Sparse large-artifact acceptance and measured peak memory.
