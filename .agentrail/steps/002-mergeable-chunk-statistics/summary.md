@@ -1,0 +1,1 @@
+Implemented fixed-chunk mergeable Safetensors statistics for supported integer tensors. Added Welford update and parallel merge state in MLPL, aligned repeated bounded reads, chunk and output budget validation before I/O, exact golden and partition parity tests, a runnable default-gate demo, and attribution and allocation documentation.

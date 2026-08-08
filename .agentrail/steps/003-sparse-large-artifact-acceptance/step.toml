@@ -1,0 +1,8 @@
+number = 3
+slug = "sparse-large-artifact-acceptance"
+status = "pending"
+description = "Add an opt-in sparse large-Safetensors acceptance test for the fixed-chunk st..."
+role = "validation"
+context_files = []
+created_at = "2026-08-08T12:53:19"
+commits = []
