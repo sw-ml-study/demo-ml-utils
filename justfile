@@ -44,6 +44,10 @@ safetensors-slice:
 safetensors-statistics:
     ./scripts/run-safetensors-statistics
 
+# Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
+sparse-acceptance:
+    ./scripts/run-sparse-safetensors-acceptance
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check

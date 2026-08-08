@@ -11,12 +11,14 @@ def u:decode_unsigned_le(bytes, offset, width, index, value, multiplier) { "Deco
 }
 
 def u:decode_slice_values(bytes, dtype, width, offset, values) { "Decode a supported integer slice in MLPL.";
-  if eq(offset, tally(bytes)) { values } else {
-    unsigned = u:decode_unsigned_le(bytes, offset, width, 0, 0, 1);
+  cursor = offset; output = values;
+  while lt(cursor, tally(bytes)) {
+    unsigned = u:decode_unsigned_le(bytes, cursor, width, 0, 0, 1);
     signed = equal(dtype, "I8") + equal(dtype, "I16"); limit = if eq(width, 1) { 128 } else { 32768 }; modulus = limit * 2;
     value = if signed * gt(unsigned, limit - 1) { unsigned - modulus } else { unsigned };
-    u:decode_slice_values(bytes, dtype, width, offset + width, concat(values, value))
-  }
+    output = concat(output, value); cursor = cursor + width
+  };
+  output
 }
 
 def u:safetensors_tensor_descriptor(path, name, max_header_bytes, max_elements, max_parameters) { "Validate the artifact and return one tensor's exact payload descriptor without reading its payload.";

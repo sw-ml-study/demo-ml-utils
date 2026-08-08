@@ -31,6 +31,8 @@ The [selective tensor decoder](docs/safetensors-slice.md) documents bounded
 integer payload reads, implementation attribution, and current dtype limits.
 The [bounded statistics demo](docs/safetensors-statistics.md) adds fixed-chunk
 mergeable reductions without reading a complete tensor at once.
+Its opt-in sparse-artifact acceptance recipe measures and enforces peak RSS
+without downloading or committing a large model.
 The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
 decode budgets, and record discovery to executable downstream evidence.
 

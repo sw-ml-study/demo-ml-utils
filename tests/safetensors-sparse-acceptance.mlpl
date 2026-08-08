@@ -1,0 +1,8 @@
+include "../src/formats/safetensors_statistics.mlpl";
+
+path = list_get(args(), 0)?;
+statistics = u:safetensors_tensor_statistics(path, "zeros", 4096, 64, 1048576, 256, 6)?;
+if 1 - equal(statistics, {count: 1048576, minimum: 0, maximum: 0, sum: 0, mean: 0, variance: 0}) { err("sparse artifact statistics mismatch") } else {
+print("PASS sparse Safetensors bounded-memory acceptance");
+ok(1)
+}

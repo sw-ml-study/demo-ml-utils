@@ -1,6 +1,6 @@
 number = 3
 slug = "sparse-large-artifact-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Add an opt-in sparse large-Safetensors acceptance test for the fixed-chunk st..."
 role = "validation"
 context_files = []

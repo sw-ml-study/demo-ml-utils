@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+mkdir -p "$repo_root/tmp"
+work_dir=$(mktemp -d "$repo_root/tmp/safetensors-sparse.XXXXXX")
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+
+payload_bytes=1048576
+chunk_bytes=256
+max_rss_bytes=16777216
+artifact="$work_dir/large-zero.safetensors"
+program_output="$work_dir/program.out"
+metrics_output="$work_dir/time.err"
+header='{"zeros":{"dtype":"U8","shape":[1048576],"data_offsets":[0,1048576]}}'
+header_bytes=${#header}
+
+value=$header_bytes
+index=0
+: > "$artifact"
+while [ "$index" -lt 8 ]; do
+  byte=$((value % 256))
+  printf "\\$(printf '%03o' "$byte")" >> "$artifact"
+  value=$((value / 256))
+  index=$((index + 1))
+done
+printf '%s' "$header" >> "$artifact"
+truncate -s $((8 + header_bytes + payload_bytes)) "$artifact"
+
+case $(uname -s) in
+  Darwin)
+    /usr/bin/time -l "$mlpl" --source-dir "$repo_root" "$repo_root/tests/safetensors-sparse-acceptance.mlpl" -- "$artifact" >"$program_output" 2>"$metrics_output" || {
+      cat "$program_output"; cat "$metrics_output" >&2; exit 1;
+    }
+    max_rss=$(awk '/maximum resident set size/ { print $1; exit }' "$metrics_output")
+    ;;
+  Linux)
+    /usr/bin/time -v "$mlpl" --source-dir "$repo_root" "$repo_root/tests/safetensors-sparse-acceptance.mlpl" -- "$artifact" >"$program_output" 2>"$metrics_output" || {
+      cat "$program_output"; cat "$metrics_output" >&2; exit 1;
+    }
+    max_rss_kib=$(awk -F: '/Maximum resident set size/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$metrics_output")
+    max_rss=$((max_rss_kib * 1024))
+    ;;
+  *)
+    echo "SKIP sparse acceptance: peak-RSS parser supports Darwin and Linux only" >&2
+    exit 77
+    ;;
+esac
+
+cat "$program_output"
+grep -Fqx 'PASS sparse Safetensors bounded-memory acceptance' "$program_output"
+[ -n "$max_rss" ] || {
+  echo "peak RSS was not reported; run the opt-in recipe where /usr/bin/time can access platform metrics" >&2
+  cat "$metrics_output" >&2
+  exit 1
+}
+[ "$max_rss" -le "$max_rss_bytes" ] || {
+  echo "peak RSS $max_rss exceeded $max_rss_bytes bytes" >&2
+  exit 1
+}
+
+echo "PASS sparse artifact bytes=$payload_bytes chunk_bytes=$chunk_bytes peak_rss_bytes=$max_rss ceiling_bytes=$max_rss_bytes"

@@ -8,7 +8,9 @@ def u:statistics_add(state, value) { "Add one value using the numerically stable
 }
 
 def u:statistics_values(values, index, state) { "Fold decoded values into a mergeable statistics state.";
-  if eq(index, tally(values)) { state } else { u:statistics_values(values, index + 1, u:statistics_add(state, take(values, 0, index))) }
+  cursor = index; output = state;
+  while lt(cursor, tally(values)) { output = u:statistics_add(output, take(values, 0, cursor)); cursor = cursor + 1 };
+  output
 }
 
 def u:statistics_merge(left, right) { "Merge independent Welford states without replaying their values.";
