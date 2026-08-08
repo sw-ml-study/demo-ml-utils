@@ -1,0 +1,1 @@
+Published the binary-format foundation report after the full repository gate passed against mlpl-repl 0.20.0 commit 6156e869. Reconciled runnable demos, implementation attribution, logical and actual memory complexity, limitations, the project plan, saga queue, README, and catalog. Saga 2 bounded Safetensors analysis is unblocked but not started.
