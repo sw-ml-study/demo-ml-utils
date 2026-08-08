@@ -10,6 +10,7 @@ JSON, then tensor data. Hugging Face also documents metadata-only access using
 |---|---|
 | `valid-small.safetensors` | One four-byte U8 tensor |
 | `valid-empty.safetensors` | Valid empty JSON object and no data |
+| `valid-catalog.safetensors` | Three sorted-discovery tensors, metadata, mixed dtypes, and one empty tensor |
 | `boundary-header.safetensors` | Exactly 4096 header bytes using permitted space padding |
 | `empty.safetensors` | No length prefix |
 | `truncated-prefix.safetensors` | Only four prefix bytes |
@@ -17,6 +18,15 @@ JSON, then tensor data. Hugging Face also documents metadata-only access using
 | `malformed-json.safetensors` | Complete declared header containing invalid JSON |
 | `oversized-header.safetensors` | Declares 4097 bytes against the demo’s 4096-byte budget |
 | `overflow-length.safetensors` | Encodes u64 maximum, outside MLPL’s exact integer domain |
+| `duplicate-name.safetensors` | Repeats one tensor key; JSON decoding must reject it |
+| `unsupported-dtype.safetensors` | Uses a dtype outside the catalog’s byte-aligned set |
+| `invalid-shape.safetensors` | Contains a negative dimension |
+| `overlapping-offsets.safetensors` | Tensor byte ranges overlap |
+| `hole-offsets.safetensors` | Tensor byte ranges leave an unindexed hole |
+| `out-of-bounds.safetensors` | Tensor range exceeds the file’s data buffer |
+| `size-mismatch.safetensors` | Shape/dtype byte count disagrees with its range |
+| `invalid-metadata.safetensors` | Metadata contains a non-string value |
+| `missing-shape.safetensors` | Tensor schema omits a required field |
 
 The 4096-byte demo budget is intentionally much smaller than the reference
 implementation’s broader defensive limits. It is enough for deterministic

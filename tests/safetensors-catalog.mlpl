@@ -1,0 +1,25 @@
+include "../src/formats/safetensors_catalog.mlpl";
+
+def u:require_catalog(condition, message) { "Return Ok for a true catalog invariant, otherwise a named error."; if condition { ok(1) } else { err(message) } }
+def u:catalog_fixture(name) { "Catalog a named fixture with repository teaching budgets."; u:catalog_safetensors(name, 4096, 256, 1000000) }
+
+catalog = u:catalog_fixture("fixtures/safetensors/valid-catalog.safetensors")?;
+u:require_catalog(equal(catalog.header_keys, ["__metadata__","tensor_a","tensor_b","tensor_c"]), "deterministic sorted tensor discovery")?;
+u:require_catalog(equal([catalog.tensor_count,catalog.parameter_count,catalog.tensor_bytes,catalog.data_bytes,catalog.metadata_present], [3,4,6,6,1]), "catalog aggregates")?;
+u:require_catalog(equal(catalog.rows_by_name, reshape([0,2,2,1, 2,6,2,2, 6,6,0,4], [3,4])), "name-sorted tensor rows")?;
+
+empty = u:catalog_fixture("fixtures/safetensors/valid-empty.safetensors")?;
+u:require_catalog(equal([empty.tensor_count,empty.parameter_count,empty.data_bytes], [0,0,0]), "empty catalog")?;
+
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/duplicate-name.safetensors")), "duplicate name rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/unsupported-dtype.safetensors")), "dtype rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/invalid-shape.safetensors")), "shape rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/overlapping-offsets.safetensors")), "overlap rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/hole-offsets.safetensors")), "hole rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/out-of-bounds.safetensors")), "bounds rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/size-mismatch.safetensors")), "size rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/invalid-metadata.safetensors")), "metadata rejection")?;
+u:require_catalog(is_err(u:catalog_fixture("fixtures/safetensors/missing-shape.safetensors")), "schema rejection")?;
+
+print("PASS Safetensors catalog");
+ok(1)

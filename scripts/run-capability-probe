@@ -17,6 +17,7 @@ for expected in \
   'CAPABILITY file_size=metadata-result' \
   'CAPABILITY bit_ops=unsigned-exact-below-2^53' \
   'CAPABILITY json=depth-byte-element-budgeted-result-duplicate-safe' \
+  'CAPABILITY record_keys=deterministic-sorted-string-list' \
   'LIMITATION typed_byte_arrays=absent'
 do
   printf '%s\n' "$output" | grep -Fqx "$expected"

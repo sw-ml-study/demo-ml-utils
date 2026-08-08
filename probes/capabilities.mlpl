@@ -39,6 +39,7 @@ u:require(is_err(parse_json(header, {max_depth: 1, max_bytes: 64})), "max_depth 
 u:require(is_ok(parse_json("[1,2,3]", {max_depth: 2, max_bytes: 16, max_elements: 3})), "max_elements boundary should parse")?;
 u:require(is_err(parse_json("[1,2,3]", {max_depth: 2, max_bytes: 16, max_elements: 2})), "max_elements must reject oversized collections")?;
 u:require(is_err(parse_json("{\"a\":1,\"a\":2}")), "duplicate JSON keys must return Err")?;
+u:require(equal(record_keys({tensor_c: 3, tensor_a: 1, tensor_b: 2}), ["tensor_a","tensor_b","tensor_c"]), "record_keys must be deterministic and sorted")?;
 u:require(is_err(parse_json("{")), "malformed JSON must return Err")?;
 
 remove_path(path)?;
@@ -50,5 +51,6 @@ print("CAPABILITY byte_io=whole-file-and-bounded-range-result-array");
 print("CAPABILITY file_size=metadata-result");
 print("CAPABILITY bit_ops=unsigned-exact-below-2^53");
 print("CAPABILITY json=depth-byte-element-budgeted-result-duplicate-safe");
+print("CAPABILITY record_keys=deterministic-sorted-string-list");
 print("LIMITATION typed_byte_arrays=absent");
 ok({bounded_range_io: 1, file_size: 1, bit_ops: 1, json_budgets: 1, max_exact_boundary: 9007199254740992})

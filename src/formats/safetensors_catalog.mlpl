@@ -1,0 +1,84 @@
+include "safetensors_header.mlpl";
+
+def u:safetensors_dtype_bytes(dtype) { "Return the byte width of one supported byte-aligned Safetensors dtype.";
+  if equal(dtype, "F64") + equal(dtype, "I64") + equal(dtype, "U64") { ok(8) } else {
+  if equal(dtype, "F32") + equal(dtype, "I32") + equal(dtype, "U32") { ok(4) } else {
+  if equal(dtype, "F16") + equal(dtype, "BF16") + equal(dtype, "I16") + equal(dtype, "U16") { ok(2) } else {
+  if equal(dtype, "I8") + equal(dtype, "U8") + equal(dtype, "BOOL") { ok(1) } else {
+  err("unsupported or sub-byte Safetensors dtype")
+  } } } }
+}
+
+def u:safetensors_shape_product(shape, index, product, max_parameters) { "Validate non-negative exact dimensions and multiply within a configured parameter budget.";
+  if eq(index, tally(shape)) { ok(product) } else {
+  dimension = take(shape, 0, index);
+  if (1 - eq(dimension, floor(dimension))) + lt(dimension, 0) { err("Safetensors shape dimensions must be non-negative exact integers") } else {
+  if eq(product, 0) + eq(dimension, 0) { u:safetensors_shape_product(shape, index + 1, 0, max_parameters) } else {
+  if gt(dimension, floor(max_parameters / product)) { err("Safetensors tensor parameter count exceeds the configured exact budget") } else {
+  u:safetensors_shape_product(shape, index + 1, product * dimension, max_parameters)
+  } } }
+  }
+}
+
+def u:safetensors_metadata_values(metadata) { "Require every __metadata__ value to be a string.";
+  keys = record_keys(metadata); index = 0;
+  while lt(index, list_len(keys)) {
+    key = list_get(keys, index)?; value = record_get(metadata, key)?;
+    if 1 - equal(type_of(value), "string") { return err("Safetensors __metadata__ values must be strings") } else { 0 };
+    index = index + 1
+  };
+  ok(1)
+}
+
+def u:safetensors_tensor_row(info, data_bytes, max_parameters) { "Validate one tensor schema and return start, end, parameters, and dtype width.";
+  if 1 - equal(type_of(info), "record") { err("Safetensors tensor entry must be a record") } else {
+  if 1 - equal(record_keys(info), ["data_offsets","dtype","shape"]) { err("Safetensors tensor entry must contain exactly data_offsets, dtype, and shape") } else {
+  dtype = record_get(info, "dtype")?; shape = record_get(info, "shape")?; offsets = record_get(info, "data_offsets")?;
+  if 1 - equal(type_of(dtype), "string") { err("Safetensors dtype must be a string") } else {
+  if (1 - equal(type_of(shape), "array")) + (1 - eq(rank(shape), 1)) { err("Safetensors shape must be a rank-one numeric array") } else {
+  if (1 - equal(type_of(offsets), "array")) + (1 - eq(rank(offsets), 1)) + (1 - eq(tally(offsets), 2)) { err("Safetensors data_offsets must contain exactly two numbers") } else {
+  start = take(offsets, 0, 0); ending = take(offsets, 0, 1);
+  if (1 - eq(start, floor(start))) + (1 - eq(ending, floor(ending))) + lt(start, 0) + lt(ending, start) + gt(ending, data_bytes) { err("Safetensors data_offsets are invalid or outside the data buffer") } else {
+  width = u:safetensors_dtype_bytes(dtype)?;
+  parameters = u:safetensors_shape_product(shape, 0, 1, max_parameters)?;
+  if gt(parameters, floor(max_parameters / width)) { err("Safetensors tensor byte count exceeds the configured exact budget") } else {
+  if 1 - eq(ending - start, parameters * width) { err("Safetensors tensor shape and dtype disagree with data_offsets") } else {
+  ok([start,ending,parameters,width])
+  } } } } } } } }
+}
+
+def u:safetensors_layout_rows(table, index, previous_end, data_bytes) { "Require offset-sorted rows to cover the entire data buffer without overlap or holes.";
+  if eq(index, take(shape(table), 0, 0)) { if eq(previous_end, data_bytes) { ok(1) } else { err("Safetensors tensor ranges do not cover the complete data buffer") } } else {
+  row = take(table, 0, index); start = take(row, 0, 0); ending = take(row, 0, 1);
+  if 1 - eq(start, previous_end) { err("Safetensors tensor ranges overlap or leave a hole") } else { u:safetensors_layout_rows(table, index + 1, ending, data_bytes) }
+  }
+}
+
+def u:catalog_safetensors(path, max_header_bytes, max_elements, max_parameters) { "Return a deterministic validated catalog using bounded native I/O and MLPL schema/layout logic.";
+  raw = u:read_safetensors_header(path, max_header_bytes)?;
+  header = parse_json(decode_bytes(raw.header_bytes), {max_depth: 8, max_bytes: max_header_bytes, max_elements: max_elements})?;
+  if 1 - equal(type_of(header), "record") { err("Safetensors header root must be a JSON object") } else {
+  keys = record_keys(header); data_bytes = raw.file_size - 8 - raw.header_length;
+  index = 0; rows = fill([0],0); tensor_count = 0; parameter_count = 0; tensor_bytes = 0; metadata_present = 0;
+  while lt(index, list_len(keys)) {
+    name = list_get(keys, index)?; value = record_get(header, name)?;
+    if equal(name, "__metadata__") {
+      if 1 - equal(type_of(value), "record") { return err("Safetensors __metadata__ must be a record") } else { 0 };
+      u:safetensors_metadata_values(value)?; metadata_present = 1
+    } else {
+      if eq(tally(tokenize_bytes(name)), 0) { return err("Safetensors tensor names must not be empty") } else { 0 };
+      row = u:safetensors_tensor_row(value, data_bytes, max_parameters)?;
+      rows = concat(rows, row); tensor_count = tensor_count + 1;
+      parameter_count = parameter_count + take(row,0,2);
+      tensor_bytes = tensor_bytes + take(row,0,1) - take(row,0,0)
+    };
+    index = index + 1
+  };
+  if eq(tensor_count, 0) {
+    if 1 - eq(data_bytes, 0) { err("Safetensors data buffer is non-empty but the header has no tensors") } else { ok({header_keys: keys, tensor_count: 0, parameter_count: 0, tensor_bytes: 0, data_bytes: data_bytes, metadata_present: metadata_present, rows_by_name: reshape([], [0,4])}) }
+  } else {
+  table = reshape(rows, [tensor_count,4]); starts = take(table, 1, 0); ordered = gather_rows(table, grade_up(starts));
+  u:safetensors_layout_rows(ordered, 0, 0, data_bytes)?;
+  ok({header_keys: keys, tensor_count: tensor_count, parameter_count: parameter_count, tensor_bytes: tensor_bytes, data_bytes: data_bytes, metadata_present: metadata_present, rows_by_name: table})
+  } }
+}

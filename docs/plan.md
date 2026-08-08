@@ -84,6 +84,9 @@ Acceptance: small fixtures work today without false large-file claims; the
 later large-file test analyzes a sparse artifact larger than the configured
 memory budget while staying below a documented high-water mark.
 
+Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
+payload statistics remain later work.
+
 ### Phase 2 — GGUF inspection and decoding
 
 - Parse magic/version, metadata, tensor descriptors, alignment, offsets, and

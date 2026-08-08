@@ -1,0 +1,10 @@
+include "../../src/formats/safetensors_catalog.mlpl";
+
+path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-catalog.safetensors");
+catalog = u:catalog_safetensors(path, 4096, 256, 1000000)?;
+
+print("Safetensors tensor names (sorted header keys; __metadata__ is not a tensor):");
+print(catalog.header_keys);
+print("Safetensors aggregate catalog:");
+print({tensor_count: catalog.tensor_count, parameter_count: catalog.parameter_count, tensor_bytes: catalog.tensor_bytes, data_bytes: catalog.data_bytes, metadata_present: catalog.metadata_present});
+ok(catalog)

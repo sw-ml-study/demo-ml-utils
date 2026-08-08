@@ -20,6 +20,10 @@ append-only `.agentrail/` state.
 6. `foundation-report` — catalog runnable demos, document complexity and
    limitations, and decide whether Saga 2 is unblocked.
 
+Steps 1–4 are complete, including the bounded arbitrary-name Safetensors
+catalog. The remaining foundation steps reconcile the upstream contract and
+produce the closeout report.
+
 ## Saga 2 — `bounded-safetensors-analysis`
 
 Gate satisfied: bounded range I/O and `file_size` are available and covered by

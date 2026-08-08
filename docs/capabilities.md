@@ -7,8 +7,8 @@ Observed binary:
 
 ```text
 mlpl-repl 0.20.0
-Commit: cce9874e
-Timestamp: 2026-08-08T11:34:59-0700
+Commit: 6156e869
+Timestamp: 2026-08-08T12:29:42-0700
 ```
 
 These are executable observations, not promises about every sw-MLPL binary.
@@ -24,6 +24,7 @@ The routine validation gate reruns the probe against the configured binary.
 | Bit operations | `band`, `bor`, `bxor`, `bnot`, `shl`, `shr`, `bits`, and `from_bits` work on unsigned exact integers below 2^53 | 8-bit pack/view golden cases pass; an operand at 2^53 fails loudly |
 | Integer precision | Consecutive mathematical integers cease to be distinguishable after 2^53 | Literals 9007199254740992 and 9007199254740993 compare equal after f64 representation |
 | JSON budgets | `parse_json` returns `Result` and accepts `max_bytes`, `max_depth`, and `max_elements` | Valid boundaries parse; byte/depth/element excess, duplicates, and malformed JSON return `Err` |
+| Record discovery | `record_keys(record)` returns a deterministic sorted string-list | Arbitrary tensor names can drive `record_get` validation |
 
 ## Safetensors consequences
 
@@ -51,5 +52,5 @@ JSON, and the 2^53 precision boundary.
 
 Browser/server metric streaming is unrelated to binary file consumption and
 does not satisfy the remaining gaps. Large-file tensor statistics can now be
-built from repeated bounded reads, but the arbitrary Safetensors catalog still
-needs deterministic record-key enumeration.
+built from repeated bounded reads. The bounded arbitrary-name Safetensors
+catalog is now runnable.

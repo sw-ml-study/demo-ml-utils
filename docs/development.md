@@ -50,6 +50,7 @@ Safetensors fixtures are generated without Python or downloaded model data:
 ```sh
 just generate-fixtures
 just safetensors-headers
+just safetensors-catalog
 ```
 
 The routine gate checks that committed fixture bytes exactly match fresh

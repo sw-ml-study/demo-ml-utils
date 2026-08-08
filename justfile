@@ -32,6 +32,10 @@ generate-fixtures:
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
 
+# Run the deterministic bounded Safetensors metadata catalog.
+safetensors-catalog:
+    ./scripts/run-safetensors-catalog
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check

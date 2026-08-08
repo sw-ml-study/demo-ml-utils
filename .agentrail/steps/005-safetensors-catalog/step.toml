@@ -1,6 +1,6 @@
 number = 5
 slug = "safetensors-catalog"
-status = "blocked"
+status = "in-progress"
 description = "Implement the small-file MLPL Safetensors metadata catalog. Validate bounded ..."
 role = "production"
 context_files = []

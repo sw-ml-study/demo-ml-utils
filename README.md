@@ -22,10 +22,13 @@ binary selection. The [demo catalog](catalog/README.md) records format,
 implementation layer, memory contract, required capabilities, and status.
 The [capability report](docs/capabilities.md) records executable observations
 from the configured interpreter and the resulting Safetensors constraints.
+The [bounded Safetensors catalog](docs/safetensors-catalog.md) documents its
+validation, attribution, output, and complexity contracts.
 
 Safetensors header inspection uses bounded range reads and `file_size`, so its
 memory depends on the configured header budget rather than total model size.
-Arbitrary tensor cataloging remains gated on deterministic record-key access.
+Arbitrary tensor cataloging is runnable with deterministic `record_keys`,
+duplicate-name rejection, and bounded header reads.
 
 ## Copyright and license
 
