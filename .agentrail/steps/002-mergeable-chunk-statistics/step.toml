@@ -1,0 +1,8 @@
+number = 2
+slug = "mergeable-chunk-statistics"
+status = "pending"
+description = "Implement mergeable Safetensors tensor statistics over repeated fixed-size bo..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T12:50:32"
+commits = []

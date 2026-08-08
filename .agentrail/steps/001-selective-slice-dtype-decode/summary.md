@@ -1,0 +1,1 @@
+Added budgeted selective Safetensors tensor reads with MLPL-owned U8, I8, U16, and I16 little-endian decoding. Added generated golden fixtures, success and fail-closed tests, a runnable default-gate demo, catalog and documentation reconciliation, and archived the completed foundation saga while initializing bounded-safetensors-analysis.

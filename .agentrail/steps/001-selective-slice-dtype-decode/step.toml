@@ -1,8 +1,9 @@
 number = 1
 slug = "selective-slice-dtype-decode"
-status = "in-progress"
+status = "completed"
 description = "Implement selective Safetensors tensor-region reads and golden decoding for a..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T12:47:14"
-commits = []
+completed_at = "2026-08-08T12:50:32"
+commits = ["4702336f64b5ac734dac0b06750b653cb454ab1a"]
