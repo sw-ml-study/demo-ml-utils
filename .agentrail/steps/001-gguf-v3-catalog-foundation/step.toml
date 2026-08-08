@@ -1,8 +1,9 @@
 number = 1
 slug = "gguf-v3-catalog-foundation"
-status = "in-progress"
+status = "completed"
 description = "Implement the first bounded GGUF v3 catalog vertical slice using TDD. Pin and..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T13:58:24"
-commits = []
+completed_at = "2026-08-08T14:03:03"
+commits = ["f3f4c59814333dc92246238f011e496d88ca95f3"]
