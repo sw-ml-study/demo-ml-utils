@@ -1,0 +1,8 @@
+number = 4
+slug = "visualization-summary-ir"
+status = "pending"
+description = "Implement a versioned renderer-neutral JSON visualization-summary IR for the ..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T13:23:12"
+commits = []
