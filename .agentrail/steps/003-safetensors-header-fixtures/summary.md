@@ -1,0 +1,1 @@
+Added nine deterministic tiny Safetensors fixtures and an MLPL little-endian header-length decoder that rejects truncation, configured-budget excess, u64 maximum, malformed JSON, and 2^53 precision hazards before inexact multiplication. Documented authoritative format sources and O(file-size) read_bytes behavior. just check passes; commit 6736b1a is pushed to origin/main.
