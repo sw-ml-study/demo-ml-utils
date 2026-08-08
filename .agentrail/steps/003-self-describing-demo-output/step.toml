@@ -1,8 +1,9 @@
 number = 3
 slug = "self-describing-demo-output"
-status = "in-progress"
+status = "completed"
 description = "Make every user-invoked just demo in this repository demonstratable rather th..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T14:09:36"
-commits = []
+completed_at = "2026-08-08T14:15:27"
+commits = ["2989bed2b52afd09214a450f74da94232da4c871"]
