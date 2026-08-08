@@ -1,0 +1,8 @@
+number = 4
+slug = "safetensors-catalog"
+status = "pending"
+description = "Implement the small-file MLPL Safetensors metadata catalog. Validate bounded ..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T10:48:17"
+commits = []

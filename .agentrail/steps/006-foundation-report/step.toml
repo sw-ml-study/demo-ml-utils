@@ -1,0 +1,8 @@
+number = 6
+slug = "foundation-report"
+status = "pending"
+description = "Run the full repository suite and produce the binary-format foundation report..."
+role = "validation"
+context_files = []
+created_at = "2026-08-08T10:48:17"
+commits = []

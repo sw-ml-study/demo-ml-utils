@@ -1,0 +1,8 @@
+number = 5
+slug = "bounded-range-upstream-contract"
+status = "pending"
+description = "Using executable evidence from the preceding demos, write the minimal separat..."
+role = "meta"
+context_files = []
+created_at = "2026-08-08T10:48:17"
+commits = []

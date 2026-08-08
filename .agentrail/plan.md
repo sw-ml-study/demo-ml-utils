@@ -1,0 +1,157 @@
+# ML Artifact Utility Demo Delivery Plan
+
+## Mission and proof standard
+
+Demonstrate that sw-MLPL can inspect, analyze, transform, visualize, and
+validate real ML artifacts while keeping algorithmic work visible in MLPL.
+The repository is a forcing function for general binary/data-processing
+capabilities, not a wrapper collection and not another ML-algorithm survey.
+
+Every deliverable identifies one of three implementation layers:
+
+1. **MLPL implementation** — parsing, analysis, or transformation is expressed
+   in MLPL.
+2. **MLPL plus native capability** — MLPL owns the algorithm while a generic
+   runtime boundary provides range I/O, transport, or rendering.
+3. **External interoperability** — a named tool is an explicit fallback,
+   compatibility implementation, performance baseline, or validation oracle.
+
+No demo may describe layer 2 or 3 work as a native MLPL implementation.
+
+## Current capability boundary
+
+The adjacent sw-MLPL language currently documents:
+
+- sandboxed `read_bytes(path)` and `write_bytes(path, bytes)`, but reads
+  materialize the entire file;
+- f64-backed byte values and fixed-width numeric bit operations such as
+  `band`, `bor`, `bxor`, `bnot`, `shl`, and `shr`;
+- JSON parsing/encoding and ordinary array reductions;
+- browser/server metric streaming, which is not a consumable binary-file
+  stream and must not be presented as one.
+
+The first executable work must probe these facts against the configured
+binary. Large-file acceptance is blocked until bounded range/seek reads are
+available. First-class typed arrays, reinterpretation, and streaming folds are
+valuable follow-ups, but the minimal upstream request should be driven by an
+executable failing need rather than assumed in advance.
+
+## Architecture
+
+```text
+artifact -> bounded reader -> format parser -> tensor catalog
+                                      |              |
+                                      v              v
+                              selective decoder  statistics
+                                      \              /
+                                       visualization IR
+                                               |
+                                browser 3D / JSON / CLI
+```
+
+The browser receives derived summaries and requested level-of-detail tiles,
+never the whole artifact. A CLI/server owns sandboxed file access. Parsers and
+reducers remain MLPL wherever the language can express them.
+
+## Delivery phases
+
+### Phase 0 — repository and capability contract
+
+- Establish licensing, AgentRail instructions, thin validation conventions,
+  fixtures, and a demo/catalog schema.
+- Pin how `$MLPL` or an adjacent build is selected without installing it.
+- Probe whole-file byte I/O, bit operations, JSON limits, integer exactness,
+  and error behavior.
+- Record the smallest upstream contract for bounded `read_range`/seek-like
+  access, including Result errors, sandbox rules, offsets, overflow, and EOF.
+
+Acceptance: `just check` runs deterministic repository checks, and every
+planned claim is marked executable, gated, or external.
+
+### Phase 1 — Safetensors vertical slice
+
+- Generate tiny valid and malformed fixtures locally; do not require model
+  downloads in the default gate.
+- Parse the 8-byte little-endian header length and bounded JSON header.
+- Validate names, dtypes, shapes, offsets, overlap, ordering assumptions,
+  truncation, duplicate metadata, integer overflow, and file bounds.
+- Produce a tensor catalog and aggregate parameter/byte counts.
+- After bounded range I/O exists, selectively read tensor regions and compute
+  mergeable statistics with measured O(chunk-size) memory.
+
+Acceptance: small fixtures work today without false large-file claims; the
+later large-file test analyzes a sparse artifact larger than the configured
+memory budget while staying below a documented high-water mark.
+
+### Phase 2 — GGUF inspection and decoding
+
+- Parse magic/version, metadata, tensor descriptors, alignment, offsets, and
+  tensor types before touching tensor payloads.
+- Add unquantized decoding, then one simple block format (Q8_0), with golden
+  blocks checked against a named reference implementation.
+- Add sampled/mergeable statistics and quantization-block summaries.
+
+Acceptance: arbitrary unsupported tensor types are cataloged without decode;
+supported selected regions decode within the same bounded-memory contract.
+
+### Phase 3 — hierarchical 3D visualization
+
+- Define a renderer-neutral JSON scene/tile IR with stable IDs, labels,
+  positions, scalar attributes, links, and provenance.
+- Implement tensor-city overview, layer/tensor drilldown, distribution and
+  sampled-surface views, and quantization-block inspection.
+- Serve LOD 0 model summaries through LOD 4 selected block/region data.
+
+Acceptance: object and payload budgets are enforced at every LOD; a headless
+snapshot validates the IR independently of the browser renderer.
+
+### Phase 4 — quantization, repacking, and conversion
+
+- Implement F32-to-F16/BF16, symmetric INT8, Q8_0, then simple Q4 in MLPL as
+  capabilities permit; do not begin with K/IQ quant families.
+- Compare original, quantized, and dequantized tensors using size, RMSE,
+  maximum error, cosine similarity, and deterministic samples.
+- Write/validate GGUF only after reader and block round trips are trustworthy.
+- Provide explicit external llama.cpp/Hugging Face routes as optional oracles
+  and fallbacks, never as hidden default behavior.
+
+Acceptance: byte-level golden vectors and round-trip invariants pass, and the
+documentation attributes every operation to MLPL/native/external code.
+
+### Phase 5 — restricted checkpoint extraction
+
+- Recognize PyTorch ZIP/pickle structure passively and produce a risk report.
+- Interpret only an allow-listed, non-executing stack-machine subset needed to
+  recover primitive containers, tensor metadata, and storage references.
+- Reject global lookup, arbitrary construction/call/reduce behavior, extension
+  codes, persistent references outside the explicit tensor-storage policy, and
+  resource-limit violations.
+- Extract tensor bytes to Safetensors and compare names, shapes, dtypes, byte
+  ranges/hashes, and numeric samples with an explicit trusted oracle.
+
+Acceptance: adversarial fixtures execute nothing, unsupported constructs fail
+closed, and successful output contains tensor data plus declarative metadata
+only. Documentation says the serialization path is risky—not the weights.
+
+## Cross-cutting gates
+
+- Default tests use generated, redistributable, tiny fixtures.
+- Large and external tests are opt-in, with exact prerequisites and checksums.
+- Parsers enforce byte, depth, entry-count, shape-rank, allocation, and output
+  budgets before allocation or iteration.
+- Each demo documents logical complexity, actual current copy/allocation
+  behavior, peak-memory methodology, and unsupported cases.
+- Format specifications and security claims must cite authoritative sources
+  when implementation begins; this research transcript is direction, not a
+  normative format specification.
+- Upstream capability work belongs in `../sw-mlpl` only under separate user
+  authorization. This repository records executable requests and remains a
+  consumer.
+
+## Recommended starting point
+
+Begin with the `binary-format-foundations` saga in [sagas.md](sagas.md). It
+delivers useful, honest Safetensors metadata inspection on small fixtures while
+turning bounded range I/O into a precise upstream contract. This produces more
+learning and less architectural risk than starting with graphics, GGUF
+K-quants, or pickle semantics.

@@ -1,0 +1,4 @@
+profile = "default"
+targets = ["AGENTS.md"]
+auto_apply = false
+exclude = []

@@ -1,0 +1,1043 @@
+ChatGPT Pro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+for sw-mlpl, in addition to demos for algorithms, combinators, functional-pipelines, and memory (see https://github.com/orgs/sw-ml-study/repositories) I want to add demos-machine-learning and specifically I want to add a way to 3D visualize an analysis of various common (and possibly large) ML files, like .gguf files, possibly safetensors, (unsafe) weights.   This would involve scanning large files that do not fit in memory, decoding, analysis, 3D rendering (WASM client, cli/server doing the file I/O).   Also, would like to be able to (possibly using external tools) perform quantization or conversion of model files, but would also like to do this kind of bit-level repackaging using native sw-mlpl language.  These demos would be yet another "forcing function" to added needed features into the base sw-mlpl language (or libraries in a yet to be created sw-mlpl-lib repo).   This might force a design of a Rust-based extension mechanisms for sw-mlpl to add native graphics, for example.
+
+Worked for 53s
+Yes. I think demos-machine-learning could become one of the best forcing functions yet for sw-MLPL, because it immediately stresses capabilities that ordinary ML training demos do not: bounded-memory I/O, binary formats, typed integers, bit manipulation, streaming computation, native extensions, client/server execution, visualization, and interoperability.
+
+The pattern already fits the ecosystem philosophy documented in companion-repos.md: companion projects should make executable demands on the language, with only the smallest generally useful capabilities promoted into the core. mlplunit is explicitly cited as the precedent for this process.
+
+I would make this a three-repository architecture
+I would not put GGUF parsing, quantization algorithms, and Three.js/WebGPU visualization into the core interpreter.
+
+sw-mlpl
+    language semantics
+    typed arrays / bytes
+    streaming abstractions
+    extension/provider interface
+    capability discovery
+    native/server integration
+
+sw-mlpl-libraries          <-- existing planned name
+    binary.mlpl
+    stats.mlpl
+    quant.mlpl
+    tensor.mlpl
+    stream.mlpl
+    visualization.mlpl
+    formats/
+        safetensors.mlpl
+        gguf.mlpl
+
+demos-machine-learning
+    01_binary_files/
+    02_safetensors/
+    03_gguf/
+    04_tensor_analysis/
+    05_quantization/
+    06_conversion/
+    07_model_3d/
+    08_large_models/
+There is a small naming collision worth settling now: your existing ecosystem document already calls the planned library repository sw-mlpl-libraries, rather than sw-mlpl-lib. I prefer the existing name because this will probably become a collection of MLPL modules, not a single library.
+
+And demos-machine-learning should depend on those libraries rather than accumulating a private mini-standard-library.
+
+The key architectural idea: don't visualize the model file
+Visualize an analysis stream derived from the model file.
+
+For a 70B model, neither the browser nor sw-MLPL should ever have to materialize the complete weights.
+
+I'd make the pipeline:
+
+                 CLI/server process
+                       |
+                       v
+ model.gguf -> reader -> tensor catalog
+                       |
+                       +--> metadata
+                       |
+                       +--> chunk iterator
+                              |
+                              v
+                       decode / sample
+                              |
+                              v
+                    streaming reducers
+                              |
+                  +-----------+-----------+
+                  |                       |
+                  v                       v
+             statistics              quant info
+                  |                       |
+                  +-----------+-----------+
+                              |
+                              v
+                       visualization IR
+                              |
+                    WebSocket / HTTP
+                              |
+                              v
+                     WASM 3D renderer
+The browser receives perhaps kilobytes or megabytes of derived information, not gigabytes of tensor data.
+
+That also fits the architecture sw-MLPL already has: mlpl-serve exists above the evaluator, and the architecture explicitly embraces services for machine-dependent capabilities.
+
+What I'd visualize
+I wouldn't attempt a single canonical "3D model visualization." Different views reveal different things.
+
+A particularly good initial view would be a tensor city.
+
+Each tensor becomes a rectangular building:
+
+               height = log(parameter count)
+                          |
+                          |
+             +------------+
+            /            /|
+           /            / |
+          +------------+  |
+          |            |  |
+          |            |  |
+          |            | /
+          +------------+
+Position could represent model hierarchy:
+
+embedding
+
+layer 0     q_proj  k_proj  v_proj  o_proj
+layer 1     q_proj  k_proj  v_proj  o_proj
+layer 2     q_proj  k_proj  v_proj  o_proj
+...
+layer N
+
+norm
+lm_head
+Then clicking a tensor drills into other views:
+
+tensor
+  |
+  +-- distribution histogram
+  +-- sampled weight surface
+  +-- quantization blocks
+  +-- magnitude heatmap
+  +-- outlier map
+  +-- zero / near-zero density
+  +-- per-row statistics
+  +-- per-column statistics
+  +-- entropy / effective bits
+A quantized tensor becomes especially interesting in 3D:
+
+              quantization blocks
+
+      +----+----+----+----+----+
+row 0 | Q  | Q  | Q  | Q  | Q  |
+      +----+----+----+----+----+
+row 1 | Q  | Q  | Q  | Q  | Q  |
+      +----+----+----+----+----+
+
+          click block
+              |
+              v
+
+       scale / min / packed bits
+             versus
+       reconstructed values
+That connects file representation directly with the ML concepts the language is intended to teach.
+
+Another powerful view: before/after quantization
+Imagine:
+
+F16 tensor ---------------------- Q4_K tensor
+     \                                /
+      \                              /
+       +---- quantization error ----+
+                   |
+          error distribution
+          outliers
+          RMSE
+          cosine similarity
+          affected rows
+Then the user could rotate around a tensor surface and switch among:
+
+original
+quantized
+dequantized
+absolute error
+relative error
+That is much more educational than merely reporting:
+
+Q4_K_M: 4.83 bits/weight
+GGUF is almost ideal as the first serious target
+GGUF is structured in a way that makes bounded-memory inspection practical. Its file structure consists of a header, metadata key/value pairs, tensor descriptors containing dimensions/type/offset, and then an aligned tensor-data blob.
+
+That means an inspector can initially read only:
+
+header
+metadata
+tensor directory
+and produce a surprisingly rich visualization without decoding the weight blob at all.
+
+Then:
+
+inspect tensor
+      ↓
+seek to tensor offset
+      ↓
+read N blocks
+      ↓
+decode or sample
+      ↓
+calculate statistics
+      ↓
+discard source bytes
+So one of your first demonstrations could handle a 100+ GB GGUF file while maintaining a tiny fixed memory footprint.
+
+That is a compelling general-purpose-language demonstration in its own right.
+
+Safetensors should actually come first
+Implementation-wise, I'd do Safetensors before GGUF.
+
+Safetensors deliberately has a simple representation and supports accessing individual tensors and slices without loading the entire model; Hugging Face describes it as safe and zero-copy and documents partial tensor access.
+
+So I would sequence the format work:
+
+Safetensors metadata inspector.
+
+Safetensors tensor streaming/statistics.
+
+Safetensors 3D visualization.
+
+GGUF metadata/tensor-directory inspector.
+
+GGUF unquantized tensor decoding.
+
+GGUF simple quant formats.
+
+GGUF K-quants and other block formats.
+
+Conversion/quantization.
+
+That gives you useful demonstrations much sooner.
+
+"Unsafe weights" could become a security demo
+I'd explicitly call that category something like PyTorch/pickle checkpoint inspection, because the distinction is educational.
+
+Current PyTorch documentation warns that torch.load() uses an unpickler and says not to load untrusted data; it supports a restricted weights_only mode and memory-mapped storage access.
+
+I therefore would not make:
+
+load_weights("random-internet-file.pt")
+implicitly execute Python serialization machinery.
+
+Instead:
+
+info = inspect_checkpoint("foo.pt")
+could perform passive structural inspection.
+
+And perhaps:
+
+safe = external("pytorch.weights_only", "foo.pt")
+would explicitly invoke a hardened external converter.
+
+That's a nice teaching comparison:
+
+pickle/PT       executable serialization
+safetensors     declarative tensors
+GGUF            inference-oriented tensors + metadata + quantization
+The biggest thing this will force into the language
+Surprisingly, I don't think it is graphics.
+
+It is real binary data types.
+
+From the current README, the CPU reference representation is built around DenseArray and the architecture describes host arrays as bit-exact f64 reference arrays.
+
+GGUF manipulation makes pretending everything is an f64 increasingly awkward.
+
+You will want at minimum something conceptually like:
+
+u8
+i8
+u16
+i16
+u32
+i32
+u64
+i64
+f16
+bf16
+f32
+f64
+plus typed arrays:
+
+bytes : u8[4096]
+
+magic   = read_u32_le(bytes, 0)
+version = read_u32_le(bytes, 4)
+And ultimately:
+
+x = reinterpret(bytes, f32)
+without numerically converting every byte.
+
+That then forces useful general-language operators
+One fairly compact core addition would unlock a lot:
+
+typed integer/byte arrays;
+
+and, or, xor, shifts and masks;
+
+little-/big-endian encode/decode;
+
+cheap array views/slices;
+
+streaming/chunk iteration;
+
+binary read/write/seek;
+
+binary packing/unpacking;
+
+bounded reductions over streams;
+
+explicit reinterpretation versus conversion.
+
+These aren't "GGUF features."
+
+They make sw-MLPL substantially more complete as a systems/data-processing language.
+
+Streaming is probably the second major language forcing function
+I would resist special functions like:
+
+analyze_gguf(...)
+in the core.
+
+Instead you want to make this elegant MLPL:
+
+file_chunks(path, 1_MiB)
+|> map(decode)
+|> map(statistics)
+|> reduce(merge_statistics)
+or whatever the eventual sw-MLPL idiom is.
+
+Conceptually:
+
+source
+  |> chunk
+  |> transform
+  |> filter
+  |> scan
+  |> reduce
+That ties beautifully into demo-functional-pipelines.
+
+The important property is:
+
+memory complexity = O(chunk size)
+not
+memory complexity = O(file size)
+This is exactly the sort of test that prevents array languages from silently assuming "the whole array is in RAM."
+
+I'd distinguish streams from arrays
+Don't make lazy arrays secretly mean streams.
+
+They have different semantics.
+
+Array
+    finite
+    known shape
+    random access
+    potentially reusable
+
+Stream
+    incremental
+    possibly unknown length
+    sequential
+    generally consumed
+Then things such as:
+
+reduce(stats_merge,
+       map(analyze_chunk,
+           chunks(file, 1048576)))
+have clear semantics.
+
+A stream can ultimately produce an array:
+
+collect(take(1000, stream))
+but doesn't masquerade as one.
+
+This will probably also improve dataset handling and training pipelines later.
+
+The Rust extension mechanism
+I agree that this project probably should force you to design one, but I would avoid jumping directly to dlopen() plugins.
+
+Your existing backend architecture already contains the beginning of a much better pattern: device backends register implementations behind a narrow interface, with TensorHandle hiding device-specific storage.
+
+Generalize that concept.
+
+Something like:
+
+trait MlplExtension {
+    fn name(&self) -> &'static str;
+    fn capabilities(&self) -> &[Capability];
+    fn register(&self, registry: &mut Registry);
+}
+with providers such as:
+
+mlpl-ext-files
+mlpl-ext-gguf
+mlpl-ext-safetensors
+mlpl-ext-wgpu
+mlpl-ext-system
+and registrations:
+
+function: file_open
+function: file_read
+function: file_seek
+
+function: gguf_tensor_info
+function: gguf_decode_block
+
+renderer: scene3d
+But initially compile these Rust crates into the native executable.
+
+That gives you:
+
+stable MLPL interface
+       |
+extension registry
+       |
+Rust traits
+       |
+compiled Rust providers
+without immediately inheriting ABI-versioning nightmares.
+
+Later
+You can add:
+
+          Registry
+         /   |    \
+        /    |     \
+ static   process   dynamic
+ Rust     service    plugin
+I would make process/service extensions the next mechanism before dynamic libraries.
+
+They give you isolation, language independence, crash containment, and hardware independence—and that matches the service-oriented direction already described in the sw-MLPL architecture.
+
+Graphics should probably use the same capability system
+Don't add:
+
+threejs(...)
+to the language.
+
+Add a scene description.
+
+For example, MLPL computes:
+
+Scene
+  nodes
+  positions
+  scalar attributes
+  labels
+  connections
+  meshes/points
+and calls something abstract like:
+
+show(scene)
+Then:
+
+Browser:
+    Scene -> WASM -> Three.js/WebGPU
+
+Native:
+    Scene -> wgpu
+
+Headless:
+    Scene -> JSON
+
+Notebook:
+    Scene -> HTML
+Your existing visualization already does something analogous at a simpler level with svg() and helpers for scatter plots, heatmaps, confusion matrices, etc.
+
+So 3D becomes an extension of the visualization IR, rather than language syntax.
+
+That's much cleaner.
+
+I would make the visualization protocol hierarchical
+A giant model could have hundreds or thousands of tensors and billions of individual quantization blocks.
+
+The server should therefore emit levels of detail.
+
+LOD 0
+model
+    64 points/buildings
+
+LOD 1
+layers
+    500 objects
+
+LOD 2
+tensors
+    5,000 objects
+
+LOD 3
+selected tensor
+    sampled 100,000 values
+
+LOD 4
+selected region
+    actual quant blocks
+Interaction drives requests:
+
+browser:
+    "open tensor blk.17.attn_q"
+
+server:
+    seek()
+    read()
+    decode()
+    summarize()
+    send scene tile
+So the renderer stays responsive even for enormous models.
+
+Quantization is where sw-MLPL becomes particularly interesting
+I would support two implementations deliberately.
+
+                        quantize
+                       /        \
+                      /          \
+             external/reference   MLPL/native
+                  |                   |
+             llama.cpp             quant.mlpl
+                  |                   |
+                  +---------+---------+
+                            |
+                         compare
+The llama.cpp project itself provides conversion tools and GGUF quantization infrastructure, making it a natural reference implementation/oracle.
+
+That lets a demo say:
+
+Reference llama.cpp Q8_0 result
+versus
+sw-MLPL Q8_0 implementation
+
+filesize
+RMSE
+max error
+distribution
+bytes/block
+runtime
+That is a fantastic language validation mechanism.
+
+And it avoids requiring sw-MLPL to perfectly reproduce every sophisticated quantizer immediately.
+
+Don't start with K-quants
+I'd build the native MLPL implementation approximately in this order:
+
+F32 -> F16 conversion
+F32 -> BF16
+F32 -> symmetric INT8
+F32 -> Q8_0
+F32 -> simple Q4
+Q8/Q4 decode
+round-trip validator
+GGUF writer
+--------------------------
+then K-quants / IQ formats
+The advanced GGML quantization schemes can come later.
+
+The important early demonstration is that MLPL can perform the actual byte packing itself:
+
+weights
+  -> block
+  -> scale
+  -> quantize
+  -> mask
+  -> shift
+  -> pack
+  -> write
+rather than delegating the interesting part to Rust.
+
+That distinction should govern the entire repository
+Each example should be classified:
+
+MLPL implementation
+    algorithm is actually written in MLPL
+
+MLPL + native primitive
+    MLPL orchestrates generic low-level capability
+
+external interoperability
+    MLPL invokes llama.cpp / another reference implementation
+Otherwise it's easy to accidentally demonstrate Rust while claiming to demonstrate MLPL.
+
+For this repo in particular, I'd strongly emphasize the first category.
+
+A good first milestone
+I would not begin with 3D graphics.
+
+I'd make the first vertical slice:
+
+model.safetensors
+       |
+       v
+bounded binary file reader
+       |
+       v
+MLPL safetensors parser
+       |
+       v
+tensor catalog
+       |
+       v
+streaming tensor statistics
+       |
+       v
+JSON visualization IR
+       |
+       v
+existing browser UI
+Output:
+
+Model: Qwen...
+File: 32.4 GB
+Memory high-water: 18 MB
+
+Tensor                               Shape              Type
+model.embed_tokens.weight            [151936, 3584]     BF16
+model.layers.0.self_attn.q_proj...   [3584, 3584]       BF16
+...
+
+Total parameters
+Type distribution
+Tensor-size distribution
+Weight distribution from samples
+Outlier tensors
+Acceptance criterion: analyze a file many times larger than available process RAM.
+
+That single demo forces:
+
+typed values
+bytes
+file seek/read
+bounded streams
+binary parsing
+statistical reducers
+format libraries
+without graphics muddying the experiment.
+
+Then make GGUF milestone 2
+GGUF adds a valuable new axis because the format explicitly stores tensor types and offsets and supports quantized representations.
+
+I'd make the second acceptance test:
+
+Given an arbitrarily large GGUF file, MLPL can parse all metadata and tensor descriptors, selectively decode any supported tensor region, and report its statistics while keeping memory usage bounded.
+
+Now you have a serious large-file language demonstration.
+
+Then 3D as milestone 3
+At that point the renderer has something stable to consume.
+
+demos-machine-learning/
+
+01-file-inspector.mlpl
+02-safetensors-catalog.mlpl
+03-streaming-stats.mlpl
+04-gguf-catalog.mlpl
+05-quant-block-decode.mlpl
+06-model-map.mlpl
+07-tensor-surface.mlpl
+08-quantization-error.mlpl
+06 is where I'd introduce the 3D model city.
+
+07 drills down.
+
+08 makes the visualization scientifically useful rather than merely attractive.
+
+And quantization becomes milestone 4
+Then:
+
+09-int8-quant.mlpl
+10-q8_0-quant.mlpl
+11-q4-quant.mlpl
+12-quant-compare.mlpl
+13-write-gguf.mlpl
+14-convert-safetensors-gguf.mlpl
+That is where sw-MLPL's general-purpose claim gets significantly stronger.
+
+What I think this should force upstream
+If the demos are implemented without cheating, I'd expect roughly this sequence of upstream requests:
+
+Priority	Capability	Destination
+P0	typed integers and byte arrays	sw-mlpl
+P0	bitwise operations and shifts	sw-mlpl
+P0	binary read/write/seek	core capability/API
+P0	bounded stream/chunk abstraction	sw-mlpl
+P1	endian decode/encode	sw-mlpl-libraries
+P1	binary pack/unpack	libraries, backed by primitives
+P1	streaming statistical reducers	libraries
+P1	Safetensors parser	libraries
+P1	GGUF parser	libraries
+P1	extension/provider registry	sw-mlpl native runtime
+P2	visualization scene IR	core visualization contract
+P2	3D WASM renderer	extension/app
+P2	WebSocket incremental scene transport	server/app
+P2	simple quantizers	libraries
+P3	sophisticated GGML quant formats	libraries/native optimization
+P3	external converter adapters	extension/service
+This is why I think demos-machine-learning is more strategically important than merely adding another collection of ML algorithms.
+
+The existing sw-MLPL repository already has logistic regression, PCA, k-means, MLPs, attention, transformers and a tiny LM. More algorithms demonstrate ML breadth.
+
+This proposed repo instead asks:
+
+Can sw-MLPL manipulate the artifacts that real machine-learning systems actually use?
+
+And that forces a very different—and very valuable—kind of completeness.
+
+The particularly nice convergence
+There are really four projects hiding inside this idea:
+
+                demos-machine-learning
+                         |
+       +-----------------+-----------------+
+       |                 |                 |
+       v                 v                 v
+ binary/data        visualization      interoperability
+ processing
+       |                 |                 |
+       +-----------------+-----------------+
+                         |
+                         v
+                 extension system
+                         |
+                         v
+                general-purpose MLPL
+So I would make this the next major companion demo repository, and use Safetensors → GGUF → 3D → quantization as the progression.
+
+Most importantly, I would establish one rule at the outset:
+
+Whenever an implementation can reasonably be expressed in MLPL, write it in MLPL first. Add a Rust primitive only where the required capability fundamentally crosses the language/runtime boundary or where a generic primitive is missing.
+
+That will make demos-machine-learning do exactly what you want: continually expose whether sw-MLPL is genuinely becoming a general-purpose machine-learning language rather than a front end over Rust libraries.
+
+
+some adjustments: demos-machine-learning was a typo, I meant demo-machine-learning but that still doesn't the naming pattern, so maybe demo-ml-use-cases or demo-ml-tasks or demo-ml-apps or demo-ml-utils?  Re: "unsafe python files" -- they are unsafe presumably because they serialize untrusted python code that could execute implicitly.  Our project has no python, so this cannot happen within sw-mlpl proper.  Converting unsafe file to safer formats would be a worthwhile demo use-case, right?
+
+Yes on both points.
+
+For the repository name, I’d avoid demo-machine-learning because the project is not primarily demonstrating ML algorithms—the core repo already does that. This companion is more about practical manipulation, inspection, conversion, visualization, and transformation of ML artifacts.
+
+My preference order would be:
+
+demo-ml-utils — best match if the emphasis is inspection, conversion, quantization, repacking, validation, and visualization tooling.
+
+demo-ml-tasks — broader and nicely consistent with “here are things ML practitioners actually need to do,” but slightly vague.
+
+demo-ml-use-cases — very accurate, but wordier than the existing demo-memory, demo-algorithms, etc.
+
+demo-ml-apps — sounds more like inference applications, chatbots, classifiers, image apps, etc., which is not really this project.
+
+I think demo-ml-utils is probably the best name. It also gives you room for things like:
+
+demo-ml-utils/
+    inspect/
+    formats/
+    statistics/
+    visualization/
+    conversion/
+    quantization/
+    validation/
+    repacking/
+It says, in effect: these are useful things you can do to ML models and ML data using sw-MLPL.
+
+On “unsafe” Python/PyTorch formats
+Yes—your correction is important.
+
+The danger is not inherent in the weights. The issue is formats based on Python serialization such as pickle, where deserializing an untrusted object can cause Python code or other callable behavior to execute.
+
+Since sw-MLPL has no Python runtime and would not interpret pickle opcodes by invoking Python objects, merely analyzing bytes from such a file does not give it the same execution pathway.
+
+That creates a rather interesting opportunity.
+
+Instead of:
+
+unsafe Python checkpoint
+        |
+        v
+    Python loader
+        |
+        +---- potentially executes serialized behavior
+you could deliberately build:
+
+Python/PyTorch checkpoint
+        |
+        v
+ sw-MLPL binary parser
+        |
+        v
+ extract tensors only
+        |
+        v
+ safetensors / GGUF
+That would be an excellent demo.
+In fact, I'd make it one of the headline applications of demo-ml-utils.
+
+The goal would be something like:
+
+Extract model weights from a Python-oriented checkpoint without executing the serialized program representation.
+
+That is considerably more interesting than merely calling an external conversion script.
+
+But there is an important distinction
+“No Python runtime” does not automatically mean arbitrary pickle files can be safely converted.
+
+A pickle stream is effectively a small stack-machine program. To recover objects from it, you still have to interpret its opcodes. Some opcodes refer to globals/classes/functions and are intended to cause construction or invocation behavior.
+
+So the sw-MLPL implementation should treat pickle more like an untrusted executable file format than an ordinary serializer.
+
+Conceptually:
+
+                  pickle stream
+                       |
+                       v
+                opcode parser
+                       |
+            +----------+----------+
+            |                     |
+            v                     v
+      permitted subset       prohibited opcode/
+                             object construction
+            |                     |
+            v                     X
+      tensor metadata          reject
+      tensor references
+            |
+            v
+      raw tensor storage
+You would parse, not “execute,” it.
+
+That distinction itself would make a good educational demo.
+
+A deliberately restricted checkpoint reader
+I would design something along these lines:
+
+checkpoint = checkpoint.inspect("model.bin")
+
+checkpoint.format
+checkpoint.tensors
+checkpoint.storage
+checkpoint.unsupported_constructs
+checkpoint.risk_report
+Then conversion:
+
+checkpoint
+|> checkpoint.tensor_data
+|> safetensors.write("model.safetensors")
+But the parser would have an allow-list.
+
+For example, conceptually:
+
+allowed:
+    scalar literals
+    strings
+    lists
+    tuples
+    dictionaries
+    storage references
+    tensor metadata
+    shape / stride information
+
+recognized but NOT executed:
+    global lookup
+    class construction
+    reduce/call behavior
+    extension codes
+If something requires arbitrary object construction:
+
+conversion refused:
+unsupported executable serialization construct
+That's much stronger than saying “we don't have Python, therefore it is safe.”
+
+It also creates a nice three-format progression
+This could become one of the strongest early demo sequences:
+
+PyTorch/pickle checkpoint
+        |
+        | passive/restricted extraction
+        v
+   Safetensors
+        |
+        | inspect / transform / quantize
+        v
+       GGUF
+Each format teaches something different:
+
+checkpoint/pickle
+    serialization semantics
+    security boundaries
+    binary parsing
+
+safetensors
+    tensor metadata
+    offsets
+    dtypes
+    zero-copy / bounded access
+
+GGUF
+    inference-oriented layout
+    quantized tensor types
+    block packing
+    model metadata
+That is a much more coherent storyline for demo-ml-utils than just collecting random file readers.
+
+I'd include external conversion too
+You mentioned “possibly using external tools,” and I think that is important.
+
+There should be two paths:
+
+                       conversion
+                      /          \
+                     /            \
+          native sw-MLPL        external
+               |                    |
+        parser/repacker      Python/HF/llama.cpp
+               |                    |
+               +---------+----------+
+                         |
+                      validate
+External tools serve as:
+
+compatibility fallback;
+
+reference implementation;
+
+validation oracle;
+
+support for formats MLPL doesn't yet understand;
+
+performance baseline.
+
+Native MLPL demonstrates language completeness.
+
+For example:
+
+demo: convert-checkpoint-external
+    .bin -> external converter -> safetensors
+
+demo: convert-checkpoint-native
+    .bin -> sw-MLPL restricted reader -> safetensors
+
+demo: compare-conversions
+    tensor names
+    shapes
+    dtypes
+    hashes
+    numeric equality
+That last one is particularly valuable because the external implementation helps validate the native one.
+
+This also changes what I would build first
+With your clarification, I'd slightly revise my earlier ordering.
+
+I would now consider:
+
+1. Binary streaming primitives
+2. Safetensors reader
+3. Safetensors inspector
+4. Large-model statistics
+5. 3D model/tensor visualization
+
+6. Restricted PyTorch/pickle inspector
+7. Safe tensor extraction
+8. checkpoint -> safetensors conversion
+
+9. GGUF reader
+10. GGUF quantized-block visualization
+11. native quantization
+12. safetensors -> GGUF conversion
+I would still start with Safetensors because it gives you the cleanest way to establish the binary/streaming infrastructure before tackling the much trickier serialization semantics.
+
+Then the “unsafe checkpoint → safe tensor-only format” demo becomes a test of how capable those generic binary facilities have become.
+
+An especially compelling demo UI
+I can imagine loading a checkpoint and seeing:
+
+Model checkpoint inspection
+──────────────────────────────────────────
+
+File: model.bin
+Size: 13.5 GB
+
+Serialization:
+  PyTorch ZIP + pickle
+
+Tensor storages:
+  291
+
+Tensor parameters:
+  7,241,732,096
+
+Executable/object constructs:
+  14 encountered
+  14 ignored/rejected
+  0 executed
+
+Convertible tensor data:
+  13.48 GB
+
+Suggested target:
+  safetensors
+Then:
+
+[ Convert tensor data only ]
+And after conversion:
+
+Verification
+
+291 / 291 tensors present
+291 shapes match
+291 dtypes match
+291 content hashes match
+
+No Python object serialization in output.
+That would make an exceptionally clear demonstration of why the formats differ.
+
+One terminology tweak
+I probably wouldn't name demos things like:
+
+unsafe_weights.mlpl
+because the weights aren't unsafe.
+
+I'd use names such as:
+
+inspect-pytorch-checkpoint.mlpl
+restricted-pickle-reader.mlpl
+extract-checkpoint-tensors.mlpl
+checkpoint-to-safetensors.mlpl
+verify-safe-conversion.mlpl
+And documentation could say:
+
+Some Python ecosystem checkpoint formats use general-purpose object serialization. Loading untrusted files through their native Python deserializer can execute behavior encoded by the serialization. This demo extracts the tensor representation without invoking Python or arbitrary object constructors.
+
+That is both more technically precise and a stronger claim.
+
+So my revised framing
+Repository: demo-ml-utils
+
+Mission:
+
+Demonstrate practical ML artifact manipulation in sw-MLPL: inspect huge model files with bounded memory, understand tensor layouts visually, safely extract tensors from general-purpose serialized checkpoints, convert between formats, quantify/repack weights, and validate the results.
+
+That actually makes the repository's purpose much clearer than demo-machine-learning would have. And the checkpoint → Safetensors → GGUF journey gives it a very natural narrative rather than being merely a bag of utilities.

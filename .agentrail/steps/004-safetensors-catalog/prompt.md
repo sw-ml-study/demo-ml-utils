@@ -1,0 +1,1 @@
+Implement the small-file MLPL Safetensors metadata catalog. Validate bounded JSON header schema, tensor names, supported dtypes, shapes, offsets, non-overlap, data/file bounds, duplicate and malformed cases; emit deterministic tensor and aggregate counts. Attribute MLPL/native work precisely, run just check, update catalog/docs, commit before agentrail complete, then stop.

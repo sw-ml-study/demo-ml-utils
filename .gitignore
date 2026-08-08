@@ -1,0 +1,25 @@
+# OS and editor state
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Build, coverage, and scratch output
+target/
+dist/
+coverage/
+tmp/
+*.tmp
+*.log
+
+# Downloaded/generated model artifacts belong outside version control.
+# Tiny deterministic test fixtures under fixtures/ remain trackable.
+artifacts/
+models/

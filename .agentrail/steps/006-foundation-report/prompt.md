@@ -1,0 +1,1 @@
+Run the full repository suite and produce the binary-format foundation report: runnable demos, implementation-layer attribution, logical and actual memory complexity, limitations, and exact Saga 2 gate status. Reconcile README, plan, saga queue, and catalog. Commit the evidence and AgentRail metadata before agentrail complete; complete the saga with --done and stop.
