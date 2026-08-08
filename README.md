@@ -27,6 +27,8 @@ The [capability report](docs/capabilities.md) records executable observations
 from the configured interpreter and the resulting Safetensors constraints.
 The [bounded Safetensors catalog](docs/safetensors-catalog.md) documents its
 validation, attribution, output, and complexity contracts.
+The [selective tensor decoder](docs/safetensors-slice.md) documents bounded
+integer payload reads, implementation attribution, and current dtype limits.
 The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
 decode budgets, and record discovery to executable downstream evidence.
 

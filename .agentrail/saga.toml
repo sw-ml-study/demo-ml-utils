@@ -1,6 +1,6 @@
-name = "binary-format-foundations"
-status = "completed"
-current_step = 7
-created_at = "2026-08-08T10:47:51"
+name = "bounded-safetensors-analysis"
+status = "active"
+current_step = 1
+created_at = "2026-08-08T12:46:59"
 plan_file = ".agentrail/plan.md"
 retroactive = false

@@ -1,0 +1,8 @@
+number = 1
+slug = "selective-slice-dtype-decode"
+status = "in-progress"
+description = "Implement selective Safetensors tensor-region reads and golden decoding for a..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T12:47:14"
+commits = []

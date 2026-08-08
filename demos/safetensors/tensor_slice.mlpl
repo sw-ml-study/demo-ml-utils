@@ -1,0 +1,8 @@
+include "../../src/formats/safetensors_slice.mlpl";
+
+path = unwrap_or(list_get(args(), 0), "fixtures/safetensors/valid-decode.safetensors");
+name = unwrap_or(list_get(args(), 1), "i16_values");
+decoded = u:read_safetensors_tensor(path, name, 4096, 256, 1000000, 4096)?;
+print("Selectively decoded Safetensors tensor:");
+print(decoded);
+ok(decoded)

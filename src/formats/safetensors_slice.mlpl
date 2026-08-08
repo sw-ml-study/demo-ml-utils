@@ -1,0 +1,36 @@
+include "safetensors_catalog.mlpl";
+
+def u:safetensors_slice_dtype_width(dtype) { "Return the width of a dtype supported by the first selective decoder.";
+  if equal(dtype, "U8") + equal(dtype, "I8") { ok(1) } else {
+  if equal(dtype, "U16") + equal(dtype, "I16") { ok(2) } else { err("Safetensors selective decoder supports only U8, I8, U16, and I16") }
+  }
+}
+
+def u:decode_unsigned_le(bytes, offset, width, index, value, multiplier) { "Decode one little-endian unsigned value from an already bounded byte array.";
+  if eq(index, width) { value } else { u:decode_unsigned_le(bytes, offset, width, index + 1, value + take(bytes, 0, offset + index) * multiplier, multiplier * 256) }
+}
+
+def u:decode_slice_values(bytes, dtype, width, offset, values) { "Decode a supported integer slice in MLPL.";
+  if eq(offset, tally(bytes)) { values } else {
+    unsigned = u:decode_unsigned_le(bytes, offset, width, 0, 0, 1);
+    signed = equal(dtype, "I8") + equal(dtype, "I16"); limit = if eq(width, 1) { 128 } else { 32768 }; modulus = limit * 2;
+    value = if signed * gt(unsigned, limit - 1) { unsigned - modulus } else { unsigned };
+    u:decode_slice_values(bytes, dtype, width, offset + width, concat(values, value))
+  }
+}
+
+def u:read_safetensors_tensor(path, name, max_header_bytes, max_elements, max_parameters, max_read_bytes) { "Validate the artifact, then selectively read and decode one budgeted tensor payload.";
+  if (1 - equal(type_of(name), "string")) + equal(name, "__metadata__") { err("Safetensors tensor name must be a non-metadata string") } else {
+  if (1 - eq(rank(max_read_bytes), 0)) + (1 - eq(max_read_bytes, floor(max_read_bytes))) + lt(max_read_bytes, 0) + gt(max_read_bytes, 9007199254740991) { err("Safetensors read budget must be a non-negative exact integer") } else {
+  u:catalog_safetensors(path, max_header_bytes, max_elements, max_parameters)?;
+  raw = u:read_safetensors_header(path, max_header_bytes)?;
+  header = parse_json(decode_bytes(raw.header_bytes), {max_depth: 8, max_bytes: max_header_bytes, max_elements: max_elements})?;
+  info = record_get(header, name)?; dtype = record_get(info, "dtype")?; shape = record_get(info, "shape")?; offsets = record_get(info, "data_offsets")?;
+  width = u:safetensors_slice_dtype_width(dtype)?; start = take(offsets, 0, 0); ending = take(offsets, 0, 1); byte_count = ending - start;
+  if 1 - eq(mod(byte_count, width), 0) { err("Safetensors tensor byte range is not element-aligned") } else {
+  if gt(byte_count, max_read_bytes) { err("Safetensors tensor exceeds the configured read budget") } else {
+  file_offset = 8 + raw.header_length + start; bytes = read_bytes(path, file_offset, byte_count)?;
+  if 1 - eq(tally(bytes), byte_count) { err("Safetensors selective payload read returned fewer bytes than validated") } else {
+  ok({name: name, dtype: dtype, shape: shape, byte_count: byte_count, file_offset: file_offset, values: u:decode_slice_values(bytes, dtype, width, 0, fill([0], 0))})
+  } } } } }
+}

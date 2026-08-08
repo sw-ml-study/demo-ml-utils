@@ -6,7 +6,7 @@ links_file=$(mktemp "${TMPDIR:-/tmp}/demo-ml-utils-links.XXXXXX")
 trap 'rm -f "$links_file"' EXIT HUP INT TERM
 failed=0
 
-find "$repo_root" \( -path "$repo_root/.git" -o -path "$repo_root/.agentrail" \) -prune -o -type f -name '*.md' -print |
+find "$repo_root" \( -path "$repo_root/.git" -o -path "$repo_root/.agentrail" -o -path "$repo_root/.agentrail-archive" \) -prune -o -type f -name '*.md' -print |
 while IFS= read -r document; do
   awk -v document="$document" '
   {

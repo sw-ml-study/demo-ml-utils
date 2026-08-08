@@ -1,0 +1,23 @@
+include "../src/formats/safetensors_slice.mlpl";
+
+def u:require_slice(condition, message) { "Return Ok for a true slice invariant."; if condition { ok(1) } else { err(message) } }
+def u:read_fixture(name, budget) { "Read a named tensor from the decoder fixture."; u:read_safetensors_tensor("fixtures/safetensors/valid-decode.safetensors", name, 4096, 256, 1000000, budget) }
+
+u8 = u:read_fixture("u8_values", 3)?;
+u:require_slice(equal(u8.values, [0,127,255]), "U8 golden decode")?;
+i8 = u:read_fixture("i8_values", 3)?;
+u:require_slice(equal(i8.values, [-128,-1,127]), "I8 golden decode")?;
+u16 = u:read_fixture("u16_values", 4)?;
+u:require_slice(equal(u16.values, [1,65535]), "U16 little-endian decode")?;
+i16 = u:read_fixture("i16_values", 6)?;
+u:require_slice(equal(i16.values, [-32768,-2,32767]), "I16 little-endian decode")?;
+u:require_slice(equal([i16.byte_count,tally(i16.values)], [6,3]), "selective result metadata")?;
+
+u:require_slice(is_err(u:read_fixture("i16_values", 5)), "read-budget rejection")?;
+u:require_slice(is_err(u:read_fixture("missing", 100)), "missing tensor rejection")?;
+u:require_slice(is_err(u:read_safetensors_tensor("fixtures/safetensors/valid-catalog.safetensors", "tensor_b", 4096, 256, 1000000, 100)), "unsupported F16 rejection")?;
+u:require_slice(is_err(u:read_safetensors_tensor("fixtures/safetensors/valid-catalog.safetensors", "__metadata__", 4096, 256, 1000000, 100)), "metadata rejection")?;
+u:require_slice(is_err(u:read_fixture("u8_values", -1)), "invalid budget rejection")?;
+
+print("PASS Safetensors selective slice decoder");
+ok(1)

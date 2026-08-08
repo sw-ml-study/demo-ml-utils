@@ -22,19 +22,19 @@ No demo may describe layer 2 or 3 work as a native MLPL implementation.
 
 The adjacent sw-MLPL language currently documents:
 
-- sandboxed whole-file and bounded `read_bytes(path, offset, length)`,
-  `file_size(path)`, and `write_bytes(path, bytes)`;
+- sandboxed `read_bytes(path)` and `write_bytes(path, bytes)`, but reads
+  materialize the entire file;
 - f64-backed byte values and fixed-width numeric bit operations such as
   `band`, `bor`, `bxor`, `bnot`, `shl`, and `shr`;
-- JSON parsing/encoding with depth, byte, and element budgets and ordinary
-  array reductions;
+- JSON parsing/encoding and ordinary array reductions;
 - browser/server metric streaming, which is not a consumable binary-file
   stream and must not be presented as one.
 
-Executable probes pin these facts against the configured binary. Bounded
-Safetensors header inspection and arbitrary tensor discovery are available.
-First-class typed arrays, reinterpretation, and streaming folds remain
-valuable follow-ups driven by executable need.
+The first executable work must probe these facts against the configured
+binary. Large-file acceptance is blocked until bounded range/seek reads are
+available. First-class typed arrays, reinterpretation, and streaming folds are
+valuable follow-ups, but the minimal upstream request should be driven by an
+executable failing need rather than assumed in advance.
 
 ## Architecture
 
@@ -65,10 +65,6 @@ reducers remain MLPL wherever the language can express them.
 - Record the smallest upstream contract for bounded `read_range`/seek-like
   access, including Result errors, sandbox rules, offsets, overflow, and EOF.
 
-Status: fulfilled by bounded `read_bytes`, `file_size`, the decode-budget trio,
-duplicate-key rejection, and deterministic `record_keys`; see
-[upstream-contract.md](upstream-contract.md) for conformance evidence.
-
 Acceptance: `just check` runs deterministic repository checks, and every
 planned claim is marked executable, gated, or external.
 
@@ -86,12 +82,6 @@ planned claim is marked executable, gated, or external.
 Acceptance: small fixtures work today without false large-file claims; the
 later large-file test analyzes a sparse artifact larger than the configured
 memory budget while staying below a documented high-water mark.
-
-Current status: bounded arbitrary-name metadata cataloging is runnable. Tensor
-payload selection and U8/I8/U16/I16 decoding are runnable; mergeable statistics
-remain later work. The completed
-[binary-format foundation report](foundation-report.md) records the acceptance
-evidence, attribution, complexity, limitations, and exact Saga 2 gate state.
 
 ### Phase 2 — GGUF inspection and decoding
 
@@ -158,10 +148,10 @@ only. Documentation says the serialization path is risky—not the weights.
   authorization. This repository records executable requests and remains a
   consumer.
 
-## Recommended next increment
+## Recommended starting point
 
-Continue the active `bounded-safetensors-analysis` saga in
-[sagas.md](sagas.md) by layering fixed-chunk mergeable statistics over the
-runnable selective integer decoder. Range-reader conformance is already
-covered by the completed foundation and should be carried forward as evidence
-rather than reimplemented.
+Begin with the `binary-format-foundations` saga in [sagas.md](sagas.md). It
+delivers useful, honest Safetensors metadata inspection on small fixtures while
+turning bounded range I/O into a precise upstream contract. This produces more
+learning and less architectural risk than starting with graphics, GGUF
+K-quants, or pickle semantics.

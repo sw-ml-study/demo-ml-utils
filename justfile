@@ -36,6 +36,10 @@ safetensors-headers:
 safetensors-catalog:
     ./scripts/run-safetensors-catalog
 
+# Selectively read and decode one bounded Safetensors tensor.
+safetensors-slice:
+    ./scripts/run-safetensors-slice
+
 # Run the complete local pre-commit gate.
 check:
     ./scripts/check

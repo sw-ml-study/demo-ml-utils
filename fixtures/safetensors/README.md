@@ -11,6 +11,7 @@ JSON, then tensor data. Hugging Face also documents metadata-only access using
 | `valid-small.safetensors` | One four-byte U8 tensor |
 | `valid-empty.safetensors` | Valid empty JSON object and no data |
 | `valid-catalog.safetensors` | Three sorted-discovery tensors, metadata, mixed dtypes, and one empty tensor |
+| `valid-decode.safetensors` | Golden U8, I8, U16, and I16 little-endian tensor payloads |
 | `boundary-header.safetensors` | Exactly 4096 header bytes using permitted space padding |
 | `empty.safetensors` | No length prefix |
 | `truncated-prefix.safetensors` | Only four prefix bytes |

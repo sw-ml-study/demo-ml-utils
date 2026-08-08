@@ -26,13 +26,14 @@ evidence and limitations needed for closeout.
 
 ## Saga 2 — `bounded-safetensors-analysis`
 
-Status: unblocked, not started. The gate is satisfied: bounded range I/O,
+Status: active. The gate is satisfied: bounded range I/O,
 `file_size`, budgeted JSON decoding, duplicate-key rejection, and deterministic
 record enumeration are shipped and covered by the repository gate.
 
 1. Carry forward the completed range-reader conformance and adversarial
    EOF/overflow evidence.
-2. Selective tensor slice reads and dtype decoding.
+2. Selective tensor slice reads and initial U8/I8/U16/I16 decoding — runnable
+   in the default gate.
 3. Mergeable streaming statistics with fixed chunk size.
 4. Sparse large-artifact acceptance and measured peak memory.
 5. JSON visualization-summary IR and headless validation.
