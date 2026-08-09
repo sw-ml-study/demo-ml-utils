@@ -1,8 +1,9 @@
 number = 4
 slug = "held-out-icrl-rollout"
-status = "in-progress"
+status = "completed"
 description = "On held-out deterministic bandit tasks, demonstrate reward adaptation from a ..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T14:09:26"
-commits = []
+completed_at = "2026-08-09T15:07:17"
+commits = ["7e00d49c3c0aec1adff0fe0d83a6daac46a3b8f8"]
