@@ -68,7 +68,8 @@ a budgeted renderer-neutral handoff.
    catalogs without payload reads.
 3. Selected-tensor distribution and sampled-surface tiles — runnable for
    bounded Safetensors integer and GGUF Q8_0 selections.
-4. Quantization-block and before/after error tiles.
+4. Q8_0 quantization-block and before/after error tiles — runnable with golden
+   pointwise and aggregate metrics.
 5. CLI/server transport and WASM 3D client, with headless snapshots retained.
 
 ## Saga 5 — `native-quantization-and-conversion`

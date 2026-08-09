@@ -24,6 +24,7 @@ check_demo safetensors-summary scripts/run-safetensors-summary
 check_demo scene-tiles scripts/run-scene-tiles
 check_demo tensor-city scripts/run-tensor-city
 check_demo detail-tiles scripts/run-detail-tiles
+check_demo quantization-error scripts/run-quantization-error
 check_demo gguf-catalog scripts/run-gguf-catalog
 check_demo gguf-slice scripts/run-gguf-slice
 check_demo gguf-q8-0 scripts/run-gguf-q8-0

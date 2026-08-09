@@ -1,0 +1,13 @@
+include "detail_tiles.mlpl";
+
+def u:qerror_metrics(reference,reconstructed) { "Compute bounded reconstruction metrics with an explicit zero-vector cosine policy.";
+  errors = reconstructed - reference; count = tally(errors); squared = errors * errors; reference_norm2 = reduce_add(reference * reference); reconstructed_norm2 = reduce_add(reconstructed * reconstructed); cosine = if eq(reference_norm2,0) * eq(reconstructed_norm2,0) { 1 } else { if eq(reference_norm2,0) + eq(reconstructed_norm2,0) { 0 } else { reduce_add(reference * reconstructed) / sqrt(reference_norm2 * reconstructed_norm2) } }; {count: count,rmse: sqrt(reduce_add(squared)/count),max_error: reduce(:max,abs(errors)),cosine: cosine,errors: errors}
+}
+def u:build_q8_error_tile(path,artifact_id,name,reference,b) { "Build one bounded Q8_0 block and reconstruction-error tile.";
+  if (1 - eq(rank(reference),1)) + gt(tally(reference),b.max_reference_values) + lt(b.max_objects,4) + lt(b.max_metric_fields,6) + lt(b.max_iterations,1) { err("invalid quantization error tile budget") } else {
+  decoded = u:read_gguf_q8_0(path,name,b.max_catalog_bytes,b.max_metadata,b.max_tensors,b.max_string_bytes,b.max_rank,b.max_parameters,b.max_payload_bytes,b.max_blocks,b.max_points)?; if 1 - eq(tally(reference),tally(decoded.values)) { err("quantization reference length mismatch") } else {
+  scale = take(decoded.scales,0,0); if eq(scale,0) { quants = fill([tally(decoded.values)],0) } else { quants = decoded.values / scale }; metrics = u:qerror_metrics(reference,decoded.values); if gt(reduce(:max,abs(reference)),b.max_value) + gt(reduce(:max,abs(decoded.values)),b.max_value) { err("quantization tile value budget exceeded") } else {
+  parent_id = u:summary_join(artifact_id,":tensor:",name); ir = {schema:"sw-ml-study.q8-error-tile",version:1,provenance:{analyzer:"mlpl-q8-error-analysis",artifact_id: artifact_id,tensor_name: name},tile:{parent_id: parent_id,lod:3,scale: scale,quantized_bytes: decoded.byte_count,reference_bytes: tally(reference)*4,compression_ratio: tally(reference)*4/decoded.byte_count,quants: quants,dequantized: decoded.values,reference: reference,errors: metrics.errors,rmse: metrics.rmse,max_error: metrics.max_error,cosine: metrics.cosine}};
+  json = to_json(ir,{tagged:1})?; if gt(tally(tokenize_bytes(json)),b.max_output_bytes) { err("quantization tile output budget exceeded") } else { round = parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1 - equal(round,ir) { err("quantization tile JSON round trip changed IR") } else { ok({ir: ir,json: json,utf8_bytes: tally(tokenize_bytes(json))}) } }
+  } } }
+}

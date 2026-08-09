@@ -38,6 +38,8 @@ two deterministic artifact districts with stable IDs and renderer-neutral
 building geometry, still without reading tensor payloads.
 The [detail-tile schema](docs/detail-tiles.md) adds bounded histograms and
 deterministic sampled surface strips for selected Safetensors and GGUF tensors.
+The [Q8_0 error tile](docs/quantization-error-tiles.md) exposes block evidence,
+pointwise reconstruction errors, and aggregate quality/size metrics.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

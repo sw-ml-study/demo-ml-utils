@@ -61,6 +61,10 @@ tensor-city:
 detail-tiles:
     ./scripts/run-detail-tiles
 
+# Demonstrate Q8_0 block and reconstruction-error metrics.
+quantization-error:
+    ./scripts/run-quantization-error
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

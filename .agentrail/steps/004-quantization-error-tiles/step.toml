@@ -1,6 +1,6 @@
 number = 4
 slug = "quantization-error-tiles"
-status = "pending"
+status = "in-progress"
 description = "Implement renderer-neutral Q8_0 quantization-block and before/after error til..."
 role = "production"
 context_files = []

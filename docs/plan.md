@@ -134,7 +134,8 @@ both complete fixture catalogs with columnar stable IDs, name hierarchy,
 districts, positions, extents, heights, scalar attributes, and headless tagged
 JSON validation. Selected-tensor distribution and sampled-surface tiles are
 also runnable for accepted integer and Q8_0 paths. Quantization comparison
-tiles remain the next step.
+tiles with Q8_0 block evidence and reconstruction metrics are runnable. The
+transport/optional-client acceptance step remains next.
 
 ### Phase 4 — quantization, repacking, and conversion
 
