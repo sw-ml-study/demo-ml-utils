@@ -1,8 +1,9 @@
 number = 2
 slug = "associative-icl"
-status = "in-progress"
+status = "completed"
 description = "Implement a frozen-parameter associative attention or nearest-example in-cont..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T13:37:27"
-commits = []
+completed_at = "2026-08-09T13:52:58"
+commits = ["e4ebf3f656da89b65401af63dd2175c0581bb95e"]
