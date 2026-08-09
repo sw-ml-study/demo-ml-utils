@@ -81,6 +81,10 @@ symmetric-roundtrip:
 simple-q4:
     ./scripts/run-simple-q4
 
+# Demonstrate bounded self-validating Safetensors-to-GGUF writing.
+safetensors-to-gguf:
+    ./scripts/run-safetensors-to-gguf
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

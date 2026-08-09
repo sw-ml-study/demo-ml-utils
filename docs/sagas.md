@@ -88,7 +88,8 @@ transport now provide reusable golden evidence for encoder work.
    bytes, independent existing-decoder acceptance, and reconstruction metrics.
 3. Simple Q4 encode/decode round trips — runnable with an explicit teaching
    layout, exact nibble bytes, size ratio, and reconstruction evidence.
-4. Safetensors-to-GGUF writer with self-validation.
+4. Safetensors-to-GGUF writer with self-validation — runnable for one bounded
+   rank-one I8/I16 tensor with atomic output and catalog/value read-back.
 5. Explicit external oracle adapters and reproducible comparison report.
 
 ## Saga 6 — `restricted-checkpoint-extraction`

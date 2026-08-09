@@ -161,8 +161,10 @@ golden and adversarial tests. Symmetric INT8 and GGUF-compatible Q8_0 encoders
 are also runnable with exact payload goldens, binary16 scale encoding,
 independent existing-decoder acceptance, and reconstruction metrics. An
 explicit simple teaching Q4 layout is also runnable with exact nibble bytes,
-18-byte blocks, and reconstruction/size evidence. A self-validating writer is
-the next increment.
+18-byte blocks, and reconstruction/size evidence. A deterministic
+Safetensors-to-GGUF v3 writer is runnable for one bounded rank-one I8/I16
+tensor, with atomic replacement and catalog/selective-decode equality before
+success. External oracle comparison and final acceptance are next.
 
 ### Phase 5 — restricted checkpoint extraction
 
