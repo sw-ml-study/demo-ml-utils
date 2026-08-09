@@ -1,8 +1,9 @@
 number = 2
 slug = "allowlisted-pickle-machine"
-status = "pending"
+status = "completed"
 description = "Implement a budgeted allow-listed primitive pickle stack machine that never resolves or invokes executable constructs."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T09:59:03"
-commits = []
+completed_at = "2026-08-09T10:24:14"
+commits = ["b7046f3b7a45e69ba669913cbe387486b6307171"]
