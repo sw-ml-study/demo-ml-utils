@@ -1,0 +1,1 @@
+Implement a bounded manual-gradient linear fine-tuning demo on a deterministic tiny task. Show initial/final parameters, selected loss points, gradients, held-out predictions, update count, stopping reason, no-training baseline, excessive-learning-rate rejection, budgets, and a narrated interpretation.

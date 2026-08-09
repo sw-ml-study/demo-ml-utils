@@ -1,0 +1,1 @@
+Implement a teaching-sized frozen-base rank-one/rank-two adapter. Demonstrate trained adapter parameters, delta and merged weights, merged/unmerged inference parity, trainable-versus-total parameter counts, loss/held-out evidence, budgets, and explicit distinction from production-scale LoRA.

@@ -1,0 +1,1 @@
+Build and headlessly validate a versioned renderer-neutral adaptation IR covering loss curves, parameter updates, predictions, baselines, and provenance for full and low-rank fine-tuning. Add deterministic tagged JSON, budgets, a self-describing demo, and documentation.

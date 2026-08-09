@@ -1,0 +1,1 @@
+Add deterministic and adversarial fine-tuning acceptance: split leakage, malformed/non-finite data, iteration/output limits, reproducibility, atomic run reports, optional independent oracle comparison, final attribution/limitations documentation, and close the bounded-fine-tuning saga.
