@@ -1,8 +1,9 @@
 number = 3
 slug = "low-rank-adapter"
-status = "in-progress"
+status = "completed"
 description = "Implement a teaching-sized frozen-base rank-one/rank-two adapter. Demonstrate..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T12:49:15"
-commits = []
+completed_at = "2026-08-09T13:14:26"
+commits = ["024cace4be61d1bf4a82a079466a0d89200a812b"]
