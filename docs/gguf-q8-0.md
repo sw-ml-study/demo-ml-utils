@@ -30,4 +30,5 @@ a documented target for a future streaming reduction.
 Run `just gguf-q8-0` for the narrated scale-and-ramp demonstration. Only
 finite little-endian Q8_0, complete whole-tensor reads, and materialized output
 are supported. Encoding, partial tensor selection, other quantized families,
-big-endian data, and chunked statistics remain out of scope.
+and big-endian data remain out of scope. Chunk-bounded sampled statistics are
+now covered by the [GGUF acceptance report](gguf-acceptance-report.md).

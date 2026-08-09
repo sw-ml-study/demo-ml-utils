@@ -61,9 +61,17 @@ gguf-slice:
 gguf-q8-0:
     ./scripts/run-gguf-q8-0
 
+# Demonstrate sampled, chunk-bounded, mergeable GGUF statistics.
+gguf-statistics:
+    ./scripts/run-gguf-statistics
+
 # Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
 sparse-acceptance:
     ./scripts/run-sparse-safetensors-acceptance
+
+# Opt-in: generate a 1 MiB sparse GGUF and enforce its peak-RSS bound.
+gguf-sparse-acceptance:
+    ./scripts/run-sparse-gguf-acceptance
 
 # Run the complete local pre-commit gate.
 check:

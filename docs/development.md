@@ -58,8 +58,8 @@ generation before running the MLPL decoder tests.
 
 ## Demonstrations versus validation
 
-User-facing recipes such as `just safetensors-statistics` and
-`just gguf-catalog` first run internal golden/adversarial assertions quietly,
+User-facing recipes such as `just safetensors-statistics`, `just gguf-catalog`,
+and `just gguf-statistics` first run internal golden/adversarial assertions quietly,
 then display an actual narrated scenario. Each output identifies the native
 boundary and MLPL-owned algorithm, active budgets, representative result, and
 how to interpret it. `tests/test-demo-output` executes every fast demo and
@@ -68,3 +68,5 @@ checks this presentation contract; `just check` keeps their narrative hidden.
 `just sparse-acceptance` follows the same narrative contract but remains
 opt-in because it creates a temporary 1 MiB sparse artifact, performs a longer
 scalar reduction, and queries platform peak-RSS metrics.
+`just gguf-sparse-acceptance` applies the same opt-in measurement to a generated
+GGUF I8 tensor with explicit iteration, sample, and report budgets.

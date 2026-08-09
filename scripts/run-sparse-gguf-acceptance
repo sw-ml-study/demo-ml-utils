@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+mkdir -p "$repo_root/tmp"; work_dir=$(mktemp -d "$repo_root/tmp/gguf-sparse.XXXXXX"); trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+payload_bytes=1048576; chunk_bytes=256; max_rss_bytes=16777216; artifact="$work_dir/large-zero.gguf"; program_output="$work_dir/program.out"; metrics_output="$work_dir/time.err"
+u32() { value=$1; file=$2; i=0; while [ "$i" -lt 4 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
+u64() { value=$1; file=$2; i=0; while [ "$i" -lt 8 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
+string() { text_value=$1; file=$2; u64 "${#text_value}" "$file"; printf '%s' "$text_value" >> "$file"; }
+: > "$artifact"; printf 'GGUF' >> "$artifact"; u32 3 "$artifact"; u64 1 "$artifact"; u64 2 "$artifact"
+string general.architecture "$artifact"; u32 8 "$artifact"; string demo "$artifact"; string general.alignment "$artifact"; u32 4 "$artifact"; u32 32 "$artifact"
+string zeros "$artifact"; u32 1 "$artifact"; u64 "$payload_bytes" "$artifact"; u32 24 "$artifact"; u64 0 "$artifact"
+header_bytes=$(wc -c < "$artifact" | tr -d ' '); pad=$(((32 - (header_bytes % 32)) % 32)); i=0; while [ "$i" -lt "$pad" ]; do printf '\000' >> "$artifact"; i=$((i + 1)); done
+data_start=$((header_bytes + pad)); truncate -s $((data_start + payload_bytes)) "$artifact"
+case $(uname -s) in
+  Darwin) /usr/bin/time -l "$mlpl" --source-dir "$repo_root" "$repo_root/tests/gguf-sparse-acceptance.mlpl" -- "$artifact" >"$program_output" 2>"$metrics_output" || { sed -n '1,80p' "$program_output" >&2; sed -n '1,80p' "$metrics_output" >&2; exit 1; }; max_rss=$(awk '/maximum resident set size/ { print $1; exit }' "$metrics_output") ;;
+  Linux) /usr/bin/time -v "$mlpl" --source-dir "$repo_root" "$repo_root/tests/gguf-sparse-acceptance.mlpl" -- "$artifact" >"$program_output" 2>"$metrics_output" || { sed -n '1,80p' "$program_output" >&2; sed -n '1,80p' "$metrics_output" >&2; exit 1; }; max_rss_kib=$(awk -F: '/Maximum resident set size/ { gsub(/^[ \t]+/, "", $2); print $2; exit }' "$metrics_output"); max_rss=$((max_rss_kib * 1024)) ;;
+  *) echo "SKIP sparse GGUF acceptance: peak-RSS parser supports Darwin and Linux only" >&2; exit 77 ;;
+esac
+grep -Fqx 'PASS sparse GGUF bounded-memory acceptance' "$program_output"; [ -n "$max_rss" ] || { echo "peak RSS was not reported" >&2; exit 1; }; [ "$max_rss" -le "$max_rss_bytes" ] || { echo "peak RSS $max_rss exceeded $max_rss_bytes bytes" >&2; exit 1; }
+echo "DEMO: measured sparse GGUF bounded-memory acceptance"
+echo "Scenario: analyze a temporary sparse 1 MiB GGUF I8 tensor in 4096 payload reads, without committing or downloading a model."
+echo "Native boundary: sparse-file creation, bounded reads, and /usr/bin/time RSS measurement. MLPL work: GGUF catalog validation, signed decode, Welford chunk states, and merges."
+echo "Budgets: artifact_bytes=$payload_bytes chunk_bytes=$chunk_bytes iterations=4096 samples=$payload_bytes report_fields=9 peak_rss_ceiling_bytes=$max_rss_bytes"
+echo "Observed result: all $payload_bytes values are zero; peak_rss_bytes=$max_rss"
+echo "Interpretation: the artifact is $((payload_bytes / chunk_bytes)) times the read budget and stayed below the process ceiling; the temporary artifact has been scheduled for cleanup."

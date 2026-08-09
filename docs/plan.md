@@ -111,7 +111,9 @@ simple extents receive overlap/file-bound validation. Exact-name selective I8
 and I16 payload reads and signed little-endian decoding are runnable under an
 explicit read budget. Exact Q8_0 block extents and selective dequantization are
 runnable with binary16-scale golden evidence; other floating and quantized
-types remain later work.
+types remain later work. Deterministic stride sampling and mergeable statistics
+are runnable for I8, I16, and Q8_0, with sparse-artifact peak RSS measured in
+the [GGUF acceptance report](gguf-acceptance-report.md).
 
 ### Phase 3 — hierarchical 3D visualization
 
@@ -169,6 +171,6 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue active `gguf-inspection` from [sagas.md](sagas.md) with bounded
-sampling/statistics and a measured acceptance report. Keep every user-invoked
-`just` demo narrative and self-describing.
+Begin `model-visualization` from [sagas.md](sagas.md) with a renderer-neutral,
+budget-validated scene/tile schema over the accepted Safetensors and GGUF
+summary paths. Keep every user-invoked `just` demo narrative and self-describing.

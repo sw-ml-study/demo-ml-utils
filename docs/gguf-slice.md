@@ -28,4 +28,5 @@ Run `just gguf-slice` for a narrated decode of four I16 boundary-spanning
 values. Current limitations are intentional: only exact-name I8/I16 selection,
 whole selected-region output, little-endian GGUF v3, and already-cataloged
 extents are supported. Floating types, quantized blocks, slicing within a
-tensor, and chunked statistics remain later steps.
+tensor remain unsupported. Chunk-bounded sampled statistics are documented in
+the [GGUF acceptance report](gguf-acceptance-report.md).

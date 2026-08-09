@@ -1,6 +1,6 @@
 number = 6
 slug = "gguf-bounded-statistics-report"
-status = "pending"
+status = "in-progress"
 description = "Complete the gguf-inspection saga with bounded selected-tensor sampling/stati..."
 role = "production"
 context_files = []

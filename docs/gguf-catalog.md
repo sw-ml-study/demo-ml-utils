@@ -42,3 +42,6 @@ catalog-validated [I8/I16 payloads](gguf-slice.md) and [Q8_0 blocks](gguf-q8-0.m
 floating and other quantization-block decode remain unsupported.
 Exact name tables avoid hash collisions but intentionally trade quadratic
 comparison work for simple fail-closed behavior under small count budgets.
+The completed [GGUF acceptance report](gguf-acceptance-report.md) adds
+chunk-bounded sampled statistics without changing this catalog's no-payload
+contract.

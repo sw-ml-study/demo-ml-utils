@@ -1,0 +1,10 @@
+include "../../src/formats/gguf_statistics.mlpl";
+report = u:gguf_tensor_statistics("fixtures/gguf/valid-catalog.gguf","quant",4096,8,4,256,4,1000000,34,1,8,4,1,9)?;
+print("DEMO: bounded mergeable GGUF tensor statistics");
+print("Scenario: read one Q8_0 block named quant, decode its 32-value -8..7.5 ramp, and retain every eighth value: [-8, -4, 0, 4].");
+print("Native boundary: file_size and one exact 34-byte read_bytes call. MLPL work: catalog/name validation, Q8_0 decode, deterministic sampling, Welford partial state, and mergeable population statistics.");
+print("Budgets: 4096 catalog bytes, 34 bytes per chunk, one block, stride 8, four retained samples, one iteration, and nine fixed report fields.");
+print("Iteration and sample accounting:"); print({payload_iterations: report.iterations, decoded_values: report.decoded_values, retained_samples: report.sampled_values});
+print("Merged population-statistics result:"); print(report.statistics);
+print("Interpretation: four evenly spaced samples have sum -8, mean -2, extrema -8 and 4, and variance 20; the report discards decoded values after each bounded merge.");
+ok(1)

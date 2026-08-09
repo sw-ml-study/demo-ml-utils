@@ -24,9 +24,14 @@ check_demo safetensors-summary scripts/run-safetensors-summary
 check_demo gguf-catalog scripts/run-gguf-catalog
 check_demo gguf-slice scripts/run-gguf-slice
 check_demo gguf-q8-0 scripts/run-gguf-q8-0
+check_demo gguf-statistics scripts/run-gguf-statistics
 
 for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
   grep -Fq "$marker" "$repo_root/scripts/run-sparse-safetensors-acceptance" || { echo "sparse acceptance output lacks $marker" >&2; exit 1; }
+done
+
+for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
+  grep -Fq "$marker" "$repo_root/scripts/run-sparse-gguf-acceptance" || { echo "sparse GGUF acceptance output lacks $marker" >&2; exit 1; }
 done
 
 echo "PASS self-describing demo output"

@@ -27,6 +27,9 @@ IDs. The [selective GGUF decoder](docs/gguf-slice.md) resolves a tensor by exact
 name and decodes only its budgeted I8 or I16 payload range.
 The [Q8_0 block decoder](docs/gguf-q8-0.md) adds exact 34-byte extents,
 binary16 scale conversion, and golden parity with ggml's dequantization rule.
+The [GGUF acceptance report](docs/gguf-acceptance-report.md) closes the bounded
+inspection slice with deterministic sampling, mergeable statistics, and
+measured sparse-artifact memory evidence.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

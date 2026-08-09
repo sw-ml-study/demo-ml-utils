@@ -42,20 +42,25 @@ record enumeration are shipped and covered by the repository gate.
 
 ## Saga 3 — `gguf-inspection`
 
-Status: active. Bounded GGUF v3 scalar metadata and multiple-tensor cataloging
+Status: acceptance complete. Bounded GGUF v3 scalar metadata and multiple-tensor cataloging
 are runnable over tiny generated fixtures; exact-name selective I8/I16 payload
 decoding and one-block Q8_0 golden dequantization are also runnable while
 unsupported types remain catalog-visible. See the
-[bounded-analysis report](bounded-analysis-report.md) for the gate evidence.
+[GGUF acceptance report](gguf-acceptance-report.md) for the gate evidence.
 
 1. GGUF header, metadata, tensor directory, and alignment fixtures/parser.
 2. Multiple-tensor cataloging, scalar metadata coverage, and catalog-visible
    active tensor type IDs — runnable without payload reads.
 3. Unquantized selective I8/I16 tensor decoding — runnable in the default gate.
 4. Q8_0 golden block decode and ggml reference parity — runnable in the default gate.
-5. Bounded tensor sampling/statistics and acceptance report.
+5. Bounded tensor sampling/statistics and measured acceptance report — runnable;
+   the visualization gate is open.
 
 ## Saga 4 — `model-visualization`
+
+Gate: open. Both Safetensors and GGUF now provide bounded catalogs, selective
+decode, mergeable summaries, and measured large-artifact evidence suitable for
+a budgeted renderer-neutral handoff.
 
 1. Versioned renderer-neutral scene/tile schema and budget validation.
 2. Tensor-city model/layer layout.
