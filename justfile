@@ -35,6 +35,10 @@ generate-fixtures:
 adaptation-contract:
     ./scripts/run-adaptation-contract
 
+# Demonstrate bounded manual-gradient linear fine-tuning.
+linear-fine-tune:
+    ./scripts/run-linear-fine-tune
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

@@ -1,6 +1,6 @@
 number = 2
 slug = "linear-fine-tune"
-status = "pending"
+status = "in-progress"
 description = "Implement a bounded manual-gradient linear fine-tuning demo on a deterministi..."
 role = "production"
 context_files = []

@@ -100,6 +100,9 @@ train/context/evaluation splits; and pins the numeric operations needed by the
 first teaching-scale learners. The broader
 [adaptation demo plan](docs/adaptation-demos-plan.md) records the sequence and
 production-scale limitations.
+The [manual linear fine-tuning demo](docs/linear-fine-tuning.md) then performs
+real bounded parameter updates, exposes its loss/gradient trajectory, and
+compares no-training with fine-tuned held-out predictions.
 
 ## Running the project
 
