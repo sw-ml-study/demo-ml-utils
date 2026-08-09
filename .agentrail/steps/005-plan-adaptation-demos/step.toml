@@ -1,8 +1,9 @@
 number = 5
 slug = "plan-adaptation-demos"
-status = "in-progress"
+status = "completed"
 description = "Create a concrete repository plan for adding demonstrable fine-tuning, in-con..."
 role = "meta"
 context_files = []
 created_at = "2026-08-09T12:06:50"
-commits = []
+completed_at = "2026-08-09T12:10:37"
+commits = ["77e7e242fef6e32020e5734789944495f00ac957"]
