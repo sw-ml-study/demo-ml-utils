@@ -1,6 +1,6 @@
 number = 7
 slug = "checkpoint-security-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Add trusted-oracle cross-format verification, adversarial security acceptance evidence, final docs, and close the saga."
 role = "legacy"
 context_files = []

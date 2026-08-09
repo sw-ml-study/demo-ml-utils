@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+for test in checkpoint-inventory checkpoint-machine checkpoint-tensor-metadata checkpoint-to-safetensors; do output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/$test.mlpl"); printf '%s\n' "$output" | grep -Fq 'PASS '; done
+echo "All passive inventory, primitive-machine, tensor-policy, atomic extraction, round-trip, adversarial, and budget acceptance suites passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/checkpoint/security_acceptance.mlpl"

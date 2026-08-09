@@ -23,4 +23,6 @@ checkpoint-inventory	demos/checkpoint/inventory.mlpl	pytorch-checkpoint	passive-
 checkpoint-machine	demos/checkpoint/primitive_machine.mlpl	pytorch-checkpoint	restricted-primitive-pickle-evaluation	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json,budgeted-parser	runnable
 checkpoint-tensor-metadata	demos/checkpoint/tensor_metadata.mlpl	pytorch-checkpoint	declarative-tensor-storage-recovery	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json,budgeted-parser	runnable
 checkpoint-to-safetensors	demos/checkpoint/to_safetensors.mlpl	pytorch-checkpoint,safetensors	tensor-only-atomic-extraction	mlpl-native	whole-file	yes	bounded-range-io,file-size,write-atomic,to_json,parse_json,budgeted-parser	runnable
+checkpoint-security-acceptance	demos/checkpoint/security_acceptance.mlpl	pytorch-checkpoint,safetensors	adversarial-security-acceptance	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json,budgeted-parser	runnable
+checkpoint-oracle	probes/checkpoint_oracle_artifact.mlpl	pytorch-checkpoint,safetensors	independent-cross-format-oracle	external	whole-file	no	python3,write-atomic	external
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated

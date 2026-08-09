@@ -200,7 +200,10 @@ A deterministic single/multi-descriptor writer now copies only approved I8/I16
 ranges into a padded Safetensors header/data buffer, replaces the destination
 atomically, and self-validates catalog counts plus exact decoded values. It is
 whole-file and budgeted rather than streaming. Trusted-oracle and final
-adversarial acceptance is next.
+adversarial acceptance now covers ten named rejection classes plus an opt-in
+standard-library Python comparison of source storage and destination
+Safetensors framing, payload bytes, and decoded values. Phase 5's constrained
+slice is complete; it does not claim general PyTorch/pickle compatibility.
 
 ### Phase 6 — adaptation demos: fine-tuning, ICL, and ICRL
 
@@ -241,9 +244,7 @@ Native production-scale training and LLM inference are not currently claimed.
 
 ## Recommended next increment
 
-Complete `restricted-checkpoint-extraction` from [sagas.md](sagas.md) with an
-explicit trusted oracle and consolidated adversarial security/limitations
-report. Keep executable constructs rejected, do not invoke native PyTorch
-deserialization, and keep every user-invoked `just` demo narrative and
-self-describing. After that saga closes, begin the shared adaptation contract in the
-[fine-tuning/ICL/ICRL plan](adaptation-demos-plan.md).
+After archiving `restricted-checkpoint-extraction`, begin the shared adaptation
+contract in the [fine-tuning/ICL/ICRL plan](adaptation-demos-plan.md). Start
+with terminology, deterministic datasets/splits, a versioned run record, and
+numeric capability probes before implementing the linear fine-tuning demo.

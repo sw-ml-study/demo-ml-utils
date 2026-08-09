@@ -102,6 +102,14 @@ checkpoint-tensor-metadata:
 checkpoint-to-safetensors:
     ./scripts/run-checkpoint-to-safetensors
 
+# Demonstrate consolidated restricted-checkpoint security acceptance.
+checkpoint-security-acceptance:
+    ./scripts/run-checkpoint-security-acceptance
+
+# Opt-in: independently compare checkpoint storage with extracted Safetensors.
+checkpoint-oracle:
+    ./scripts/run-checkpoint-oracle
+
 # Opt-in: compare a generated GGUF with an explicit external Python oracle.
 external-oracle:
     ./scripts/run-external-oracle

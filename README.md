@@ -85,9 +85,12 @@ deliberately constrained, non-PyTorch-deserializing path:
 4. [Safetensors extraction](docs/checkpoint-to-safetensors.md) copies only
    approved ranges into an atomic deterministic artifact and validates every
    tensor through the independent existing reader.
+5. [Security acceptance](docs/checkpoint-security-acceptance.md) consolidates
+   ten adversarial rejection classes and an opt-in independent cross-format
+   oracle.
 
-Final trusted-oracle and adversarial acceptance remains the next planned
-stage.
+The constrained restricted-checkpoint slice is complete. It does not claim
+general PyTorch/pickle compatibility.
 
 ## Running the project
 

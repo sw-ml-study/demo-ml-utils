@@ -113,7 +113,12 @@ enforced before allocation.
 4. Tensor-only Safetensors extraction — runnable with deterministic padded
    headers, atomic replacement, independent catalog/decode read-back, and
    exact source/output value parity.
-5. Cross-format verification and adversarial security report.
+5. Cross-format verification and adversarial security report — complete with
+   ten named rejection classes, internal read-back, an opt-in independent
+   standard-library oracle, explicit non-goals, and attribution.
+
+Status: constrained slice complete. See the
+[checkpoint security acceptance report](checkpoint-security-acceptance.md).
 
 ## Saga 7 — `bounded-fine-tuning` (planned)
 

@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+python_bin=${PYTHON:-$(command -v python3 || true)}
+[ -n "$python_bin" ] && [ -x "$python_bin" ] || { echo "SKIP checkpoint oracle: set PYTHON to an absolute Python 3 executable" >&2; exit 77; }
+mkdir -p "$repo_root/tmp"; work_dir=$(mktemp -d "$repo_root/tmp/checkpoint-oracle.XXXXXX"); trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+artifact="$work_dir/extracted.safetensors"; generated=$($mlpl --source-dir "$repo_root" "$repo_root/probes/checkpoint_oracle_artifact.mlpl" -- "$artifact"); printf '%s\n' "$generated" | grep -Fqx 'PASS checkpoint oracle artifact generated and self-validated'
+observed=$($python_bin "$repo_root/scripts/oracles/inspect_checkpoint_safetensors.py" "$repo_root/fixtures/checkpoint/tensor-metadata.pt" "$artifact")
+expected='{"checkpoint_bytes":318,"checkpoint_members":["data.pkl","data/0"],"dtype":"I16","output_bytes":80,"payload_bytes":8,"payload_equal":true,"shape":[2,2],"tensor":"tensor_a","values":[1,-2,300,512]}'
+[ "$observed" = "$expected" ] || { echo "checkpoint oracle mismatch" >&2; echo "observed: $observed" >&2; exit 1; }
+echo "DEMO: independent restricted-checkpoint cross-format oracle"
+echo "Scenario: have MLPL safely extract and self-validate tensor_a, then independently parse the source ZIP member and destination Safetensors bytes without importing pickle, PyTorch, or Safetensors libraries."
+echo "Native boundary: MLPL bounded reads/atomic write; the opt-in standard-library Python process is explicitly external and independently parses binary framing, JSON, I16 values, and byte equality."
+echo "Budgets: two tiny input members, one tensor, 318 source bytes, 80 destination bytes, eight payload bytes, four decoded values, one external process, no download; temporary output is cleaned up."
+echo "Observed oracle record: $observed"
+echo "Interpretation: independent implementations agree on members, tensor name, dtype, shape, exact payload bytes, decoded values, and file sizes. The oracle never executes data.pkl; its expected tensor manifest is pinned to the generated fixture."
