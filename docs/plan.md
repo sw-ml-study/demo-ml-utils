@@ -255,6 +255,8 @@ adaptation increment.
 Saga 9 has begun with deterministic bounded bandit task/history contracts,
 held-out separation, cumulative reward/regret, and explicitly non-ICRL greedy
 and UCB baselines. Source-history generation is next.
+Source-history generation is now runnable; miniature policy distillation is
+next.
 
 ## Cross-cutting gates
 

@@ -75,6 +75,10 @@ icl-acceptance:
 bandit-contract:
     ./scripts/run-bandit-contract
 
+# Generate diverse bounded source-learner bandit histories.
+history-generator:
+    ./scripts/run-history-generator
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

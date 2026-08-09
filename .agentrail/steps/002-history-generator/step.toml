@@ -1,6 +1,6 @@
 number = 2
 slug = "history-generator"
-status = "pending"
+status = "in-progress"
 description = "Generate bounded source-learner histories across deterministic training bandi..."
 role = "production"
 context_files = []

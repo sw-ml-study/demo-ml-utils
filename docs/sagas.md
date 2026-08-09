@@ -167,6 +167,8 @@ baselines are not labeled ICRL.
 Current status: deterministic source/held-out bandit tasks, reward tapes,
 history and reward/regret metrics, and named non-ICRL greedy/UCB baselines are
 runnable.
+Deterministic diverse source UCB histories are now runnable with held-out
+exclusion, task provenance, and reward/regret trajectories.
 
 The exact steps, proof standards, blockers, and terminology are defined in the
 [adaptation demo plan](adaptation-demos-plan.md).

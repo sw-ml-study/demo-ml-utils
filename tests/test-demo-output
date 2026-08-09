@@ -27,6 +27,7 @@ check_demo icl-controls scripts/run-icl-controls
 check_demo icl-comparison-ir scripts/run-icl-comparison-ir
 check_demo icl-acceptance scripts/run-icl-acceptance
 check_demo bandit-contract scripts/run-bandit-contract
+check_demo history-generator scripts/run-history-generator
 check_demo safetensors-headers scripts/run-safetensors-header-tests
 check_demo safetensors-catalog scripts/run-safetensors-catalog
 check_demo safetensors-slice scripts/run-safetensors-slice

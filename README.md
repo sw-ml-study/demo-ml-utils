@@ -128,6 +128,8 @@ reproducible, adversarial, frozen-state, and atomic-publication evidence.
 The [bandit history contract](docs/bandit-history-contract.md) begins bounded
 ICRL work with deterministic reward tapes, regret histories, held-out
 separation, and explicitly non-ICRL greedy/UCB baselines.
+The [source history generator](docs/history-generator.md) produces diverse,
+held-out-separated offline reward/regret trajectories for policy distillation.
 
 ## Running the project
 
