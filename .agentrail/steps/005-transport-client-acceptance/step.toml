@@ -1,8 +1,9 @@
 number = 5
 slug = "transport-client-acceptance"
-status = "in-progress"
+status = "completed"
 description = "Complete the model-visualization saga with a bounded CLI/server transport con..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T20:06:20"
-commits = []
+completed_at = "2026-08-09T08:27:17"
+commits = ["94edde2d5289c7e218cc23abbe1d462724e52b30"]
