@@ -90,6 +90,10 @@ safetensors-to-gguf:
 checkpoint-inventory:
     ./scripts/run-checkpoint-inventory
 
+# Demonstrate a no-execution allow-listed primitive pickle stack machine.
+checkpoint-machine:
+    ./scripts/run-checkpoint-machine
+
 # Opt-in: compare a generated GGUF with an explicit external Python oracle.
 external-oracle:
     ./scripts/run-external-oracle

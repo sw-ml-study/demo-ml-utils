@@ -105,7 +105,8 @@ enforced before allocation.
 1. Passive ZIP/pickle opcode inventory and risk report — runnable for a tiny
    stored `data.pkl` container with dangerous-opcode reporting and zero
    deserialization/execution.
-2. Budgeted allow-listed primitive stack-machine parser.
+2. Budgeted allow-listed primitive stack-machine parser — runnable for an
+   inert protocol-2 dictionary/list graph with memo and no-execution evidence.
 3. Tensor metadata/storage-reference recovery with executable constructs
    rejected rather than invoked.
 4. Tensor-only Safetensors extraction.

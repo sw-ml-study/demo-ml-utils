@@ -189,7 +189,10 @@ unencrypted, single-disk ZIP with exactly one safe `data.pkl` member. It
 validates matching local/central/end records, inventories known bounded pickle
 opcodes and arguments without stack evaluation, reports dangerous globals and
 related executable categories as high risk, and keeps execution evidence at
-zero. Allow-listed primitive evaluation remains next.
+zero. A budgeted allow-listed stack machine now reconstructs bounded integer,
+text, list, and dictionary values into an inert typed graph, with visible memo
+and edge evidence; executable, constructor, extension, and persistence
+families fail before resolution. Declarative tensor/storage recovery is next.
 
 ## Cross-cutting gates
 
@@ -208,7 +211,8 @@ zero. Allow-listed primitive evaluation remains next.
 
 ## Recommended next increment
 
-Begin `restricted-checkpoint-extraction` from [sagas.md](sagas.md) with a
-passive ZIP/pickle opcode inventory and risk report. Keep the parser
-non-executing and budget-first; do not invoke native PyTorch deserialization.
-Keep every user-invoked `just` demo narrative and self-describing.
+Continue `restricted-checkpoint-extraction` from [sagas.md](sagas.md) with a
+strict declarative tensor/storage-reference policy layered over the shipped
+primitive graph. Keep executable constructs rejected, do not invoke native
+PyTorch deserialization, and keep every user-invoked `just` demo narrative and
+self-describing.

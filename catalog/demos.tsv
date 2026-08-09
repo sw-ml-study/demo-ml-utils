@@ -20,4 +20,5 @@ simple-q4	demos/quantization/simple_q4.mlpl	teaching-q4	nibble-encode-decode	mlp
 safetensors-to-gguf	demos/conversion/safetensors_to_gguf.mlpl	safetensors,gguf	single-integer-tensor-conversion	mlpl-native	chunk-bounded	yes	bounded-range-io,write-atomic,dtype-decode	runnable
 external-oracle	probes/external_oracle_artifact.mlpl	safetensors,gguf	independent-oracle-comparison	external	chunk-bounded	no	python3,write-atomic	external
 checkpoint-inventory	demos/checkpoint/inventory.mlpl	pytorch-checkpoint	passive-zip-pickle-risk-inventory	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json	runnable
+checkpoint-machine	demos/checkpoint/primitive_machine.mlpl	pytorch-checkpoint	restricted-primitive-pickle-evaluation	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json,budgeted-parser	runnable
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated

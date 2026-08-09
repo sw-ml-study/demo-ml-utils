@@ -57,6 +57,9 @@ records the complete supported slice and an opt-in independent oracle adapter.
 The [passive checkpoint inventory](docs/checkpoint-risk-inventory.md) begins the
 restricted-extraction work by classifying ZIP/pickle risk without loading or
 executing serialized content.
+The [restricted primitive machine](docs/checkpoint-primitive-machine.md) then
+reconstructs an inert dictionary/list graph while executable and persistence
+opcodes remain rejected rather than resolved.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL
