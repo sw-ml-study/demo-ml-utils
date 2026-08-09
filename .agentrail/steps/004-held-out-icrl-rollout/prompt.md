@@ -1,0 +1,1 @@
+On held-out deterministic bandit tasks, demonstrate reward adaptation from a growing action/observation/reward context using the frozen distilled policy. Show per-round actions, rewards, cumulative reward/regret, unchanged deployment fingerprints, and empty/shuffled/reward-ablated controls.

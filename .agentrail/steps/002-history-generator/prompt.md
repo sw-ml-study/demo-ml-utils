@@ -1,0 +1,1 @@
+Generate bounded source-learner histories across deterministic training bandit tasks. Demonstrate action, reward, cumulative reward, regret, task provenance, diversity, determinism, and resource limits; keep generated histories distinct from held-out deployment evaluation.

@@ -1,0 +1,8 @@
+number = 3
+slug = "distilled-context-policy"
+status = "pending"
+description = "Train a miniature history-conditioned policy from source histories, publish a..."
+role = "production"
+context_files = []
+created_at = "2026-08-09T14:09:26"
+commits = []

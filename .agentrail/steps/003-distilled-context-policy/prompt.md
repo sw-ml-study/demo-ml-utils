@@ -1,0 +1,1 @@
+Train a miniature history-conditioned policy from source histories, publish and freeze a versioned parameter artifact, demonstrate loss/parameter updates and held-out-independent training evidence, and clearly distinguish this offline training phase from deployment-time ICRL.

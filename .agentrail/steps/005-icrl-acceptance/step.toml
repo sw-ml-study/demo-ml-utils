@@ -1,0 +1,8 @@
+number = 5
+slug = "icrl-acceptance"
+status = "pending"
+description = "Close the bounded ICRL saga with deterministic and adversarial held-out evide..."
+role = "validation"
+context_files = []
+created_at = "2026-08-09T14:09:26"
+commits = []

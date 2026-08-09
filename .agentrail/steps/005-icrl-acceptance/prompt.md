@@ -1,0 +1,1 @@
+Close the bounded ICRL saga with deterministic and adversarial held-out evidence, renderer-neutral history/curve IR, malformed/non-finite data and resource limits, atomic report publication/read-back, optional non-authoritative external LLM reward-context corroboration, attribution, limitations, and the full repository gate.

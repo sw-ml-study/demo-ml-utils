@@ -1,0 +1,1 @@
+Using TDD, define versioned bounded deterministic bandit environments, reward tapes, action/observation/reward history records, cumulative reward and regret metrics, held-out task separation, and named greedy/UCB baselines that are explicitly not labeled ICRL. Add deterministic tagged JSON, budgets, a self-describing demo, documentation, and repository gate integration.

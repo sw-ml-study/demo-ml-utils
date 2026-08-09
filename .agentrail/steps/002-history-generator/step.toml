@@ -1,0 +1,8 @@
+number = 2
+slug = "history-generator"
+status = "pending"
+description = "Generate bounded source-learner histories across deterministic training bandi..."
+role = "production"
+context_files = []
+created_at = "2026-08-09T14:09:25"
+commits = []
