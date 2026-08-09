@@ -257,6 +257,8 @@ held-out separation, cumulative reward/regret, and explicitly non-ICRL greedy
 and UCB baselines. Source-history generation is next.
 Source-history generation is now runnable; miniature policy distillation is
 next.
+The miniature policy is now trained offline and frozen; held-out reward-context
+rollout is next.
 
 ## Cross-cutting gates
 

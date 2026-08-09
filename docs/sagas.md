@@ -169,6 +169,8 @@ history and reward/regret metrics, and named non-ICRL greedy/UCB baselines are
 runnable.
 Deterministic diverse source UCB histories are now runnable with held-out
 exclusion, task provenance, and reward/regret trajectories.
+Offline policy distillation is now runnable with loss/parameter evidence,
+held-out independence, and a versioned frozen artifact.
 
 The exact steps, proof standards, blockers, and terminology are defined in the
 [adaptation demo plan](adaptation-demos-plan.md).

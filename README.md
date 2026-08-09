@@ -130,6 +130,8 @@ ICRL work with deterministic reward tapes, regret histories, held-out
 separation, and explicitly non-ICRL greedy/UCB baselines.
 The [source history generator](docs/history-generator.md) produces diverse,
 held-out-separated offline reward/regret trajectories for policy distillation.
+The [distilled context policy](docs/distilled-context-policy.md) performs
+visible offline training, then freezes a versioned two-parameter artifact.
 
 ## Running the project
 

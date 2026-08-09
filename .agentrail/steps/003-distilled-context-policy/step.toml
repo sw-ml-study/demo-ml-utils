@@ -1,6 +1,6 @@
 number = 3
 slug = "distilled-context-policy"
-status = "pending"
+status = "in-progress"
 description = "Train a miniature history-conditioned policy from source histories, publish a..."
 role = "production"
 context_files = []

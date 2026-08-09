@@ -12,6 +12,7 @@ icl-comparison-ir	demos/adaptation/icl_comparison_ir.mlpl	adaptation-ir	zero-one
 icl-acceptance	demos/adaptation/icl_acceptance.mlpl	adaptation-run	deterministic-adversarial-atomic-icl-acceptance	mlpl-native	not-applicable	yes	dot,to_json,parse_json,write-atomic	runnable
 bandit-contract	demos/adaptation/bandit_contract.mlpl	adaptation-run	deterministic-bandit-history-contract	mlpl-native	not-applicable	yes	to_json,parse_json	runnable
 history-generator	demos/adaptation/history_generator.mlpl	adaptation-run	offline-source-bandit-histories	mlpl-native	not-applicable	yes	to_json,parse_json	runnable
+distilled-policy	demos/adaptation/distilled_policy.mlpl	adaptation-run	offline-history-policy-distillation	mlpl-native	not-applicable	yes	sigmoid,log,to_json,parse_json	runnable
 safetensors-header	demos/safetensors/header.mlpl	safetensors	bounded-header-inspection	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size	runnable
 safetensors-catalog	demos/safetensors/catalog.mlpl	safetensors	metadata-catalog	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,parse_json,record-keys	runnable
 safetensors-slice	demos/safetensors/tensor_slice.mlpl	safetensors	selective-integer-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode	runnable

@@ -79,6 +79,10 @@ bandit-contract:
 history-generator:
     ./scripts/run-history-generator
 
+# Train and freeze the miniature offline history-conditioned policy.
+distilled-policy:
+    ./scripts/run-distilled-policy
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
