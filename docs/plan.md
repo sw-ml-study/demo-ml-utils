@@ -259,6 +259,8 @@ Source-history generation is now runnable; miniature policy distillation is
 next.
 The miniature policy is now trained offline and frozen; held-out reward-context
 rollout is next.
+Held-out reward-context rollout is now runnable; final adversarial and atomic
+ICRL acceptance is next.
 
 ## Cross-cutting gates
 

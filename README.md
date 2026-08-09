@@ -132,6 +132,8 @@ The [source history generator](docs/history-generator.md) produces diverse,
 held-out-separated offline reward/regret trajectories for policy distillation.
 The [distilled context policy](docs/distilled-context-policy.md) performs
 visible offline training, then freezes a versioned two-parameter artifact.
+The [held-out ICRL rollout](docs/held-out-icrl-rollout.md) demonstrates growing
+reward-context adaptation, frozen fingerprints, regret, and ablations.
 
 ## Running the project
 

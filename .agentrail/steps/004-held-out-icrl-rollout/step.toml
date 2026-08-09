@@ -1,6 +1,6 @@
 number = 4
 slug = "held-out-icrl-rollout"
-status = "pending"
+status = "in-progress"
 description = "On held-out deterministic bandit tasks, demonstrate reward adaptation from a ..."
 role = "production"
 context_files = []

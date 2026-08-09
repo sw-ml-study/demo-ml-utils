@@ -29,6 +29,7 @@ check_demo icl-acceptance scripts/run-icl-acceptance
 check_demo bandit-contract scripts/run-bandit-contract
 check_demo history-generator scripts/run-history-generator
 check_demo distilled-policy scripts/run-distilled-policy
+check_demo icrl-rollout scripts/run-icrl-rollout
 check_demo safetensors-headers scripts/run-safetensors-header-tests
 check_demo safetensors-catalog scripts/run-safetensors-catalog
 check_demo safetensors-slice scripts/run-safetensors-slice

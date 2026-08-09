@@ -83,6 +83,10 @@ history-generator:
 distilled-policy:
     ./scripts/run-distilled-policy
 
+# Demonstrate held-out reward adaptation with the frozen distilled policy.
+icrl-rollout:
+    ./scripts/run-icrl-rollout
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
