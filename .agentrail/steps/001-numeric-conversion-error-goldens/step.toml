@@ -1,8 +1,9 @@
 number = 1
 slug = "numeric-conversion-error-goldens"
-status = "in-progress"
+status = "completed"
 description = "Implement bounded numeric conversion and error-metric golden vectors in MLPL ..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T08:30:11"
-commits = []
+completed_at = "2026-08-09T08:51:27"
+commits = ["64601f0fdc0a1ef34241904d03f1fcb61fb5ad54"]

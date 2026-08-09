@@ -1,0 +1,1 @@
+Implemented and pushed bounded numeric conversion/error goldens in 64601f0: explicit saturating truncate-toward-zero i8/u8, honest f64 identity, absolute/RMSE/maximum/cosine metrics, zero-vector policy, deterministic tagged JSON, actual infinity and malformed-vector rejection, all declared work/output/decode budgets, a narrated just demo, catalog/docs, and a green full gate.
