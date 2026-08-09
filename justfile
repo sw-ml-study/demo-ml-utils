@@ -57,6 +57,10 @@ scene-tiles:
 tensor-city:
     ./scripts/run-tensor-city
 
+# Demonstrate bounded histogram and sampled-surface detail tiles.
+detail-tiles:
+    ./scripts/run-detail-tiles
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

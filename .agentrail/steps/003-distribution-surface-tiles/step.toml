@@ -1,6 +1,6 @@
 number = 3
 slug = "distribution-surface-tiles"
-status = "pending"
+status = "in-progress"
 description = "Implement selected-tensor distribution and sampled-surface tiles over the bou..."
 role = "production"
 context_files = []

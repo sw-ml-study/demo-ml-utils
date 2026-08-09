@@ -1,0 +1,17 @@
+include "../src/visualization/detail_tiles.mlpl";
+def u:require_detail(v,m) { "Require a detail tile invariant."; if v { ok(1) } else { err(m) } }
+def u:detail_budgets(bins,points,payload,samples,objects,iterations,output) { "Return fixture detail budgets."; {max_header_bytes:4096,max_elements:256,max_parameters:1000000,max_catalog_bytes:4096,max_metadata:8,max_tensors:4,max_string_bytes:256,max_rank:4,max_payload_bytes: payload,max_blocks:1,max_samples: samples,max_bins: bins,max_surface_points: points,max_objects: objects,max_iterations: iterations,max_value:65536,max_output_bytes: output,max_json_depth:8,max_json_elements:512} }
+def u:fixture_detail(b) { "Build golden cross-format detail tiles."; u:build_detail_tiles("fixtures/safetensors/valid-decode.safetensors","safe-detail","i16_values","fixtures/gguf/valid-catalog.gguf","gguf-detail","quant",b) }
+
+d = u:fixture_detail(u:detail_budgets(4,4,34,32,5,2,8192))?;
+u:require_detail(equal(d.ir.safetensors.bin_counts,[1,1,0,1]) * equal(d.ir.safetensors.sample_values,[-32768,-2,32767]),"Safetensors golden distribution/surface")?;
+u:require_detail(equal(d.ir.gguf.bin_counts,[8,8,8,8]) * equal(d.ir.gguf.sample_indices,[0,10,20,31]) * equal(d.ir.gguf.sample_values,[-8,-3,2,7.5]),"GGUF golden distribution/surface")?;
+left = u:detail_histogram([-8,-7.5],4,-8,7.5,fill([4],0)); right = u:detail_histogram(range(30)/2-7,4,-8,7.5,fill([4],0)); u:require_detail(equal(left+right,d.ir.gguf.bin_counts),"histogram partition merge parity")?;
+again = u:fixture_detail(u:detail_budgets(4,4,34,32,5,2,8192))?; u:require_detail(equal(d.json,again.json),"detail deterministic tagged JSON")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(4,4,33,32,5,2,8192))),"detail payload budget rejection")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(4,4,34,31,5,2,8192))),"detail sample budget rejection")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(0,4,34,32,5,2,8192))),"detail bin budget rejection")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(4,4,34,32,4,2,8192))),"detail object budget rejection")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(4,4,34,32,5,1,8192))),"detail iteration budget rejection")?;
+u:require_detail(is_err(u:fixture_detail(u:detail_budgets(4,4,34,32,5,2,256))),"detail output budget rejection")?;
+print("PASS distribution and sampled-surface tiles"); ok(1)

@@ -66,7 +66,8 @@ a budgeted renderer-neutral handoff.
    runnable with cross-format golden JSON and headless validation.
 2. Deterministic cross-format tensor-city layout — runnable from bounded
    catalogs without payload reads.
-3. Selected-tensor distribution and sampled-surface tiles.
+3. Selected-tensor distribution and sampled-surface tiles — runnable for
+   bounded Safetensors integer and GGUF Q8_0 selections.
 4. Quantization-block and before/after error tiles.
 5. CLI/server transport and WASM 3D client, with headless snapshots retained.
 

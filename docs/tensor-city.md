@@ -46,5 +46,6 @@ Golden tests pin both formats' ordering, districts, positions, heights,
 attributes, hierarchy depths, and a representative stable ID. They also prove
 repeat encoding is deterministic and reject malformed IDs and insufficient
 object, tile, hierarchy, coordinate, iteration, or output budgets. This is
-catalog geometry only: statistics, distributions, surfaces, arbitrary prefix
-sub-districts, LOD, transport, and rendering remain separate stages.
+catalog geometry only. [Distribution and surface detail tiles](detail-tiles.md)
+are now a separate bounded LOD stage; arbitrary prefix sub-districts,
+quantization comparison, transport, and rendering remain later work.

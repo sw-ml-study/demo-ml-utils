@@ -132,7 +132,9 @@ explicit comparison link, deterministic golden JSON, and object/link/label/
 output/decode budgets. Deterministic tensor-city layout is also runnable over
 both complete fixture catalogs with columnar stable IDs, name hierarchy,
 districts, positions, extents, heights, scalar attributes, and headless tagged
-JSON validation. Distribution and sampled-surface tiles remain the next step.
+JSON validation. Selected-tensor distribution and sampled-surface tiles are
+also runnable for accepted integer and Q8_0 paths. Quantization comparison
+tiles remain the next step.
 
 ### Phase 4 — quantization, repacking, and conversion
 
@@ -179,6 +181,6 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue `model-visualization` from [sagas.md](sagas.md) with selected-tensor
-distribution and sampled-surface tiles over the bounded scene/city foundation.
-Keep every user-invoked `just` demo narrative and self-describing.
+Continue `model-visualization` from [sagas.md](sagas.md) with Q8_0
+quantization-block and before/after error tiles. Keep every user-invoked `just`
+demo narrative and self-describing.
