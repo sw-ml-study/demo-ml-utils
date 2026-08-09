@@ -1,6 +1,6 @@
 number = 2
 slug = "associative-icl"
-status = "pending"
+status = "in-progress"
 description = "Implement a frozen-parameter associative attention or nearest-example in-cont..."
 role = "production"
 context_files = []

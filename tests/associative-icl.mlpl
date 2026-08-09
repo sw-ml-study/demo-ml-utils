@@ -1,0 +1,11 @@
+include "../src/adaptation/associative_icl.mlpl";
+def u:aireq(v,m) { "Require one associative ICL invariant."; if v { ok(1) } else { err(m) } }
+def u:aib(work,context,similarity,contribution,output) { "Return bounded associative ICL limits."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:4096,max_output_bytes: output,max_context_examples: context,max_query_examples:4,max_query_elements:32,max_context_query_comparisons:16,max_abs_prediction:1000,max_association_work: work,max_abs_similarity: similarity,max_abs_contribution: contribution} }
+b=u:aib(64,4,10,100,32768); built=u:associative_icl_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?; r=built.report;
+u:aireq(equal(r.zero_shot.predictions,[1,1,1])*eq(r.zero_shot.mse,152/3),"zero-shot golden")?;
+u:aireq(equal(r.one_shot.predictions,[5,1,5])*eq(r.one_shot.mse,24)*equal(r.one_shot.similarities,reshape([-2,0,-2],[3,1])),"one-shot golden")?;
+u:aireq(equal(r.few_shot.predictions,[5,7,11])*eq(r.few_shot.mse,0)*equal(r.few_shot.similarities,reshape([-2,0,0,-2,-2,-2],[3,2]))*equal(r.few_shot.contributions,reshape([4,0,0,6,4,6],[3,2])),"few-shot golden")?;
+u:aireq(equal(r.deployment.fingerprint_before,r.deployment.fingerprint_after)*eq(r.mechanism.parameter_updates,0),"frozen parameter golden")?;
+u:aireq(equal(u:associative_icl_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?.json,built.json),"deterministic report golden")?;
+contract=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?; u:aireq(is_err(u:associative_predict(contract.report.record,[1,0,0],3,b)),"excess context rejection")?; u:aireq(is_err(u:associative_icl_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:aib(11,4,10,100,32768))),"association work rejection")?; u:aireq(is_err(u:associative_icl_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:aib(64,4,1,100,32768))),"similarity budget rejection")?; u:aireq(is_err(u:associative_icl_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:aib(64,4,10,3,32768))),"contribution budget rejection")?;
+print("PASS frozen associative ICL"); ok(1)

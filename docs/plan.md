@@ -243,6 +243,8 @@ are not currently claimed.
 Saga 8 has begun with a runnable ICL context/query contract, disjoint stable
 IDs, frozen deployment fingerprints, a zero-update invariant, and an explicit
 zero-shot held-out baseline. Associative context use is next.
+Frozen associative context use is now runnable with exact similarity and
+contribution evidence; context controls are next.
 
 ## Cross-cutting gates
 

@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/associative-icl.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS frozen associative ICL'
+echo "Zero/one/few-shot goldens, similarities, contributions, frozen fingerprints, determinism, and work/magnitude budgets passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/associative_icl.mlpl"

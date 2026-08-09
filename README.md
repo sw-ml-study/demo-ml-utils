@@ -115,6 +115,9 @@ plus explicit limitations.
 The [ICL record contract](docs/icl-contract.md) begins frozen-parameter
 in-context learning with disjoint context/query records and an honest zero-shot
 baseline.
+The [frozen associative ICL demo](docs/associative-icl.md) then exposes exact
+zero/one/few-shot predictions, similarities, contributions, and unchanged
+deployment fingerprints.
 
 ## Running the project
 

@@ -55,6 +55,10 @@ fine-tuning-acceptance:
 icl-contract:
     ./scripts/run-icl-contract
 
+# Demonstrate zero-, one-, and few-shot frozen associative inference.
+associative-icl:
+    ./scripts/run-associative-icl
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

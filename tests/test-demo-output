@@ -22,6 +22,7 @@ check_demo low-rank-adapter scripts/run-low-rank-adapter
 check_demo adaptation-curve-ir scripts/run-adaptation-curve-ir
 check_demo fine-tuning-acceptance scripts/run-fine-tuning-acceptance
 check_demo icl-contract scripts/run-icl-contract
+check_demo associative-icl scripts/run-associative-icl
 check_demo safetensors-headers scripts/run-safetensors-header-tests
 check_demo safetensors-catalog scripts/run-safetensors-catalog
 check_demo safetensors-slice scripts/run-safetensors-slice
