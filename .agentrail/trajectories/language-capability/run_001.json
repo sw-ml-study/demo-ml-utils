@@ -1,0 +1,11 @@
+{
+  "task_type": "language-capability",
+  "state": {
+    "number": 1,
+    "step": "lefts-capability-contract"
+  },
+  "action": "Added TDD output assertions, MLPL source/test/demo, runner, catalog and Just recipes, capability documentation, and roadmap status; ran just lefts-capabilities and just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T16:39:58"
+}
