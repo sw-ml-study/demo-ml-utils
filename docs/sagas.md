@@ -164,6 +164,10 @@ distilled history-conditioned policy, and held-out context-only reward
 adaptation with an optional external LLM reward loop. Programmed UCB/greedy
 baselines are not labeled ICRL.
 
+Current status: deterministic source/held-out bandit tasks, reward tapes,
+history and reward/regret metrics, and named non-ICRL greedy/UCB baselines are
+runnable.
+
 The exact steps, proof standards, blockers, and terminology are defined in the
 [adaptation demo plan](adaptation-demos-plan.md).
 

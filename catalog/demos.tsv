@@ -10,6 +10,7 @@ associative-icl	demos/adaptation/associative_icl.mlpl	adaptation-run	frozen-para
 icl-controls	demos/adaptation/icl_controls.mlpl	adaptation-run	associative-context-controls	mlpl-native	not-applicable	yes	dot,to_json,parse_json	runnable
 icl-comparison-ir	demos/adaptation/icl_comparison_ir.mlpl	adaptation-ir	zero-one-few-shot-comparison	mlpl-native	not-applicable	yes	dot,to_json,parse_json	runnable
 icl-acceptance	demos/adaptation/icl_acceptance.mlpl	adaptation-run	deterministic-adversarial-atomic-icl-acceptance	mlpl-native	not-applicable	yes	dot,to_json,parse_json,write-atomic	runnable
+bandit-contract	demos/adaptation/bandit_contract.mlpl	adaptation-run	deterministic-bandit-history-contract	mlpl-native	not-applicable	yes	to_json,parse_json	runnable
 safetensors-header	demos/safetensors/header.mlpl	safetensors	bounded-header-inspection	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size	runnable
 safetensors-catalog	demos/safetensors/catalog.mlpl	safetensors	metadata-catalog	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,parse_json,record-keys	runnable
 safetensors-slice	demos/safetensors/tensor_slice.mlpl	safetensors	selective-integer-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode	runnable

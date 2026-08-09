@@ -252,6 +252,10 @@ Deterministic and adversarial ICL acceptance is now complete with frozen-state
 proof and atomic report publication. The bounded ICRL saga is the next planned
 adaptation increment.
 
+Saga 9 has begun with deterministic bounded bandit task/history contracts,
+held-out separation, cumulative reward/regret, and explicitly non-ICRL greedy
+and UCB baselines. Source-history generation is next.
+
 ## Cross-cutting gates
 
 - Default tests use generated, redistributable, tiny fixtures.

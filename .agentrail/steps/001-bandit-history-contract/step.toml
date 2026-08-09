@@ -1,6 +1,6 @@
 number = 1
 slug = "bandit-history-contract"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, define versioned bounded deterministic bandit environments, reward..."
 role = "production"
 context_files = []

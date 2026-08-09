@@ -1,0 +1,1 @@
+{"schema":"sw-ml-study.bandit-tasks","version":1,"arms":2,"horizon":4,"training":{"ids":[401,402],"reward_tapes":[1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1]},"held_out":{"ids":[501],"reward_tapes":[0,1,0,1,0,1,0,1]}}

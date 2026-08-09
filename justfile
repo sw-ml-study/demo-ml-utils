@@ -71,6 +71,10 @@ icl-comparison-ir:
 icl-acceptance:
     ./scripts/run-icl-acceptance
 
+# Demonstrate deterministic bandit histories and explicitly non-ICRL baselines.
+bandit-contract:
+    ./scripts/run-bandit-contract
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

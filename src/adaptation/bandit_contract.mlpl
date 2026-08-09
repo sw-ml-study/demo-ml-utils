@@ -1,0 +1,29 @@
+def u:bandit_tasks_validate(tasks,b) { "Validate deterministic source and held-out bandit reward tapes with disjoint task IDs.";
+  if 1-equal(record_keys(tasks),["arms","held_out","horizon","schema","training","version"])+1-equal(tasks.schema,"sw-ml-study.bandit-tasks")+1-eq(tasks.version,1)+1-equal(record_keys(tasks.training),["ids","reward_tapes"])+1-equal(record_keys(tasks.held_out),["ids","reward_tapes"]) { err("bandit task schema mismatch") } else {
+    arms=tasks.arms; horizon=tasks.horizon; training_count=tally(tasks.training.ids); held_count=tally(tasks.held_out.ids);
+    if lt(arms,2)+gt(arms,b.max_arms)+lt(horizon,1)+gt(horizon,b.max_horizon)+lt(training_count,1)+gt(training_count,b.max_training_tasks)+lt(held_count,1)+gt(held_count,b.max_held_out_tasks)+1-eq(tally(tasks.training.reward_tapes),training_count*horizon*arms)+1-eq(tally(tasks.held_out.reward_tapes),held_count*horizon*arms) { err("bandit task shape or count budget exceeded") } else {
+      comparisons=0; i=0; while lt(i,training_count) { j=0; while lt(j,held_count) { if gt(comparisons,b.max_task_comparisons-1) { return err("bandit task comparison budget exceeded") } else { 0 }; if eq(take(tasks.training.ids,0,i),take(tasks.held_out.ids,0,j)) { return err("bandit training/held-out task leakage detected") } else { 0 }; comparisons=comparisons+1; j=j+1 }; i=i+1 };
+      tapes=concat(tasks.training.reward_tapes,tasks.held_out.reward_tapes); i=0; while lt(i,tally(tapes)) { reward=take(tapes,0,i); if (1-eq(reward,reward))+lt(reward,b.min_reward)+gt(reward,b.max_reward) { return err("bandit reward is non-finite or over budget") } else { 0 }; i=i+1 };
+      ok({training_tasks: training_count,held_out_tasks: held_count,arms: arms,horizon: horizon,task_comparisons: comparisons,reward_values: tally(tapes)})
+    }
+  }
+}
+def u:bandit_history(tape,arms,horizon,actions,b) { "Replay actions against a deterministic reward tape and compute cumulative reward and regret.";
+  if 1-eq(tally(tape),arms*horizon)+1-eq(tally(actions),horizon)+gt(horizon,b.max_history_records) { err("bandit history shape or record budget exceeded") } else {
+    rewards=fill([0],0); cumulative=fill([0],0); regrets=fill([0],0); cumulative_regret=fill([0],0); total=0; regret_total=0; round=0; matrix=reshape(tape,[horizon,arms]);
+    while lt(round,horizon) { action=take(actions,0,round); if (1-eq(action,floor(action)))+lt(action,0)+gt(action,arms-1) { return err("bandit action is invalid") } else { reward=take(tape,0,round*arms+action); oracle=reduce(:max,take(matrix,0,round)); regret=oracle-reward; total=total+reward; regret_total=regret_total+regret; rewards=concat(rewards,reward); cumulative=concat(cumulative,total); regrets=concat(regrets,regret); cumulative_regret=concat(cumulative_regret,regret_total) }; round=round+1 };
+    ok({actions: actions,observations: range(horizon),rewards: rewards,cumulative_rewards: cumulative,regrets: regrets,cumulative_regret: cumulative_regret,total_reward: total,total_regret: regret_total})
+  }
+}
+def u:bandit_ucb_actions(tape,arms,horizon) { "Produce deterministic UCB1 actions with lowest-index tie breaking.";
+  counts=fill([arms],0); totals=fill([arms],0); actions=fill([0],0); round=0;
+  while lt(round,horizon) { if lt(round,arms) { action=round } else { best=0; best_score=-1000000; arm=0; while lt(arm,arms) { score=take(totals,0,arm)/take(counts,0,arm)+sqrt(2*log(round)/take(counts,0,arm)); if gt(score,best_score) { best=arm; best_score=score } else { 0 }; arm=arm+1 }; action=best }; reward=take(tape,0,round*arms+action); counts=scatter(counts,action,take(counts,0,action)+1); totals=scatter(totals,action,take(totals,0,action)+reward); actions=concat(actions,action); round=round+1 };
+  ok(actions)
+}
+def u:bandit_contract_report(path,b) { "Build deterministic non-ICRL greedy and UCB baseline histories on a held-out task.";
+  bytes=read_bytes(path)?; if gt(tally(bytes),b.max_dataset_bytes) { err("bandit dataset byte budget exceeded") } else {
+    tasks=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?; summary=u:bandit_tasks_validate(tasks,b)?; tape=tasks.held_out.reward_tapes; greedy_actions=fill([tasks.horizon],0); ucb_actions=u:bandit_ucb_actions(tape,tasks.arms,tasks.horizon)?; greedy=u:bandit_history(tape,tasks.arms,tasks.horizon,greedy_actions,b)?; ucb=u:bandit_history(tape,tasks.arms,tasks.horizon,ucb_actions,b)?;
+    report={schema:"sw-ml-study.bandit-history-contract",version:1,environment:{task_id: take(tasks.held_out.ids,0,0),split:"held-out",arms: tasks.arms,horizon: tasks.horizon,reward_tape: tape},baselines:{greedy:{name:"fixed-greedy-arm-zero",kind:"programmed-baseline",icrl_claim:0,history: greedy},ucb:{name:"ucb1",kind:"programmed-baseline",icrl_claim:0,history: ucb}},dataset: summary,boundary:{policy_execution:"mlpl",reward_lookup:"mlpl-deterministic-tape",model_training:0,external_inference:0}}; json=to_json(report,{tagged:1})?; size=tally(tokenize_bytes(json));
+    if gt(size,b.max_output_bytes) { err("bandit contract output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("bandit contract tagged JSON round trip changed") } else { ok({report: report,json: json,utf8_bytes: size}) } }
+  }
+}

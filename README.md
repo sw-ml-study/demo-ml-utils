@@ -125,6 +125,9 @@ similarities, predictions, loss, exact-match accuracy, fingerprints, and
 provenance for renderer-neutral consumers.
 The [ICL acceptance report](docs/icl-acceptance.md) closes the saga with
 reproducible, adversarial, frozen-state, and atomic-publication evidence.
+The [bandit history contract](docs/bandit-history-contract.md) begins bounded
+ICRL work with deterministic reward tapes, regret histories, held-out
+separation, and explicitly non-ICRL greedy/UCB baselines.
 
 ## Running the project
 
