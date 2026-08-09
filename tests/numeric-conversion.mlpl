@@ -1,0 +1,23 @@
+include "../src/quantization/numeric_conversion.mlpl";
+def u:nreq(v,m) { "Require a numeric-conversion invariant."; if v { ok(1) } else { err(m) } }
+def u:nb(value_limit,iterations,outputs,absolute,bytes,decode,elements,fields) { "Return numeric conversion budgets."; {max_values: value_limit,max_iterations: iterations,max_output_values: outputs,max_abs_input: absolute,max_output_bytes: bytes,max_decode_bytes: decode,max_json_depth:8,max_json_elements: elements,max_report_fields: fields} }
+b=u:nb(8,8,8,1000,4096,4096,128,8); values=[-300,-2.9,-0.5,0,0.5,2.9,255.9,300]; reference=[-128,-3,-1,0,1,3,127,127];
+u:nreq(equal(u:convert_values(values,"i8",b)?,[-128,-2,0,0,0,2,127,127]),"signed truncation and saturation golden")?;
+u:nreq(equal(u:convert_values(values,"u8",b)?,[0,0,0,0,0,2,255,255]),"unsigned truncation and saturation golden")?;
+u:nreq(equal(u:convert_values(values,"f64",b)?,values),"floating identity golden")?;
+m=u:numeric_error_metrics([1,-2,3],[1,-1,2],b)?; u:nreq(equal(m.absolute_errors,[0,1,1])*eq(m.rmse,sqrt(2/3))*eq(m.max_error,1),"absolute RMSE and maximum golden")?;
+u:nreq(gt(m.cosine,0.98)*lt(m.cosine,0.99),"cosine golden")?;
+u:nreq(eq(u:numeric_error_metrics([0,0],[0,0],b)?.cosine,1)*eq(u:numeric_error_metrics([0,0],[1,0],b)?.cosine,0),"zero-vector cosine policy")?;
+r=u:numeric_conversion_report(values,reference,b)?; again=u:numeric_conversion_report(values,reference,b)?; u:nreq(equal(r.json,again.json),"deterministic numeric report JSON")?;
+u:nreq(is_err(u:convert_values(values,"i16",b)),"unsupported conversion rejection")?;
+u:nreq(is_err(u:convert_values(values,"i8",u:nb(7,8,8,1000,4096,4096,128,8))),"value budget rejection")?;
+u:nreq(is_err(u:convert_values(values,"i8",u:nb(8,7,8,1000,4096,4096,128,8))),"iteration budget rejection")?;
+u:nreq(is_err(u:convert_values(values,"i8",u:nb(8,8,7,1000,4096,4096,128,8))),"output value budget rejection")?;
+u:nreq(is_err(u:convert_values([1001],"i8",b)),"absolute input budget rejection")?;
+u:nreq(is_err(u:convert_values([pow(10,400)],"i8",b)),"non-finite input rejection")?;
+u:nreq(is_err(u:convert_values(fill([0],0),"i8",b))*is_err(u:convert_values([[1,2]],"i8",b)),"empty and rank input rejection")?;
+u:nreq(is_err(u:numeric_error_metrics([1,2],[1],b)),"mismatched comparison rejection")?;
+u:nreq(is_err(u:numeric_conversion_report(values,reference,u:nb(8,8,8,1000,100,4096,128,8))),"report byte budget rejection")?;
+u:nreq(is_err(u:numeric_conversion_report(values,reference,u:nb(8,8,8,1000,4096,100,128,8))),"decode byte budget rejection")?;
+u:nreq(is_err(u:numeric_conversion_report(values,reference,u:nb(8,8,8,1000,4096,4096,20,8))),"decode element budget rejection")?;
+print("PASS numeric conversion and error goldens"); ok(1)

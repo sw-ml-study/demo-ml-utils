@@ -1,6 +1,6 @@
 number = 1
 slug = "numeric-conversion-error-goldens"
-status = "pending"
+status = "in-progress"
 description = "Implement bounded numeric conversion and error-metric golden vectors in MLPL ..."
 role = "production"
 context_files = []

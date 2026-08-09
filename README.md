@@ -43,6 +43,9 @@ pointwise reconstruction errors, and aggregate quality/size metrics.
 The [visualization acceptance report](docs/visualization-acceptance-report.md)
 closes the renderer-neutral slice with deterministic bounded JSONL transport
 and an optional dependency-free envelope inspector.
+The [numeric conversion goldens](docs/numeric-conversion.md) begin native
+quantization work with explicit saturating byte policies and reconstruction
+metrics implemented in MLPL.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

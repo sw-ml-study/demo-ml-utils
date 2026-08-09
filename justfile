@@ -69,6 +69,10 @@ quantization-error:
 transport:
     ./scripts/run-transport
 
+# Demonstrate bounded numeric conversion and reconstruction metrics.
+numeric-conversion:
+    ./scripts/run-numeric-conversion
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

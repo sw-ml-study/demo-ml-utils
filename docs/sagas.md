@@ -82,7 +82,8 @@ Status: acceptance complete. See the
 Gate: open. The Q8_0 reader, reconstruction metrics, error IR, and bounded
 transport now provide reusable golden evidence for encoder work.
 
-1. Numeric conversion/error metric golden vectors.
+1. Numeric conversion/error metric golden vectors — runnable with bounded
+   saturating i8/u8, f64 identity, and deterministic comparison evidence.
 2. Symmetric INT8 and Q8_0 encode/decode round trips.
 3. Simple Q4 encode/decode round trips.
 4. Safetensors-to-GGUF writer with self-validation.

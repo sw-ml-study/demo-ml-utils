@@ -153,6 +153,12 @@ headless MLPL validation remains authoritative. Phase 3 acceptance is complete.
 Acceptance: byte-level golden vectors and round-trip invariants pass, and the
 documentation attributes every operation to MLPL/native/external code.
 
+Current status: the numeric foundation is runnable. Bounded i8/u8 conversions
+make truncate-toward-zero and saturation explicit, f64 identity demonstrates
+the non-narrowing floating path currently expressible without pretending to
+produce f32/f16 bits, and absolute/RMSE/maximum/cosine evidence is covered by
+golden and adversarial tests. Encoder byte layouts remain the next increment.
+
 ### Phase 5 — restricted checkpoint extraction
 
 - Recognize PyTorch ZIP/pickle structure passively and produce a risk report.
