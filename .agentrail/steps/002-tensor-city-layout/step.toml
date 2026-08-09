@@ -1,0 +1,8 @@
+number = 2
+slug = "tensor-city-layout"
+status = "pending"
+description = "Implement deterministic tensor-city model/layer layout over scene/tile IR ver..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T19:37:11"
+commits = []
