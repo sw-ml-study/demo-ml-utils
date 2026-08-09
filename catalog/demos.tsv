@@ -2,6 +2,7 @@ id	path	format	operation	implementation_layer	memory_bound	default_gate	required
 capability-probe	probes/capabilities.mlpl	runtime	binary-capability-probe	mlpl	not-applicable	yes	current	runnable
 lefts-capabilities	demos/experiments/lefts_capabilities.mlpl	experiment-contract	callable-mapping-law-probe	mlpl	not-applicable	yes	call,partials,records,each,map-ok,table,atop,over	runnable
 split-lift	demos/experiments/split_lift.mlpl	experiment-run	split-and-grouped-fit	mlpl	not-applicable	yes	records,reduce,fit-predict-contract	runnable
+ensemble-feed	demos/experiments/ensemble_feed.mlpl	experiment-run	ensemble-and-fed-feature-composition	mlpl	not-applicable	yes	callable-records,reduce,fit-predict-contract	runnable
 adaptation-contract	demos/adaptation/contract.mlpl	adaptation-run	fine-tuning-icl-icrl-contract	mlpl-native	not-applicable	yes	dot,matmul,softmax,seeded-random,to_json,parse_json	runnable
 linear-fine-tune	demos/adaptation/linear_fine_tune.mlpl	adaptation-run	manual-gradient-linear-fine-tuning	mlpl-native	not-applicable	yes	dot,matmul,to_json,parse_json	runnable
 low-rank-adapter	demos/adaptation/low_rank_adapter.mlpl	adaptation-run	frozen-base-low-rank-fine-tuning	mlpl-native	not-applicable	yes	matmul,to_json,parse_json	runnable

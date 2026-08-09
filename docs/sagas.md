@@ -219,6 +219,11 @@ and exact explicit/factored parity. It retains the concrete grouped-fit name
 rather than prematurely adding `experiment.lift`. Ensemble and Feed are next;
 see [the demo report](split-lift.md).
 
+Ensemble and Feed composition is now runnable. Ordered member predictions,
+disagreement, aggregation, intermediate fed features, ablation metrics, and a
+shared predict-record evaluator are visible. No cross-repository blocker was
+found. Leakage-safe Tune is next; see [the report](ensemble-feed.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

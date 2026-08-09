@@ -1,6 +1,6 @@
 number = 3
 slug = "ensemble-feed-composition"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, demonstrate Ensemble with visibly different member predictions, di..."
 role = "production"
 context_files = []

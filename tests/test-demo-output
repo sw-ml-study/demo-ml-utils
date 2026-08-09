@@ -18,6 +18,7 @@ check_demo() {
 check_demo capabilities scripts/run-capability-probe
 check_demo lefts-capabilities scripts/run-lefts-capability-contract
 check_demo split-lift scripts/run-split-lift
+check_demo ensemble-feed scripts/run-ensemble-feed
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter
@@ -69,6 +70,20 @@ for marker in \
 do
   grep -Fqx "$marker" "$lefts_output" || {
     echo "LEFTS capability output lacks $marker" >&2
+    exit 1
+  }
+done
+
+ensemble_feed_output="$work_dir/ensemble-feed.txt"
+for marker in \
+  'CONCEPT Ensemble=member-disagreement-then-deterministic-mean' \
+  'CONCEPT Feed=stage-one-output-becomes-stage-two-feature' \
+  'CLOSURE transformed_computations_share_evaluator=yes' \
+  'ABLATION feed_without_stage_one_is_worse=yes' \
+  'CLASSIFICATION cross_repo_blockers=none'
+do
+  grep -Fqx "$marker" "$ensemble_feed_output" || {
+    echo "Ensemble/Feed output lacks $marker" >&2
     exit 1
   }
 done

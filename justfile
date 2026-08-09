@@ -32,6 +32,10 @@ lefts-capabilities:
 split-lift:
     ./scripts/run-split-lift
 
+# Demonstrate visible ensemble disagreement and a fed intermediate feature.
+ensemble-feed:
+    ./scripts/run-ensemble-feed
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

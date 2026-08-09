@@ -299,3 +299,9 @@ global and group-specific offsets, held-out predictions, MSE improvement, and
 exact explicit-versus-factored parity. The concrete `grouped fit` helper is
 clearer than introducing a generic `experiment.lift`; Ensemble and Feed are
 next. See [the Split/Lift demo](split-lift.md).
+
+Ensemble and Feed are now runnable through one bounded computation evaluator.
+The two ensemble members expose their disagreement before their mean cancels
+opposite biases, and Feed exposes its upstream squared feature plus a harmful
+no-feed ablation. Both transformed computation records retain the same predict
+interface. Leakage-safe Tune is next; see [the composition demo](ensemble-feed.md).

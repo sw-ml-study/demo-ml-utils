@@ -166,6 +166,7 @@ capabilities, and status.
 - [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)
 - [LEFTS callable and functor-law capability contract](docs/lefts-capability-contract.md)
 - [Split and Lift-inspired grouped learning](docs/split-lift.md)
+- [Ensemble and Feed composition](docs/ensemble-feed.md)
 
 ## Copyright and license
 
