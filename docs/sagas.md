@@ -173,6 +173,9 @@ Offline policy distillation is now runnable with loss/parameter evidence,
 held-out independence, and a versioned frozen artifact.
 Held-out frozen-policy reward adaptation is now runnable with per-round context,
 actions, probabilities, rewards/regret, and empty/shuffled/reward ablations.
+Status: acceptance complete. Deterministic history IR, hostile data/resource
+checks, atomic exact/semantic read-back, attribution, and limitations are
+documented in the [ICRL acceptance report](icrl-acceptance.md).
 
 The exact steps, proof standards, blockers, and terminology are defined in the
 [adaptation demo plan](adaptation-demos-plan.md).

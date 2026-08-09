@@ -1,6 +1,6 @@
 number = 5
 slug = "icrl-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Close the bounded ICRL saga with deterministic and adversarial held-out evide..."
 role = "validation"
 context_files = []

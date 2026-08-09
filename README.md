@@ -134,6 +134,8 @@ The [distilled context policy](docs/distilled-context-policy.md) performs
 visible offline training, then freezes a versioned two-parameter artifact.
 The [held-out ICRL rollout](docs/held-out-icrl-rollout.md) demonstrates growing
 reward-context adaptation, frozen fingerprints, regret, and ablations.
+The [ICRL acceptance report](docs/icrl-acceptance.md) closes the adaptation
+roadmap with renderer-neutral histories, adversarial checks, and atomic evidence.
 
 ## Running the project
 

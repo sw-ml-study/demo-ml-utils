@@ -261,6 +261,8 @@ The miniature policy is now trained offline and frozen; held-out reward-context
 rollout is next.
 Held-out reward-context rollout is now runnable; final adversarial and atomic
 ICRL acceptance is next.
+Deterministic and adversarial ICRL acceptance is now complete with a
+renderer-neutral history IR and atomic report publication.
 
 ## Cross-cutting gates
 

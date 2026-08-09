@@ -87,6 +87,10 @@ distilled-policy:
 icrl-rollout:
     ./scripts/run-icrl-rollout
 
+# Run final deterministic, adversarial, renderer-neutral, and atomic ICRL acceptance.
+icrl-acceptance:
+    ./scripts/run-icrl-acceptance
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
