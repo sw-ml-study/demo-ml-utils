@@ -1,8 +1,9 @@
 number = 1
 slug = "adaptation-contract"
-status = "in-progress"
+status = "completed"
 description = "Using TDD, define the shared fine-tuning/ICL/ICRL terminology and versioned b..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T12:49:15"
-commits = []
+completed_at = "2026-08-09T12:56:24"
+commits = ["7944fa93a55b250f0a556aa407184ce6d421d632"]
