@@ -90,7 +90,12 @@ transport now provide reusable golden evidence for encoder work.
    layout, exact nibble bytes, size ratio, and reconstruction evidence.
 4. Safetensors-to-GGUF writer with self-validation — runnable for one bounded
    rank-one I8/I16 tensor with atomic output and catalog/value read-back.
-5. Explicit external oracle adapters and reproducible comparison report.
+5. Explicit external oracle adapters and reproducible comparison report —
+   opt-in Python byte/parser comparison is runnable; llama.cpp availability is
+   reported without misapplying it to an ineligible I16 teaching artifact.
+
+Status: acceptance complete. See the
+[quantization and conversion acceptance report](quantization-conversion-acceptance.md).
 
 ## Saga 6 — `restricted-checkpoint-extraction`
 

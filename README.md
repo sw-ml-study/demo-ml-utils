@@ -52,6 +52,8 @@ The [simple Q4 demo](docs/simple-q4.md) makes an 18-byte teaching nibble layout
 and its larger reconstruction tradeoff directly visible.
 The [self-validating writer](docs/safetensors-to-gguf.md) converts one bounded
 signed-integer Safetensors tensor into deterministic GGUF v3 and reads it back.
+The [quantization and conversion acceptance report](docs/quantization-conversion-acceptance.md)
+records the complete supported slice and an opt-in independent oracle adapter.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

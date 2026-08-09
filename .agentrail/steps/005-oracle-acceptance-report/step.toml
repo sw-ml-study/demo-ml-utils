@@ -1,6 +1,6 @@
 number = 5
 slug = "oracle-acceptance-report"
-status = "pending"
+status = "in-progress"
 description = "Add optional external oracle adapters, reproducible comparisons, final acceptance documentation, and close the saga."
 role = "legacy"
 context_files = []

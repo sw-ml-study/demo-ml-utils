@@ -43,4 +43,8 @@ for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:
   grep -Fq "$marker" "$repo_root/scripts/run-sparse-gguf-acceptance" || { echo "sparse GGUF acceptance output lacks $marker" >&2; exit 1; }
 done
 
+for marker in 'DEMO:' 'Scenario:' 'Native boundary:' 'Budgets:' 'Interpretation:'; do
+  grep -Fq "$marker" "$repo_root/scripts/run-external-oracle" || { echo "external oracle output lacks $marker" >&2; exit 1; }
+done
+
 echo "PASS self-describing demo output"

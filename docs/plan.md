@@ -164,7 +164,10 @@ explicit simple teaching Q4 layout is also runnable with exact nibble bytes,
 18-byte blocks, and reconstruction/size evidence. A deterministic
 Safetensors-to-GGUF v3 writer is runnable for one bounded rank-one I8/I16
 tensor, with atomic replacement and catalog/selective-decode equality before
-success. External oracle comparison and final acceptance are next.
+success. An opt-in standard-library Python parser now independently confirms
+the complete artifact structure, values, and SHA-256; llama.cpp availability
+is reported without misapplying it to an ineligible I16 artifact. Phase 4's
+bounded teaching slice is complete.
 
 ### Phase 5 — restricted checkpoint extraction
 
@@ -198,8 +201,7 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Begin `native-quantization-and-conversion` from [sagas.md](sagas.md) with
-numeric conversion and error-metric golden vectors, followed by a bounded
-symmetric INT8 encoder. Reuse the completed Q8_0 decoder and error-tile metrics
-as comparison evidence. Keep every user-invoked `just` demo narrative and
-self-describing.
+Begin `restricted-checkpoint-extraction` from [sagas.md](sagas.md) with a
+passive ZIP/pickle opcode inventory and risk report. Keep the parser
+non-executing and budget-first; do not invoke native PyTorch deserialization.
+Keep every user-invoked `just` demo narrative and self-describing.

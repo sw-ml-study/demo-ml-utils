@@ -85,6 +85,10 @@ simple-q4:
 safetensors-to-gguf:
     ./scripts/run-safetensors-to-gguf
 
+# Opt-in: compare a generated GGUF with an explicit external Python oracle.
+external-oracle:
+    ./scripts/run-external-oracle
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog
