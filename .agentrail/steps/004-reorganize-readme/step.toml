@@ -1,8 +1,9 @@
 number = 4
 slug = "reorganize-readme"
-status = "in-progress"
+status = "completed"
 description = "Reorganize and reformat README.md so it is concise, scannable, and grouped by..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T12:04:48"
-commits = []
+completed_at = "2026-08-09T12:06:10"
+commits = ["17d322ed4f1f5ee97b28dc90c69b3cc8a412f6c1"]
