@@ -1,6 +1,6 @@
 number = 3
 slug = "icl-controls"
-status = "pending"
+status = "in-progress"
 description = "Add bounded ICL controls and adversarial demonstrations for context order, di..."
 role = "validation"
 context_files = []

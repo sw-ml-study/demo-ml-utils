@@ -245,6 +245,7 @@ IDs, frozen deployment fingerprints, a zero-update invariant, and an explicit
 zero-shot held-out baseline. Associative context use is next.
 Frozen associative context use is now runnable with exact similarity and
 contribution evidence; context controls are next.
+Context controls are now runnable; the shared ICL comparison IR is next.
 
 ## Cross-cutting gates
 

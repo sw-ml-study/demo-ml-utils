@@ -1,0 +1,12 @@
+include "associative_icl.mlpl";
+
+def u:icl_control_record(base,ids,x,labels) { "Replace only the context portion of a validated ICL record."; {schema: base.schema,version: base.version,context:{ids: ids,x: x,labels: labels},query: base.query,provenance: base.provenance} }
+def u:icl_controls_report(path,parameters,b) { "Run causal context controls while proving deployment parameters remain frozen.";
+  contract=u:icl_contract_report(path,parameters,b)?; base=contract.report.record; before=contract.report.deployment.fingerprint_before;
+  canonical=u:associative_predict(base,parameters,2,b)?;
+  reversed=u:icl_control_record(base,[202,201],[0,-1,-1,0],[-2,-1]); u:icl_record_validate(reversed,b)?; order=u:associative_predict(reversed,parameters,2,b)?;
+  distracted=u:icl_control_record(base,[201,202,203],[-1,0,0,-1,0,0],[-1,-2,99]); u:icl_record_validate(distracted,b)?; distractor=u:associative_predict(distracted,parameters,3,b)?;
+  contradiction_record=u:icl_control_record(base,[201,202,204],[-1,0,0,-1,-1,0],[-1,-2,9]); u:icl_record_validate(contradiction_record,b)?; contradiction=u:associative_predict(contradiction_record,parameters,3,b)?;
+  truncated=u:associative_predict(base,parameters,1,b)?; empty=u:associative_predict(base,parameters,0,b)?; after=u:adaptation_fingerprint(parameters,b)?;
+  if 1-equal(canonical.predictions,order.predictions)+1-equal(canonical.predictions,distractor.predictions)+1-equal(empty.predictions,contract.report.zero_shot.predictions)+1-equal(before,after)+1-eq(contradiction.mse,contradiction.mse) { err("ICL control invariant failed") } else { report={schema:"sw-ml-study.icl-controls",version:1,deployment:{parameters: parameters,fingerprint_before: before,fingerprint_after: after,updates:0},canonical: canonical,order_reversed: order,zero_vector_distractor: distractor,contradictory_feature: contradiction,truncated_one_shot: truncated,empty_context: empty,interpretation:{order_invariant:1,distractor_zero_contribution:1,truncation_removes_x2_evidence:1,contradiction_can_harm: gt(contradiction.mse,canonical.mse),empty_equals_zero_shot:1}}; json=to_json(report,{tagged:1})?; size=tally(tokenize_bytes(json)); if gt(size,b.max_output_bytes) { err("ICL controls output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("ICL controls tagged JSON round trip changed") } else { ok({report: report,json: json,utf8_bytes: size}) } } }
+}

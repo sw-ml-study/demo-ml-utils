@@ -148,6 +148,8 @@ Current status: the versioned bounded context/query record, split/leakage
 evidence, frozen deployment fingerprint, and zero-shot baseline are runnable.
 Frozen associative inference now demonstrates improving zero/one/few-shot
 predictions with visible kernel contributions and no parameter updates.
+Context controls now expose order invariance, zero-effect distractors,
+contradiction harm, truncation, empty selection, leakage, and budget failures.
 
 ## Saga 9 — `in-context-reinforcement-learning` (planned)
 

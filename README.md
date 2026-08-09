@@ -118,6 +118,8 @@ baseline.
 The [frozen associative ICL demo](docs/associative-icl.md) then exposes exact
 zero/one/few-shot predictions, similarities, contributions, and unchanged
 deployment fingerprints.
+The [ICL context controls](docs/icl-controls.md) make order, distractor,
+contradiction, truncation, empty-context, and leakage effects explicit.
 
 ## Running the project
 

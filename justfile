@@ -59,6 +59,10 @@ icl-contract:
 associative-icl:
     ./scripts/run-associative-icl
 
+# Demonstrate causal order, distractor, contradiction, and truncation controls.
+icl-controls:
+    ./scripts/run-icl-controls
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests
