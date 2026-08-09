@@ -1,8 +1,9 @@
 number = 7
 slug = "checkpoint-security-acceptance"
-status = "in-progress"
+status = "completed"
 description = "Add trusted-oracle cross-format verification, adversarial security acceptance evidence, final docs, and close the saga."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T09:59:03"
-commits = []
+completed_at = "2026-08-09T12:20:51"
+commits = ["9e5754ac8957b339dce14e527ced729851c48d14"]
