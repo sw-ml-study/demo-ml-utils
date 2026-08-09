@@ -24,6 +24,10 @@ mlpl-path:
 capabilities:
     ./scripts/run-capability-probe
 
+# Probe callable composition, mapping laws, and the tiny fit/predict contract.
+lefts-capabilities:
+    ./scripts/run-lefts-capability-contract
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

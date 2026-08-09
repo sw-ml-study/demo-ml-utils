@@ -1,6 +1,6 @@
 number = 1
 slug = "lefts-capability-contract"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, pin the active sw-MLPL binary and build runnable, bounded probes f..."
 role = "production"
 context_files = []

@@ -1,0 +1,23 @@
+def u:lefts_require(condition,message) { "Return Ok for a demonstrated capability or a named failure."; if condition { ok(1) } else { err(message) } }
+def u:lefts_identity(x) { "Identity callable used by the mapping-law probes."; x }
+def u:lefts_increment(x) { "Increment one scalar for composition evidence."; x+1 }
+def u:lefts_double(x) { "Double one scalar for composition evidence."; x*2 }
+def u:lefts_double_after_increment(x) { "Compose increment and double without hidden state."; u:lefts_double(u:lefts_increment(x)) }
+def u:lefts_add(a,b) { "Add two scalar cells for table and over probes."; a+b }
+def u:lefts_affine(scale,bias,x) { "Apply a staged affine callable."; scale*x+bias }
+def u:lefts_mean_fit(values,max_elements) { "Fit the tiny learner by returning one bounded mean parameter."; if lt(tally(values),1)+gt(tally(values),max_elements) { err("fit input is empty or over budget") } else { ok({kind: "mean-parameter",value: reduce_add(values)/tally(values),examples: tally(values)}) } }
+def u:lefts_mean_predict(parameter,x) { "Predict by adding the fitted mean to one scalar input."; parameter.value+x }
+def u:lefts_model_contract() { "Return an inspectable computation description whose behavior is held by named callable references."; {kind: "fit-predict-computation",name: "bounded-mean-offset",fit: :u:lefts_mean_fit,predict: :u:lefts_mean_predict,description: {fit: "bounded arithmetic mean",predict: "fitted mean plus scalar input",closure: "records returned by transformations retain fit and predict callable fields"}} }
+def u:lefts_capability_report(max_elements) { "Build bounded executable evidence for callable composition, functor-like laws, and the tiny model contract.";
+  if lt(max_elements,4) { err("LEFTS capability element budget must be at least four") } else {
+    xs=[1,2,3,4]; identity_result=each(:u:lefts_identity,xs); nested=each(:u:lefts_double,each(:u:lefts_increment,xs)); composed=each(:u:lefts_double_after_increment,xs);
+    array_identity=equal(identity_result,xs); array_composition=equal(nested,composed);
+    mapped_ok=map_ok(:u:lefts_increment,ok(4)); preserved_error=map_ok(:u:lefts_increment,err("kept"));
+    partial=call(:u:lefts_affine,2,3); model=u:lefts_model_contract(); parameter=call(model.fit,[2,4,6],max_elements)?; prediction=call(model.predict,parameter,10);
+    u:lefts_require(array_identity,"array identity law failed")?; u:lefts_require(array_composition,"array composition law failed")?;
+    u:lefts_require(equal(mapped_ok,ok(5)),"map_ok success mapping failed")?; u:lefts_require(equal(preserved_error,err("kept")),"map_ok changed an error")?;
+    u:lefts_require(eq(call(partial,4),11),"partial application failed")?; u:lefts_require(equal(record_keys(model),["description","fit","kind","name","predict"]),"model description is not deterministically inspectable")?;
+    u:lefts_require(eq(parameter.value,4)*eq(prediction,14),"fit/predict callable record failed")?;
+    ok({binary_capabilities: {callable_records: 1,partial_application: 1,returned_descriptions: 1,each: 1,map_ok: 1,table: equal(table(:u:lefts_add,[1,2],[10,20]),reshape([11,21,12,22],[2,2])),atop: eq(atop(:u:lefts_double,:u:lefts_increment,3),8),over: eq(over(:u:lefts_add,:u:lefts_double,2,3),10)},laws: {array_identity: array_identity,array_composition: array_composition,result_success_mapping: equal(mapped_ok,ok(5)),result_error_preservation: equal(preserved_error,err("kept"))},model: {description: model,parameter: parameter,prediction_input: 10,prediction: prediction},budgets: {max_elements: max_elements,probe_elements: tally(xs)},blockers: []})
+  }
+}

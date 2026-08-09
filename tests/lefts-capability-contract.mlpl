@@ -1,0 +1,10 @@
+include "../src/experiments/lefts_capabilities.mlpl";
+def u:lreq(condition,message) { "Require one LEFTS capability invariant."; if condition { ok(1) } else { err(message) } }
+r=u:lefts_capability_report(16)?;
+u:lreq(eq(r.binary_capabilities.callable_records,1)*eq(r.binary_capabilities.partial_application,1)*eq(r.binary_capabilities.returned_descriptions,1),"callable value capability golden")?;
+u:lreq(eq(r.binary_capabilities.each,1)*eq(r.binary_capabilities.map_ok,1)*eq(r.binary_capabilities.table,1)*eq(r.binary_capabilities.atop,1)*eq(r.binary_capabilities.over,1),"higher-order capability golden")?;
+u:lreq(eq(r.laws.array_identity,1)*eq(r.laws.array_composition,1)*eq(r.laws.result_success_mapping,1)*eq(r.laws.result_error_preservation,1),"mapping law golden")?;
+u:lreq(equal(record_keys(r.model.description),["description","fit","kind","name","predict"]),"inspectable model keys golden")?;
+u:lreq(eq(r.model.parameter.value,4)*eq(r.model.parameter.examples,3)*eq(r.model.prediction,14),"fit/predict contract golden")?;
+u:lreq(is_err(u:lefts_capability_report(3)),"capability budget rejection")?;
+print("PASS bounded LEFTS capability contract"); ok(1)

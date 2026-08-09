@@ -207,6 +207,12 @@ Gate: start in this repository with pure MLPL. An upstream or extension saga
 is created only for a minimized `LANGUAGE_EXPRESSIVENESS_GAP` or
 `NATIVE_CAPABILITY_GAP`. See the detailed [LEFTS plan](plan-lefts.md).
 
+Current status: the callable and functor-law capability contract is runnable
+on binary `7f6dee4d`. Named references, callable records, partials, returned
+descriptions, `each`, `map_ok`, `table`, `atop`, and `over` support the tiny
+fit/predict record without an upstream blocker. The explicit Split/Lift
+baseline is next; see the [capability report](lefts-capability-contract.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

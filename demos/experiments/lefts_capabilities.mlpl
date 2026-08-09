@@ -1,0 +1,19 @@
+include "../../src/experiments/lefts_capabilities.mlpl";
+r=u:lefts_capability_report(16)?;
+print("DEMO: LEFTS-inspired callable and functor-law capability contract");
+print("Scenario: determine whether today's sw-MLPL can describe a tiny fit/predict computation and compose mappings before inventing LEFTS-specific syntax or native code.");
+print("Native boundary: sw-MLPL supplies generic callable references, partials, records, Result, each, table, atop, and over. This MLPL program defines the model contract and verifies its behavior.");
+print("Budgets: four mapping cells, at most 16 fit elements, one tiny parameter record, deterministic record-key inspection, and no file, model, network, Rust, or external-library work.");
+print("Callable evidence:"); print(r.binary_capabilities);
+print("Functor-like law evidence:"); print(r.laws);
+print("Fit/predict computation description:"); print(r.model.description);
+print("Fitted parameter and explained prediction:"); print({training_values: [2,4,6],fitted_mean: r.model.parameter.value,prediction_input: r.model.prediction_input,prediction: r.model.prediction,calculation: "4 fitted mean + 10 input = 14"});
+print("CAPABILITY callable_records=supported");
+print("CAPABILITY partial_application=supported");
+print("LAW array_functor_identity=holds");
+print("LAW array_functor_composition=holds");
+print("LAW result_functor_error_preservation=holds");
+print("CONTRACT model=inspectable-fit-predict-description");
+print("CLASSIFICATION cross_repo_blockers=none");
+print("Interpretation: each and map_ok are functor-like mappings with executable preservation evidence. A functor maps objects and morphisms while preserving identity and composition; an endofunctor has the same source and target category. The mere fit/predict record transformation shape M-to-M does not prove either claim, so this demo calls LEFTS transformations endofunctor-like computation combinators until their objects, morphisms, and laws are defined.");
+ok(1)

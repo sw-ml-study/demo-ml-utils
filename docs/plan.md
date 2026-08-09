@@ -286,3 +286,10 @@ Archive the completed adaptation saga and begin the
 capability probes and the smallest honest computation contract before adding
 Split, Lift, Ensemble, Feed, or Tune helpers. The first implementation remains
 pure MLPL; cross-repository work requires a minimized, classified blocker.
+
+Current LEFTS status: callable records, partials, returned computation
+descriptions, mapping/composition operations, and narrow functor-like identity
+and composition laws are executable on binary `7f6dee4d`. The smallest current
+fit/predict contract is documented in the
+[LEFTS capability report](lefts-capability-contract.md); no upstream blocker
+was found. The explicit Split/Lift baseline is next.
