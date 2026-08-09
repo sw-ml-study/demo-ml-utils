@@ -134,8 +134,11 @@ both complete fixture catalogs with columnar stable IDs, name hierarchy,
 districts, positions, extents, heights, scalar attributes, and headless tagged
 JSON validation. Selected-tensor distribution and sampled-surface tiles are
 also runnable for accepted integer and Q8_0 paths. Quantization comparison
-tiles with Q8_0 block evidence and reconstruction metrics are runnable. The
-transport/optional-client acceptance step remains next.
+tiles with Q8_0 block evidence and reconstruction metrics are runnable.
+Deterministic JSONL transport now carries the four schemas as ordered LOD 0–3
+envelopes with per-payload, per-message, total, object, sequence, provenance,
+depth, and element budgets. A dependency-free static inspector is optional;
+headless MLPL validation remains authoritative. Phase 3 acceptance is complete.
 
 ### Phase 4 — quantization, repacking, and conversion
 
@@ -182,6 +185,8 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue `model-visualization` from [sagas.md](sagas.md) with Q8_0
-quantization-block and before/after error tiles. Keep every user-invoked `just`
-demo narrative and self-describing.
+Begin `native-quantization-and-conversion` from [sagas.md](sagas.md) with
+numeric conversion and error-metric golden vectors, followed by a bounded
+symmetric INT8 encoder. Reuse the completed Q8_0 decoder and error-tile metrics
+as comparison evidence. Keep every user-invoked `just` demo narrative and
+self-describing.

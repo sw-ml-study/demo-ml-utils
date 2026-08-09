@@ -13,4 +13,5 @@ gguf-statistics	demos/gguf/statistics.mlpl	gguf	sampled-tensor-statistics	mlpl-n
 model-scene	demos/visualization/model_scene.mlpl	scene-ir	tensor-city-layout	mlpl-native	chunk-bounded	yes	bounded-range-io,record-keys,to_json,scene-ir	runnable
 detail-tiles	demos/visualization/detail_tiles.mlpl	scene-ir	distribution-surface-tiles	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode,to_json,scene-ir	runnable
 quantization-error	demos/visualization/quantization_error.mlpl	scene-ir	q8-error-tile	mlpl-native	chunk-bounded	yes	bounded-range-io,fp16-decode,to_json,scene-ir	runnable
+visualization-transport	demos/visualization/transport.mlpl	scene-ir	jsonl-transport	mlpl-native	chunk-bounded	yes	to_json,parse_json,scene-ir	runnable
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated

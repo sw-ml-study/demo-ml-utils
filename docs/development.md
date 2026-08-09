@@ -65,6 +65,11 @@ boundary and MLPL-owned algorithm, active budgets, representative result, and
 how to interpret it. `tests/test-demo-output` executes every fast demo and
 checks this presentation contract; `just check` keeps their narrative hidden.
 
+`just transport` validates and then narrates the ordered visualization JSONL
+handoff. The optional `viewer/transport-viewer.html` can inspect pasted
+envelopes without a build or network dependency; it is presentation only and
+does not replace the MLPL schema and budget checks.
+
 `just sparse-acceptance` follows the same narrative contract but remains
 opt-in because it creates a temporary 1 MiB sparse artifact, performs a longer
 scalar reduction, and queries platform peak-RSS metrics.

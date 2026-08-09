@@ -65,6 +65,10 @@ detail-tiles:
 quantization-error:
     ./scripts/run-quantization-error
 
+# Demonstrate bounded ordered JSONL transport for visualization IR.
+transport:
+    ./scripts/run-transport
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

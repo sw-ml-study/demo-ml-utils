@@ -1,6 +1,6 @@
 number = 5
 slug = "transport-client-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Complete the model-visualization saga with a bounded CLI/server transport con..."
 role = "production"
 context_files = []

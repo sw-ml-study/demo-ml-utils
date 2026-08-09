@@ -19,8 +19,11 @@ reference, metric, point, object, iteration, value, output, depth, and element
 budgets fail closed. Golden tests include the ggml-compatible block, metric
 vectors, zero policy, deterministic JSON, and adversarial budgets.
 
+The tile can now be carried as the final LOD 3 message in the
+[bounded visualization transport](visualization-acceptance-report.md), after
+the scene, tensor-city, and selected-detail messages.
+
 For N points and J JSON bytes, work and retained memory are O(N+J). Reference,
 dequantized, quant, error, encoded, and decoded copies coexist under the strict
 32-point/8192-byte teaching caps. Encoding, arbitrary blocks, streamed metric
-folds, other quantizers, renderer transport, and browser presentation remain
-later work.
+folds, other quantizers, and a full 3D renderer remain later work.

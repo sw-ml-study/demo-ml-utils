@@ -40,6 +40,9 @@ The [detail-tile schema](docs/detail-tiles.md) adds bounded histograms and
 deterministic sampled surface strips for selected Safetensors and GGUF tensors.
 The [Q8_0 error tile](docs/quantization-error-tiles.md) exposes block evidence,
 pointwise reconstruction errors, and aggregate quality/size metrics.
+The [visualization acceptance report](docs/visualization-acceptance-report.md)
+closes the renderer-neutral slice with deterministic bounded JSONL transport
+and an optional dependency-free envelope inspector.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

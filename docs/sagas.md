@@ -70,9 +70,17 @@ a budgeted renderer-neutral handoff.
    bounded Safetensors integer and GGUF Q8_0 selections.
 4. Q8_0 quantization-block and before/after error tiles — runnable with golden
    pointwise and aggregate metrics.
-5. CLI/server transport and WASM 3D client, with headless snapshots retained.
+5. Bounded CLI/server JSONL transport and optional dependency-free client —
+   runnable with deterministic envelopes; headless MLPL validation is retained
+   as the acceptance authority.
+
+Status: acceptance complete. See the
+[visualization acceptance report](visualization-acceptance-report.md).
 
 ## Saga 5 — `native-quantization-and-conversion`
+
+Gate: open. The Q8_0 reader, reconstruction metrics, error IR, and bounded
+transport now provide reusable golden evidence for encoder work.
 
 1. Numeric conversion/error metric golden vectors.
 2. Symmetric INT8 and Q8_0 encode/decode round trips.
