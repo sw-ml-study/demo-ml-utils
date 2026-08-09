@@ -1,1 +1,5 @@
-1. Implement bounded numeric conversion and error-metric golden vectors in MLPL with adversarial budgets, a self-describing demo, documentation, and full-gate evidence.\n2. Implement symmetric INT8 and Q8_0 encode/decode round trips with deterministic byte goldens and comparison metrics.\n3. Implement a simple Q4 encode/decode round trip with explicit layout, size, and error evidence.\n4. Implement a bounded Safetensors-to-GGUF writer with read-back self-validation and no hidden external conversion.\n5. Add explicit optional external oracle adapters, reproducible comparison reporting, acceptance documentation, and close the saga.
+1. Produce a passive bounded ZIP/pickle opcode inventory and threat-model risk report without deserializing or executing checkpoint content.
+2. Implement a budgeted allow-listed primitive pickle stack-machine parser that rejects executable and unsupported opcodes.
+3. Recover declarative tensor metadata and storage references while rejecting global lookup, reduce, constructors, extensions, and disallowed persistence.
+4. Extract approved tensor storage into deterministic Safetensors with atomic output and self-validation.
+5. Add explicit trusted-oracle cross-format verification, adversarial security acceptance evidence, final documentation, and close the saga.
