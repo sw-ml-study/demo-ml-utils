@@ -150,6 +150,8 @@ Frozen associative inference now demonstrates improving zero/one/few-shot
 predictions with visible kernel contributions and no parameter updates.
 Context controls now expose order invariance, zero-effect distractors,
 contradiction harm, truncation, empty selection, leakage, and budget failures.
+The renderer-neutral ICL comparison IR now exposes aligned zero/one/few-shot
+context, similarity, prediction, MSE, accuracy, fingerprint, and provenance data.
 
 ## Saga 9 — `in-context-reinforcement-learning` (planned)
 

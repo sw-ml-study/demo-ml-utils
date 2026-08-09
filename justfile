@@ -63,6 +63,10 @@ associative-icl:
 icl-controls:
     ./scripts/run-icl-controls
 
+# Normalize zero-, one-, and few-shot evidence for renderer-neutral consumers.
+icl-comparison-ir:
+    ./scripts/run-icl-comparison-ir
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

@@ -246,6 +246,8 @@ zero-shot held-out baseline. Associative context use is next.
 Frozen associative context use is now runnable with exact similarity and
 contribution evidence; context controls are next.
 Context controls are now runnable; the shared ICL comparison IR is next.
+The shared ICL comparison IR is now runnable; final deterministic and
+adversarial ICL acceptance is next.
 
 ## Cross-cutting gates
 

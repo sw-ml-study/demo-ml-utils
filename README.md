@@ -120,6 +120,9 @@ zero/one/few-shot predictions, similarities, contributions, and unchanged
 deployment fingerprints.
 The [ICL context controls](docs/icl-controls.md) make order, distractor,
 contradiction, truncation, empty-context, and leakage effects explicit.
+The [ICL comparison IR](docs/icl-comparison-ir.md) normalizes context,
+similarities, predictions, loss, exact-match accuracy, fingerprints, and
+provenance for renderer-neutral consumers.
 
 ## Running the project
 

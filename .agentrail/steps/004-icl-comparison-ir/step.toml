@@ -1,6 +1,6 @@
 number = 4
 slug = "icl-comparison-ir"
-status = "pending"
+status = "in-progress"
 description = "Build and headlessly validate a deterministic versioned renderer-neutral ICL ..."
 role = "production"
 context_files = []
