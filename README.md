@@ -168,6 +168,7 @@ capabilities, and status.
 - [Split and Lift-inspired grouped learning](docs/split-lift.md)
 - [Ensemble and Feed composition](docs/ensemble-feed.md)
 - [Leakage-safe Tune](docs/tune.md)
+- [Composed rolling experiment](docs/rolling-experiment.md)
 
 ## Copyright and license
 

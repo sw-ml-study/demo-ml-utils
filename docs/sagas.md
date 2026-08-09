@@ -229,6 +229,11 @@ scores, deterministic lower-index tie behavior, zero test reads during
 selection, and exactly one held-out evaluation. The composed rolling
 experiment is next; see [the report](tune.md).
 
+The composed rolling experiment is now runnable with four concepts, changed
+per-window fitted artifacts, visible fed signals and ensemble members, exact
+explicit parity, and an independently round-tripped seven-node/six-edge IR.
+Final acceptance is next; see [the report](rolling-experiment.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

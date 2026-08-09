@@ -20,6 +20,7 @@ check_demo lefts-capabilities scripts/run-lefts-capability-contract
 check_demo split-lift scripts/run-split-lift
 check_demo ensemble-feed scripts/run-ensemble-feed
 check_demo tune scripts/run-tune
+check_demo rolling-experiment scripts/run-rolling-experiment
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter
@@ -71,6 +72,20 @@ for marker in \
 do
   grep -Fqx "$marker" "$lefts_output" || {
     echo "LEFTS capability output lacks $marker" >&2
+    exit 1
+  }
+done
+
+rolling_output="$work_dir/rolling-experiment.txt"
+for marker in \
+  'COMPOSITION Split+Lift+Feed+Ensemble=demonstrated' \
+  'IR schema=sw-ml-study.composable-experiment version=1' \
+  'PARITY explicit_equals_composed=yes' \
+  'VALIDATION independent_round_trip=yes' \
+  'CLASSIFICATION cross_repo_blockers=none'
+do
+  grep -Fqx "$marker" "$rolling_output" || {
+    echo "rolling experiment output lacks $marker" >&2
     exit 1
   }
 done

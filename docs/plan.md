@@ -310,3 +310,9 @@ Leakage-safe Tune is now runnable. Training produces the base slope,
 validation exposes every candidate score and deterministically selects the
 lowest-index minimum, and held-out data is read only for one final evaluation.
 The composed rolling experiment is next; see [the Tune demo](tune.md).
+
+The composed rolling experiment is now runnable across two refitting windows.
+It combines Split, grouped fitting, Feed, and Ensemble, proves explicit parity,
+and emits a stable seven-node/six-edge computation IR that independently
+round-trips and validates. Final adversarial acceptance and promotion decisions
+are next; see [the rolling demo](rolling-experiment.md).

@@ -40,6 +40,10 @@ ensemble-feed:
 tune:
     ./scripts/run-tune
 
+# Compose Split, grouped fit, Feed, and Ensemble across two windows.
+rolling-experiment:
+    ./scripts/run-rolling-experiment
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

@@ -1,6 +1,6 @@
 number = 5
 slug = "composed-rolling-experiment"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, compose at least three LEFTS-inspired concepts in a self-describin..."
 role = "production"
 context_files = []
