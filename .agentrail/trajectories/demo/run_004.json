@@ -1,0 +1,11 @@
+{
+  "task_type": "demo",
+  "state": {
+    "number": 5,
+    "step": "composed-rolling-experiment"
+  },
+  "action": "Added TDD output assertions, rolling MLPL source/test/demo reusing grouped-fit primitives, stable computation IR and independent validator, runner, catalog and Just recipes, report and roadmap documentation; ran just rolling-experiment and just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T16:57:43"
+}
