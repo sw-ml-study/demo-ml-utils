@@ -1,0 +1,8 @@
+number = 3
+slug = "distribution-surface-tiles"
+status = "pending"
+description = "Implement selected-tensor distribution and sampled-surface tiles over the bou..."
+role = "production"
+context_files = []
+created_at = "2026-08-08T19:56:35"
+commits = []
