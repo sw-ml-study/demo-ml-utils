@@ -196,7 +196,11 @@ families fail before resolution. Declarative tensor/storage recovery is now
 runnable for a strict five-field primitive descriptor: safe tensor/storage
 names, I8/I16 dtype, positive bounded shape, offset, and exact byte length are
 validated against the ZIP member catalog while storage bytes remain unread.
-Deterministic Safetensors extraction is next.
+A deterministic single/multi-descriptor writer now copies only approved I8/I16
+ranges into a padded Safetensors header/data buffer, replaces the destination
+atomically, and self-validates catalog counts plus exact decoded values. It is
+whole-file and budgeted rather than streaming. Trusted-oracle and final
+adversarial acceptance is next.
 
 ### Phase 6 — adaptation demos: fine-tuning, ICL, and ICRL
 
@@ -237,10 +241,9 @@ Native production-scale training and LLM inference are not currently claimed.
 
 ## Recommended next increment
 
-Continue `restricted-checkpoint-extraction` from [sagas.md](sagas.md) by
-copying only approved cataloged storage ranges into deterministic Safetensors
-with atomic replacement and self-validation. Keep executable constructs
-rejected, do not invoke native PyTorch deserialization, and keep every
-user-invoked `just` demo narrative and self-describing. After that saga closes,
-begin the shared adaptation contract in the
+Complete `restricted-checkpoint-extraction` from [sagas.md](sagas.md) with an
+explicit trusted oracle and consolidated adversarial security/limitations
+report. Keep executable constructs rejected, do not invoke native PyTorch
+deserialization, and keep every user-invoked `just` demo narrative and
+self-describing. After that saga closes, begin the shared adaptation contract in the
 [fine-tuning/ICL/ICRL plan](adaptation-demos-plan.md).

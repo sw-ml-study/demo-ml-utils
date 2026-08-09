@@ -33,6 +33,7 @@ check_demo safetensors-to-gguf scripts/run-safetensors-to-gguf
 check_demo checkpoint-inventory scripts/run-checkpoint-inventory
 check_demo checkpoint-machine scripts/run-checkpoint-machine
 check_demo checkpoint-tensor-metadata scripts/run-checkpoint-tensor-metadata
+check_demo checkpoint-to-safetensors scripts/run-checkpoint-to-safetensors
 check_demo gguf-catalog scripts/run-gguf-catalog
 check_demo gguf-slice scripts/run-gguf-slice
 check_demo gguf-q8-0 scripts/run-gguf-q8-0

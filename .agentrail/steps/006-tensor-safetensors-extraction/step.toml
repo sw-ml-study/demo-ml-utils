@@ -1,6 +1,6 @@
 number = 6
 slug = "tensor-safetensors-extraction"
-status = "pending"
+status = "in-progress"
 description = "Extract approved tensor storage into deterministic atomic Safetensors output with self-validation."
 role = "legacy"
 context_files = []

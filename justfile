@@ -98,6 +98,10 @@ checkpoint-machine:
 checkpoint-tensor-metadata:
     ./scripts/run-checkpoint-tensor-metadata
 
+# Demonstrate atomic, self-validating restricted-checkpoint extraction.
+checkpoint-to-safetensors:
+    ./scripts/run-checkpoint-to-safetensors
+
 # Opt-in: compare a generated GGUF with an explicit external Python oracle.
 external-oracle:
     ./scripts/run-external-oracle

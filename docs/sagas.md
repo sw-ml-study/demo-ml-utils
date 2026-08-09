@@ -110,7 +110,9 @@ enforced before allocation.
 3. Tensor metadata/storage-reference recovery — runnable for strict primitive
    five-field descriptors with member/range validation and zero payload reads;
    executable constructs and persistence remain rejected rather than invoked.
-4. Tensor-only Safetensors extraction.
+4. Tensor-only Safetensors extraction — runnable with deterministic padded
+   headers, atomic replacement, independent catalog/decode read-back, and
+   exact source/output value parity.
 5. Cross-format verification and adversarial security report.
 
 ## Saga 7 — `bounded-fine-tuning` (planned)

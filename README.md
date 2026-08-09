@@ -82,9 +82,12 @@ deliberately constrained, non-PyTorch-deserializing path:
 3. [Declarative tensor catalog](docs/checkpoint-tensor-metadata.md) validates
    dtype, shape, and exact raw-storage member ranges without reading storage
    payloads or invoking persistence callbacks.
+4. [Safetensors extraction](docs/checkpoint-to-safetensors.md) copies only
+   approved ranges into an atomic deterministic artifact and validates every
+   tensor through the independent existing reader.
 
-Deterministic Safetensors extraction and final adversarial acceptance remain
-the next planned stages.
+Final trusted-oracle and adversarial acceptance remains the next planned
+stage.
 
 ## Running the project
 
