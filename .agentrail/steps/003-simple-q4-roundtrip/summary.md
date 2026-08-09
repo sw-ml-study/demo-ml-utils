@@ -1,0 +1,1 @@
+Implemented and pushed explicit bounded teaching Q4 round trips in 10f547e: 18-byte blocks with binary16 scale and interleaved low-even/high-odd nibbles, exact ramp/zero byte goldens, decode equality, reconstruction and size evidence, malformed input and all resource-budget rejection, narrated demo, honest non-GGUF attribution, docs, and green full gate.

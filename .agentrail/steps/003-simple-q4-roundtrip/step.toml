@@ -1,8 +1,9 @@
 number = 3
 slug = "simple-q4-roundtrip"
-status = "in-progress"
+status = "completed"
 description = "Implement a bounded simple Q4 encode/decode round trip with explicit layout, size, and error evidence."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T08:30:11"
-commits = []
+completed_at = "2026-08-09T09:02:43"
+commits = ["10f547e82bb5afe1111e6852b0be9274f65b454f"]
