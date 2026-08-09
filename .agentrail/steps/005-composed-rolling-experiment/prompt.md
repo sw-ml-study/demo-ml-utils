@@ -1,0 +1,1 @@
+Using TDD, compose at least three LEFTS-inspired concepts in a self-describing rolling or grouped experiment. Emit a bounded versioned computation-description IR with stable nodes, edges, transforms, inputs, fitted artifacts, metrics, and provenance; independently validate it and prove parity with an equivalent explicit implementation.

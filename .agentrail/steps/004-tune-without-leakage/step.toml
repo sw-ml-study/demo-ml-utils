@@ -1,0 +1,9 @@
+number = 4
+slug = "tune-without-leakage"
+status = "pending"
+description = "Using TDD, demonstrate a bounded Tune concept in pure MLPL: score every candi..."
+role = "production"
+context_files = []
+created_at = "2026-08-09T16:33:43"
+task_type = "demo"
+commits = []

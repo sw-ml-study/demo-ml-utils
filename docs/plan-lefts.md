@@ -63,13 +63,23 @@ sw-MLPL currently supplies functor-like operations rather than a language-level
   references may be passed, returned, or stored in records.
 
 That is enough to investigate LEFTS without adding a typeclass, trait, keyword,
-or general closure facility. LEFTS transformations are informally
+or general closure facility. The demo documentation must distinguish these
+terms precisely:
+
+- a **functor** maps objects and the morphisms between them from one category
+  to another while preserving identity and composition;
+- an **endofunctor** is a functor whose source and target are the same category;
+- a function shaped `M -> M` is only an endomorphism at the value/type level.
+  That shape alone does not prove a functor, because no mapping of morphisms or
+  preservation laws has yet been defined.
+
+LEFTS transformations are therefore initially described as
 *endofunctor-like*: they transform a fit/predict computation into another value
-intended to support the same interface. They are not automatically formal
-functors. The demo must first identify its objects and composable mappings and
-then test observable identity and composition laws. If those laws do not make
-sense for a transformation, use the plainer term “combinator” or “computation
-transformation.”
+intended to support the same interface and further composition. They are not
+automatically formal functors. The demo must identify its computation objects,
+their composable mappings, and the observable identity/composition laws before
+making a stronger claim. If those laws do not make sense for a transformation,
+use the plainer term “combinator” or “computation transformation.”
 
 The capability step will therefore probe:
 
@@ -78,6 +88,9 @@ The capability step will therefore probe:
 - callable records and partials as model descriptions;
 - identity wrapping and sequential transformation equivalence for the tiny
   fit/predict contract.
+
+The corresponding demo narrative must show at least one concrete law check and
+explain what it establishes—and what it does not establish—in plain language.
 
 No generic `fmap` is proposed until at least two distinct containers need the
 same user-facing abstraction and their laws and failure behavior can be stated

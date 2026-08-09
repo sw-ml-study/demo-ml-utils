@@ -1,0 +1,9 @@
+number = 2
+slug = "split-lift-baseline"
+status = "pending"
+description = "Using TDD and the proven capability contract, build a pure-MLPL, self-describ..."
+role = "production"
+context_files = []
+created_at = "2026-08-09T16:33:43"
+task_type = "demo"
+commits = []

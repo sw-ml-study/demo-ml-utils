@@ -180,6 +180,33 @@ documented in the [ICRL acceptance report](icrl-acceptance.md).
 The exact steps, proof standards, blockers, and terminology are defined in the
 [adaptation demo plan](adaptation-demos-plan.md).
 
+## Saga 10 — `lefts-inspired-composable-experiments` (planned)
+
+Demonstrate LEFTS-inspired Split, Lift, Ensemble, Feed, and Tune concepts as
+ordinary, inspectable MLPL. Begin with capability probes and an explicit tiny
+learner; introduce reusable helpers only when they improve on direct array and
+higher-order composition.
+
+1. `lefts-capability-contract` — pin the binary and probe the function/value,
+   collection, composition, and inspection capabilities needed for a minimal
+   fit/predict computation contract; explain functor versus endofunctor and
+   test the relevant identity/composition laws without overclaiming `M -> M`.
+2. `split-lift-baseline` — build a self-describing grouped learner with visible
+   split provenance, global baseline, per-group parameters, predictions, and
+   explicit-versus-factored equivalence.
+3. `ensemble-feed-composition` — demonstrate member disagreement and reduction,
+   then a two-stage fed feature with visible intermediate values and ablation.
+4. `tune-without-leakage` — score a bounded candidate set on validation data,
+   explain deterministic selection, and evaluate once on held-out data.
+5. `composed-rolling-experiment` — combine at least three concepts and emit a
+   bounded inspectable computation description alongside explicit parity.
+6. `lefts-acceptance` — add adversarial budgets, deterministic acceptance,
+   catalog/navigation, attribution, limitations, and the promotion decision.
+
+Gate: start in this repository with pure MLPL. An upstream or extension saga
+is created only for a minimized `LANGUAGE_EXPRESSIVENESS_GAP` or
+`NATIVE_CAPABILITY_GAP`. See the detailed [LEFTS plan](plan-lefts.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

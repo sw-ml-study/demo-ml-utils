@@ -1,0 +1,1 @@
+Close the LEFTS-inspired saga with deterministic reruns, hostile input and resource-budget evidence, catalog and README navigation, LEFTS attribution, implementation-layer labels, limitations, and a promotion decision for every helper or blocker. Ensure demos explain their outputs rather than merely print PASS, and run the full just check gate.

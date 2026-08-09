@@ -1,0 +1,1 @@
+Using TDD, demonstrate a bounded Tune concept in pure MLPL: score every candidate on disjoint validation data, explain deterministic selection and tie behavior, then evaluate exactly once on held-out data. Make candidate scores, selected configuration, provenance, budgets, and non-goals visible; reject leakage and malformed/non-finite inputs.

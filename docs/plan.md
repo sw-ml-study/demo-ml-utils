@@ -281,7 +281,8 @@ renderer-neutral history IR and atomic report publication.
 
 ## Recommended next increment
 
-After archiving `restricted-checkpoint-extraction`, begin the shared adaptation
-contract in the [fine-tuning/ICL/ICRL plan](adaptation-demos-plan.md). Start
-with terminology, deterministic datasets/splits, a versioned run record, and
-numeric capability probes before implementing the linear fine-tuning demo.
+Archive the completed adaptation saga and begin the
+[LEFTS-inspired composable experiment plan](plan-lefts.md). Start with runnable
+capability probes and the smallest honest computation contract before adding
+Split, Lift, Ensemble, Feed, or Tune helpers. The first implementation remains
+pure MLPL; cross-repository work requires a minimized, classified blocker.

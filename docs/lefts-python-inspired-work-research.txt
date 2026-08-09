@@ -1,0 +1,1491 @@
+ChatGPT Pro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+consider https://nsmat.github.io/lefts/ and how that might influence my sw-MLPL language or demo-ml-utils. What can we learn from this practical DSL?
+
+
+Yes. Lefts is unusually relevant to sw-MLPL because it embodies a principle you've been circling around: a small set of higher-order transformations can provide more expressive power than continually adding ML-specific primitives. 
+
+The particularly interesting thing is that Lefts isn't really a collection of ML algorithms. It is a combinator language over models.
+
+1. The important abstraction isn't fit or predict
+Lefts reduces an ML component to roughly:
+
+fit     : training_data -> parameters
+predict : parameters × data -> predictions
+Then its five operations transform one such model into another:
+
+Lefts operation	Conceptually
+lift	replicate a computation across partitions/conditions
+ensemble	combine several computations
+feed	connect one computation's output to another
+tune	make parameters themselves learned/computed
+split	control the data domain on which computation occurs
+The clever part is closure: the result of transforming a model is itself a model, so transformations compose indefinitely. 
+
+That is much more interesting for sw-MLPL than simply implementing Lefts.
+
+I'd generalize its idea to:
+
+thing -> transform -> thing
+where thing implements some small behavioral interface.
+
+That fits extremely well with the direction of sw-MLPL.
+
+2. Lefts looks surprisingly APL-ish
+Consider lift.
+
+Their example effectively says:
+
+dates = Jan..Dec
+
+models =
+    dates each (
+        train ridge where date < current_date
+    )
+That's already conceptually an array operation.
+
+APL/J might see this as rank/map applied to a model rather than merely to numbers.
+
+That's an important lesson for sw-MLPL:
+
+Array operations don't have to stop at arrays of numbers.
+
+A model can be a value.
+
+A pipeline can be a value.
+
+A dataset can be partitioned into an array of datasets.
+
+Therefore:
+
+models = dates each train(ridge)
+predictions = models each predict(test)
+starts looking extremely natural.
+
+And this is where sw-MLPL could potentially be cleaner than Lefts. Lefts needs explicit Python constructs such as lift(...) because Python doesn't fundamentally have the array/combinator semantics you're building.
+
+3. Don't add five Lefts keywords
+I would not respond by adding:
+
+lift
+ensemble
+feed
+tune
+split
+to the sw-MLPL language.
+
+Instead, use Lefts as a test:
+
+Can these five operations be elegantly expressed using existing sw-MLPL composition, arrays, higher-order functions and libraries?
+
+If not, why not?
+
+That becomes another excellent forcing function.
+
+For example, perhaps lift is approximately:
+
+lift(model, values, transform)
+but the language might already support something more fundamental like:
+
+values each transform(model)
+Likewise feed may simply be composition:
+
+features
+|> model_a
+|> transform
+|> model_b
+or:
+
+model_b << transform << model_a
+depending upon where your pipeline/composition syntax lands.
+
+And ensemble might be:
+
+models
+|> each predict(data)
+|> mean
+So the question becomes:
+
+Can sw-MLPL derive LEFTS rather than implement LEFTS?
+
+I think that's the interesting demonstration.
+
+4. lift may expose something deeper
+There is nevertheless something worth examining carefully.
+
+Lefts lift doesn't merely perform each.
+
+It performs something closer to:
+
+values
+    -> instantiate computation per value
+    -> transform training data per value
+    -> transform testing data per value
+    -> execute each computation
+    -> aggregate results
+That's approximately:
+
+map + partition + map + reduce
+But operating over computational objects.
+
+That could reveal a useful generalized sw-MLPL abstraction.
+
+Perhaps:
+
+over
+each
+partition
+group
+table
+plus function composition is enough.
+
+For example, imagine something vaguely like:
+
+monthly =
+    dates
+    |> each(train_before(date))
+    |> each(train(ridge))
+Then:
+
+predictions =
+    monthly
+    |> each(predict(month_data))
+    |> coalesce
+That would be an excellent demonstration of why APL-inspired operations are useful outside traditional numerical array programming.
+
+5. feed is particularly interesting for your ML goals
+Lefts defines feed as letting one model produce a feature or target consumed by another. 
+
+That maps almost perfectly onto several things you've been interested in:
+
+model A
+   ↓
+prediction
+   ↓
+model B
+   ↓
+prediction
+But generalized:
+
+producer -> transform -> consumer
+Now suddenly this isn't just classical ML.
+
+It describes:
+
+draft model
+    -> candidate tokens
+    -> verifier model
+or:
+
+embedding model
+    -> vectors
+    -> clustering
+    -> classifier
+or:
+
+small model
+    -> prediction
+    -> confidence test
+    -> large model
+or even:
+
+LLM
+    -> critique
+    -> LLM
+    -> revised answer
+That's why I'd avoid making feed an ML-specific primitive.
+
+sw-MLPL's functional pipeline machinery should naturally express it.
+
+This ties Lefts directly into your demo-functional-pipelines work, not merely demo-ml-utils.
+
+6. tune contains another powerful idea
+Lefts describes tune as allowing one model to learn the hyperparameters of another. 
+
+Abstract that:
+
+A produces configuration for B
+That's an extremely general pattern.
+
+It includes:
+
+optimizer -> learning rate -> trainer
+but also:
+
+router -> expert choice -> model
+and:
+
+classifier -> quantization policy -> inference
+and:
+
+small model -> confidence -> expensive model
+and potentially agent systems:
+
+evaluator -> prompt parameters -> agent
+So again I'd resist implementing tune.
+
+Instead:
+
+parameters = tuner(data)
+
+result =
+    model
+    |> configure(parameters)
+    |> train(data)
+If sw-MLPL makes that concise, it has absorbed the useful idea without absorbing the DSL.
+
+7. The biggest lesson: preserve closure
+I think this is the most important architectural lesson from Lefts.
+
+Lefts says a command transforms .fit and .predict into another .fit and .predict, allowing another Lefts command to transform the result again. 
+
+That's essentially an algebra.
+
+If:
+
+M = model
+T = model transformation
+then:
+
+T : M -> M
+Consequently:
+
+T3(T2(T1(M)))
+always remains meaningful.
+
+That's exactly the property you should seek in sw-MLPL libraries.
+
+Rather than:
+
+train(...)
+cross_validate(...)
+ensemble(...)
+distill(...)
+quantize(...)
+evaluate(...)
+all returning unrelated structures, strive toward:
+
+Model -> Model
+Pipeline -> Pipeline
+Dataset -> Dataset
+Array -> Array
+where practical.
+
+Then composition becomes the architecture rather than merely syntax.
+
+8. This gives you a very good demo-ml-utils
+I would actually make a LEFTS-inspired demo without depending upon Lefts.
+
+Something like:
+
+demo-ml-utils/
+    01-model.mlpl
+    02-lift.mlpl
+    03-split.mlpl
+    04-feed.mlpl
+    05-ensemble.mlpl
+    06-tune.mlpl
+    07-rolling-validation.mlpl
+    08-teacher-student.mlpl
+    09-stacked-model.mlpl
+    10-composed-workflow.mlpl
+The goal would explicitly be:
+
+Implement the ideas demonstrated by Lefts using ordinary sw-MLPL functions, arrays and combinators.
+
+That becomes another language completeness test.
+
+And I'd make the final example deliberately impressive.
+
+For instance:
+
+base = ridge(features, target)
+
+monthly =
+    months
+    |> each(split_before)
+    |> each(train(base))
+
+forecast =
+    monthly
+    |> each(predict)
+    |> ensemble(mean)
+Then perhaps:
+
+teacher =
+    train(large_model, training)
+
+student =
+    training
+    |> feed(teacher)
+    |> train(small_model)
+The exact syntax depends on what sw-MLPL currently supports, but that is the target readability I'd pursue.
+
+9. It also suggests a useful Model protocol
+This may be the one actual library abstraction worth borrowing.
+
+Lefts deliberately operates on anything that supplies fit and predict. 
+
+sw-MLPL could have a similarly tiny conceptual protocol:
+
+Model {
+    fit
+    predict
+}
+but I might generalize it slightly:
+
+Learner {
+    fit
+    apply
+}
+or:
+
+Transform {
+    fit
+    transform
+}
+because not everything is prediction.
+
+Potential implementations include:
+
+LinearRegression
+PCA
+KMeans
+UMAP
+Tokenizer
+Scaler
+Classifier
+EmbeddingModel
+NeuralNetwork
+Then compositions operate on the protocol rather than knowing what algorithm they're manipulating.
+
+That gets sw-MLPL closer to a practical ML experimentation language rather than an ML algorithm collection.
+
+10. And this connects directly to the 3D work
+There's a particularly nice intersection with the dimensional-reduction visualization demo we discussed.
+
+Imagine:
+
+embeddings
+|> pca(50)
+|> umap(3)
+|> cluster
+|> visualize3d
+Now apply Lefts-style transformations:
+
+methods = [pca3, tsne3, umap3]
+
+views =
+    methods
+    |> each(fit(embeddings))
+    |> each(transform(embeddings))
+    |> each(visualize3d)
+Or hyperparameters:
+
+neighbors = [5, 10, 20, 50, 100]
+
+views =
+    neighbors
+    |> each(umap(neighbors=_))
+    |> each(fit_transform(embeddings))
+Now the user can flip among five interactive 3D projections.
+
+That is an excellent demonstration of APL-inspired array programming applied to ML experimentation.
+
+It makes each visibly useful in a way that each [1,2,3] never will.
+
+11. Where I would put the ideas
+I'd divide the responsibility like this:
+
+Project	What LEFTS teaches it
+sw-MLPL language	functions/models/pipelines must be first-class and easily composable
+sw-MLPL standard library	small model/dataset abstractions
+demo-combinators	model-transforming combinators
+demo-functional-pipelines	feed, composition, DAG-like workflows
+demo-ml-utils	practical lift/split/tune/ensemble/teacher-student/CV examples
+3D extension demo	visualize arrays of experiments/results
+That separation is important.
+
+LEFTS shouldn't cause five new language features.
+
+It should cause perhaps zero new language features initially.
+
+Try implementing its concepts entirely in sw-MLPL first. Whatever feels painfully awkward identifies genuine missing language capabilities.
+
+A useful new milestone
+I'd actually add this fairly high in your roadmap:
+
+LEFTS challenge: implement Lift, Ensemble, Feed, Tune and Split as ordinary sw-MLPL library functions without modifying the parser.
+
+Then evaluate:
+
+expressiveness
+readability
+LOC
+composition depth
+error quality
+intermediate inspectability
+parallelizability
+The last two are especially interesting.
+
+Lefts can print its model tree before execution—for example, its rolling-retrain example exposes the generated Lift/Leaf structure. 
+ That suggests sw-MLPL pipelines should be inspectable values, not opaque function chains.
+
+Imagine:
+
+describe experiment
+producing:
+
+ensemble mean
+└─ each month
+   └─ predict
+      └─ train ridge
+         └─ split date < month
+Then later:
+
+visualize experiment
+could turn that into your interactive graph/3D UI.
+
+That starts connecting APL arrays + functional composition + ML experimentation + visualization + explainability into one coherent sw-MLPL story.
+
+And I think that's the deeper lesson from Lefts: don't copy its ML vocabulary; copy its algebraic design—very few composable operations, closure under transformation, and inspectable computations. That is unusually well aligned with what sw-MLPL is trying to become. 
+
+
+Worked for 23s
+Your instinct to start in demo-extensions is good, but I would draw a fairly hard boundary: demo-extensions should prove the mechanism for adding a LEFTS-inspired abstraction, while demo-ml-utils should prove its ML usefulness. I would not create another repo yet.
+
+The qualified-name problem actually makes this a particularly good extension experiment.
+
+Recommended architecture
+I would build a small, domain-neutral composable workflow/model extension in demo-extensions, then wrap it with ordinary MLPL code in demo-ml-utils.
+
+Something like:
+
+demo-extensions
+    composable/
+        Rust implementation
+        ABI bindings
+        extension metadata
+        MLPL facade
+
+demo-ml-utils
+    lefts-inspired/
+        rolling-retrain.mlpl
+        ensemble.mlpl
+        feed.mlpl
+        tune.mlpl
+        teacher-student.mlpl
+The extension should not be called lefts. LEFTS is the inspiration; what you are extracting is more general.
+
+The abstraction underneath LEFTS is effectively:
+
+Computation
+    fit
+    apply
+
+Transform :
+    Computation -> Computation
+LEFTS itself gets substantial mileage from exactly that closure property: each command transforms a model's fit/predict pair into another model with fit/predict, so further commands can continue transforming it. 
+
+Qualified names make this experiment more valuable
+Your extension architecture already points directly at namespaces.
+
+The current shipped extension slice supports calls such as:
+
+hello:answer()
+while the planned language surface is:
+
+use hello
+
+hello.answer()
+with the native implementation hidden behind a private namespace and an MLPL module.mlpl facade exposing the public API. Your design explicitly says the module/namespace work should be shared between normal modules and extensions rather than building a separate extension naming mechanism.
+
+That's exactly what I would exploit here.
+
+Suppose the extension package were named:
+
+workflow
+Then eventually:
+
+use workflow
+
+workflow.leaf(...)
+workflow.lift(...)
+workflow.ensemble(...)
+workflow.feed(...)
+workflow.split(...)
+That is substantially preferable to putting:
+
+lift(...)
+feed(...)
+split(...)
+into the global language namespace.
+
+And it answers one of your earlier concerns about language purity:
+
+A useful operation does not have to become a language keyword or builtin just because it is concise and pervasive.
+
+The namespace gives you another level in the hierarchy:
+
+syntax
+    ↓
+core language operations
+    ↓
+standard MLPL modules
+    ↓
+extension-backed modules
+    ↓
+application/domain modules
+That is healthy.
+
+But I would go one step further
+I don't think the public API should expose that something happens to be an extension.
+
+Meaning I would avoid:
+
+extension.workflow.lift(...)
+native.workflow.lift(...)
+ext:workflow:lift(...)
+The implementation mechanism shouldn't leak into source code.
+
+Instead:
+
+use workflow
+
+workflow.lift(...)
+should mean exactly the same thing whether workflow happens to be:
+
+pure MLPL,
+
+Rust-backed,
+
+partly MLPL with Rust primitives,
+
+statically linked,
+
+dynamically loaded later.
+
+That is already consistent with the extension direction you've documented: the intended programming model is an MLPL module rather than an explicit FFI API, with a public MLPL facade hiding a private native namespace.
+
+That abstraction barrier is worth protecting.
+
+Public names versus private extension names
+Internally I'd use something close to the scheme you've already designed:
+
+_workflow.leaf
+_workflow.compose
+_workflow.apply
+_workflow.inspect
+or, during the current colon-name phase:
+
+_workflow:leaf(...)
+_workflow:compose(...)
+Then module.mlpl provides:
+
+workflow.leaf(...)
+workflow.lift(...)
+workflow.feed(...)
+workflow.ensemble(...)
+This gives you a very useful architectural separation:
+
+Rust primitive:
+    _workflow:compose
+
+MLPL abstraction:
+    workflow.feed
+
+ML application:
+    ml.teacher_student
+That distinction becomes important because you probably should not implement LEFTS's five operations individually in Rust.
+
+What belongs in Rust?
+This is where I'd make the experiment explicitly about language purity.
+
+The Rust extension should provide the minimum machinery that cannot reasonably be expressed in MLPL.
+
+Perhaps something like:
+
+_workflow:leaf(...)
+_workflow:compose(...)
+_workflow:execute(...)
+_workflow:describe(...)
+and possibly later:
+
+_workflow:parallel(...)
+_workflow:cache(...)
+Then implement:
+
+lift
+feed
+ensemble
+tune
+split
+in module.mlpl.
+
+Conceptually:
+
+lift =
+    ... MLPL composition ...
+
+feed =
+    ... MLPL composition ...
+
+ensemble =
+    ... MLPL composition ...
+That's much more interesting than writing five Rust functions named after LEFTS.
+
+Why?
+Because it tests three layers simultaneously:
+
+Can Rust provide a small primitive substrate?
+
+Can MLPL define sophisticated combinators over it?
+
+Can demo-ml-utils build real ML applications from those combinators?
+That's a powerful demonstration of sw-MLPL's architecture.
+
+What might the native primitive actually be?
+There are a couple possible levels.
+
+Option A — native Model
+Rust owns model objects:
+
+ModelHandle
+
+fit(model, data)
+predict(model, data)
+
+compose(a, b)
+This is relatively easy, but quite ML-specific.
+
+Pros: straightforward; directly demonstrates LEFTS; efficient native implementations possible.
+
+Cons: prematurely blesses Model as a fundamental abstraction; requires native handles, which your extension roadmap deliberately defers; ties demo-extensions to ML semantics. Your current extension V1 only crosses scalar/string/bytes values, with native handles and arrays explicitly deferred.
+
+So I would not start here.
+
+Option B — generic Workflow
+Instead define something like:
+
+Workflow
+Node
+Edge
+where nodes represent computations.
+
+Conceptually:
+
+workflow.node(fn)
+workflow.then(a, b)
+workflow.map(values, fn)
+workflow.reduce(nodes, fn)
+workflow.describe()
+workflow.run()
+Then models are merely one application:
+
+model = workflow.node(train_ridge)
+LEFTS operations become combinators over workflows.
+
+Pros: much more general; useful to ML, agents, file processing, visualization, ETL, speculative inference; excellent demonstration of functional composition.
+
+Cons: danger of accidentally inventing Airflow/Dagster/Arrow/etc.; requires careful scope control.
+
+I like this substantially more.
+
+Option C — don't create native workflow objects at all
+There is an even more language-pure approach.
+
+Use the extension only to supply leaf operations:
+
+use ml_native
+
+ml_native.ridge_fit(...)
+ml_native.ridge_predict(...)
+and let ordinary MLPL values/functions represent the entire composition.
+
+Then LEFTS-inspired operations are simply MLPL:
+
+use workflow
+
+model =
+    workflow.leaf(...)
+    |> workflow.lift(...)
+    |> workflow.split(...)
+The extension doesn't know that lift exists.
+
+This gives you:
+
+Rust
+  ↓
+fast leaf computations
+
+MLPL
+  ↓
+composition algebra
+
+demo-ml-utils
+  ↓
+actual ML workflows
+This is actually my preferred long-term architecture.
+It maximizes sw-MLPL's claim that the language itself provides the expressive machinery.
+
+There's an important implementation test hiding here
+Try implementing:
+
+lift
+ensemble
+feed
+tune
+split
+without modifying Rust at all.
+
+LEFTS describes those five operations as transformations of models with fit and predict. 
+
+If MLPL cannot conveniently represent:
+
+{
+    fit: function,
+    predict: function
+}
+and return another such value, then you've discovered a more fundamental missing feature.
+
+For example, perhaps the real blocker isn't extension support.
+
+Perhaps it's one of:
+
+first-class records
+first-class functions in records
+closures
+callable values
+function-returning functions
+structured user-defined objects
+namespaced modules
+That would be an extremely valuable finding.
+
+You'd rather discover:
+
+"MLPL needs better first-class structured functional values"
+
+than incorrectly conclude:
+
+"MLPL needs a builtin lift keyword."
+
+So where does demo-extensions come in?
+I'd use this project to demonstrate a three-layer extension pattern.
+
+             public MLPL API
+                    │
+             workflow.lift
+             workflow.feed
+             workflow.split
+                    │
+              module.mlpl
+                    │
+              private API
+                    │
+          _workflow:something
+                    │
+               Rust ABI
+That is a much stronger extension demo than:
+
+hello:answer() -> 42
+because it demonstrates that extensions can provide substrates upon which MLPL libraries are built.
+
+The extension ceases to mean:
+
+"Call some Rust."
+
+and starts to mean:
+
+"Extend the ecosystem without extending the language."
+
+That's exactly the architectural distinction you want.
+
+I wouldn't name the extension lefts
+There are several candidates depending on how general you make it.
+
+Name	Interpretation	My view
+workflow	general composable computations	Best initially
+model	ML model composition	too ML-specific
+pipeline	transformations through stages	conflicts conceptually with functional pipelines
+graph	computation graph	too low-level
+compose	composition utilities	vague
+experiment	ML experimentation	belongs more in demo-ml-utils
+learn	ML-centric	too broad
+flow	compact	overloaded
+lefts	direct inspiration	too derivative/specific
+I'd probably aim for:
+
+use workflow
+and then perhaps:
+
+workflow.map
+workflow.branch
+workflow.feed
+workflow.reduce
+workflow.inspect
+while demo-ml-utils could expose:
+
+use ml
+
+ml.lift
+ml.ensemble
+ml.tune
+ml.cross_validate
+This makes layering visually obvious.
+
+Do we need demo-workflows?
+Not yet.
+
+Right now you already have three relevant repositories:
+
+demo-functional-pipelines
+demo-extensions
+demo-ml-utils
+and all three have clear responsibilities. The repos exist today alongside demo-algorithms, demo-combinators, demo-memory, and demo-file-processing. The extension repo is explicitly aimed at proving the native Rust extension ecosystem rather than being an ML repo.
+
+I'd divide this experiment this way:
+
+demo-functional-pipelines
+    pure functional composition concepts
+
+demo-extensions
+    extension-backed workflow substrate
+
+demo-ml-utils
+    practical LEFTS-inspired ML workflows
+That's actually a nice progression:
+
+FUNCTIONS
+    ↓
+EXTENSIONS
+    ↓
+ML APPLICATION
+A new demo-workflows only becomes justified if you discover many substantial non-ML applications:
+
+ML model orchestration
+ETL
+agent workflows
+file pipelines
+distributed computation
+visualization graphs
+build systems
+At that point the abstraction has proven that it deserves its own demonstration.
+
+Creating that repo now would be naming an architecture before you've discovered its shape.
+
+One alternative I like even better
+There is a possibility that nothing LEFTS-inspired belongs natively in demo-extensions at first.
+
+Start by implementing this entirely as:
+
+demo-ml-utils/lib/compose.mlpl
+Try to recreate LEFTS.
+
+Whenever something cannot be written elegantly, classify the missing capability:
+
+language deficiency
+standard-library deficiency
+performance deficiency
+native integration deficiency
+Only the last two become extension candidates.
+
+For example:
+
+lift
+may turn out to require nothing native.
+
+But:
+
+parallel execute 100 model instances
+might warrant:
+
+use parallel
+implemented as a Rust extension.
+
+Likewise:
+
+cache model artifacts
+could become:
+
+use cache
+And UMAP might be:
+
+use native_ml
+
+native_ml.umap(...)
+Then an MLPL implementation could say:
+
+models
+|> each train
+|> parallel
+|> each predict
+|> mean
+This is architecturally cleaner than a giant native workflow extension.
+
+The key criterion
+For each operation, ask:
+
+Does Rust provide capability, or semantics?
+
+Prefer:
+
+Rust extension:
+    threads
+    GPU
+    file mapping
+    native 3D
+    SIMD
+    external libraries
+    efficient matrix kernels
+Prefer MLPL for:
+
+composition
+mapping
+lifting
+feeding
+ensembling
+splitting
+experiment definitions
+control of dataflow
+In other words:
+
+Extensions should provide powers MLPL doesn't intrinsically possess; MLPL should decide how those powers are composed.
+
+That preserves language purity far better than moving complicated semantics into Rust merely because extensions make that convenient.
+
+My proposed experiment
+I would therefore make the next forcing function:
+
+demo-extensions/
+    workflow-primitives/
+but initially allow it to be nearly empty.
+
+Then build in demo-ml-utils:
+
+lefts-inspired/
+    01-leaf.mlpl
+    02-split.mlpl
+    03-lift.mlpl
+    04-feed.mlpl
+    05-ensemble.mlpl
+    06-tune.mlpl
+    07-rolling-retrain.mlpl
+    08-teacher-student.mlpl
+For each one, record:
+
+PURE MLPL      works cleanly
+LIBRARY        needs reusable MLPL abstraction
+EXTENSION      needs native capability
+LANGUAGE       impossible/ugly because of language limitation
+That gives you a very objective way to decide what sw-MLPL actually needs.
+
+And qualified module names are a crucial part of the solution, because they let the ecosystem become large without polluting the core vocabulary:
+
+array.each
+workflow.lift
+ml.ensemble
+viz.scatter3d
+file.stream
+gguf.tensor
+I would much rather see sw-MLPL evolve toward that than accumulate globally visible lift, feed, ensemble, render, load_gguf, etc.
+
+The extension work you already have underway—private native namespace, public facade, and eventually use foo + foo.bar()—is therefore not incidental to this problem. It is probably the right mechanism for keeping a growing sw-MLPL ecosystem small at the language-core level while still making it feel rich at the user level.
+
+So my preferred sequence is pure MLPL LEFTS experiment → identify genuine capability gaps → implement only those gaps in demo-extensions → consume the resulting qualified modules from demo-ml-utils. I would postpone demo-workflows until the same abstraction has at least two convincing non-ML consumers.
+
+
+I view demo-extensions as a research playground; ideas proven by it can eventually be promoted into their own per-extension repo, right?  Ideally lift-inspired functions/demo could be implemented purely in .mlpl today.  Then the approach would be to provide it as a library, right.  If a building block (requiring Rust) is missing today, we can work on just that as an extension (or consider it for language-inclusion if general-enough/justifiable).  So given that, your revised recommendation for proceeding towards a demo?
+
+Yes. With that framing, I’d treat demo-extensions as an incubator, not as the eventual home of every extension. A successful experiment can later graduate into something like sw-mlpl-ext-umap, sw-mlpl-ext-native3d, or another focused repo once its API and usefulness are proven. That matches the current role of demo-extensions as a downstream research/proving ground for the extension ecosystem rather than part of the language core.
+
+Revised goal
+For the LEFTS-inspired work, I would start with a stronger constraint:
+
+Assume zero Rust and zero language changes. Try to build the useful abstraction entirely in .mlpl.
+
+The first demo is therefore not really an extension demo. It is a language/library expressiveness test.
+
+I’d proceed in four stages.
+
+1. Build the smallest useful pure-MLPL abstraction
+Do not start by cloning all five LEFTS operations.
+
+Start with the underlying idea:
+
+model = {
+    fit: ...,
+    predict: ...
+}
+and prove that MLPL can transform one model-like value into another.
+
+The first target might be conceptually:
+
+lift(model, partitions)
+returning something equivalent to:
+
+[
+    model_for_partition_1,
+    model_for_partition_2,
+    ...
+]
+Then demonstrate:
+
+models
+|> each fit
+|> each predict
+The important question is not whether the example performs sophisticated ML.
+
+It is whether .mlpl can naturally express:
+
+functions as values
+structured values containing functions
+functions returning structured functional values
+arrays of those values
+each/map over them
+composition of transformations
+If that works, you've learned something much more important than whether you can recreate LEFTS.
+
+2. Put the prototype in demo-ml-utils
+Given this refined architecture, I would not initially put the LEFTS-inspired implementation in demo-extensions.
+
+I'd start here:
+
+demo-ml-utils/
+    lefts-inspired/
+        README.md
+        model.mlpl
+        lift.mlpl
+        split.mlpl
+        ensemble.mlpl
+        feed.mlpl
+        tune.mlpl
+        demo.mlpl
+Or better, if your module/library mechanism supports it:
+
+demo-ml-utils/
+    lib/
+        model.mlpl
+        experiment.mlpl
+
+    demos/
+        lifted-models.mlpl
+        ensemble.mlpl
+        rolling-validation.mlpl
+The demo should consume the library rather than implement everything inline.
+
+That gives you a clean distinction:
+
+lib/*.mlpl      reusable abstraction
+demos/*.mlpl    applications of abstraction
+That is itself something worth demonstrating.
+
+3. Let failures determine demo-extensions
+While implementing it, maintain a small capability matrix:
+
+Requirement	Pure MLPL?	If not, why?
+model represented as data	?	language issue
+function stored in structure	?	language issue
+function returns model	?	language issue
+arrays of models	?	type/value issue
+each over models	?	genericity issue
+compose model transforms	?	function issue
+split dataset	probably	library
+ensemble predictions	probably	library
+parallel model execution	maybe not	runtime/extension
+native ML algorithm	no	extension
+caching/mmap	maybe not	extension
+GPU implementation	no	extension
+This is where demo-extensions enters.
+
+Suppose everything works except parallel execution.
+
+Then don't make a lefts extension.
+
+Make a tiny experiment in demo-extensions:
+
+parallel/
+whose job is only to prove something like:
+
+parallel.map(fn, values)
+Then the ML library can use it:
+
+models
+|> parallel.map(fit)
+That extension is general-purpose, which is a much better candidate for eventual promotion.
+
+Likewise, if a native matrix solver is missing:
+
+linalg.solve(...)
+could become the extension primitive.
+
+LEFTS-style composition remains .mlpl.
+
+4. Only promote abstractions after the demo proves them
+I'd use three possible destinations for things discovered during this exercise.
+
+Pure useful abstraction
+        ↓
+MLPL library/module
+
+General capability impossible in MLPL
+        ↓
+demo-extensions prototype
+        ↓
+possibly standalone extension
+
+Fundamental operation awkward everywhere
+        ↓
+consider language/core-library enhancement
+That gives you a good promotion pipeline.
+
+For example:
+
+lift
+likely stays a library combinator.
+
+parallel_map
+might start as a Rust extension and eventually become a standard capability.
+
+closures
+if missing, clearly aren't an extension problem at all; they are a language issue.
+
+That distinction is exactly what the experiment should reveal.
+
+What I would actually demo first
+I'd avoid starting with real neural networks.
+
+Use deliberately tiny models so the composition is the focus.
+
+For example, define a simple linear model:
+
+fit_linear(xs, ys) -> model
+predict(model, xs) -> ys
+Then use some grouped data:
+
+regions = ["north", "south", "east", "west"]
+and demonstrate:
+
+models =
+    regions
+    |> each(training_for_region)
+    |> each(fit_linear)
+
+predictions =
+    models
+    |> each(predict(test_data))
+Then introduce the library abstraction so the same operation becomes something resembling:
+
+regional =
+    lift(linear_model, regions, training_for_region)
+Now compare the two versions.
+
+The demo answers:
+
+Does the abstraction actually improve clarity enough to justify existing?
+
+That's important. You don't want to recreate a DSL merely because the DSL exists.
+
+Then add the LEFTS ideas incrementally
+I would implement them in this order:
+
+split — easiest and tests dataset transformations.
+
+lift — exercises arrays of computations/models.
+
+ensemble — map + reduction.
+
+feed — tests actual model composition.
+
+tune — most abstract; a computation controls configuration of another computation.
+
+That order also increases the pressure on MLPL progressively.
+
+The progression is nice:
+
+data transformation
+       ↓
+array of models
+       ↓
+reduce model outputs
+       ↓
+compose models
+       ↓
+models parameterizing models
+If MLPL survives all five cleanly, that is a very strong demonstration of the language.
+
+Make lift less ML-specific internally
+Even though the demo is inspired by LEFTS, I wouldn't immediately name the reusable primitive model.lift.
+
+Try to discover whether the actual abstraction is something like:
+
+each_with
+map_context
+instantiate
+partition_map
+For example, LEFTS-style lifting is roughly:
+
+contexts
+|> each(ctx -> transform(base, ctx))
+If that's already concise in MLPL, you may discover that you don't need a lift function at all.
+
+That would be an excellent result.
+
+The demo could explicitly show:
+
+LEFTS concept:
+    lift
+
+Natural MLPL:
+    contexts |> each(make_model)
+That says something compelling about the language.
+
+I would make the demo comparative
+For each concept, show three stages:
+
+1. Explicit MLPL
+2. Factored reusable MLPL
+3. Optional extension-assisted MLPL
+For example:
+
+# explicit
+preds =
+    groups
+    |> each(group_data)
+    |> each(train)
+    |> each(predict)
+
+# library abstraction
+preds =
+    experiment.lift(model, groups)
+    |> experiment.predict(data)
+
+# only if useful
+preds =
+    experiment.lift(model, groups)
+    |> parallel.map(predict)
+This exposes exactly what each abstraction layer contributes.
+
+It also guards against overengineering.
+
+Naming
+I would call the library something broader than LEFTS, perhaps:
+
+experiment
+or:
+
+models
+My preference would be:
+
+experiment.lift
+experiment.split
+experiment.ensemble
+experiment.feed
+experiment.tune
+because these operations describe experimental model construction, not underlying numerical algorithms.
+
+Then your demo becomes:
+
+demo-ml-utils/demos/composable-experiments.mlpl
+That sounds more like what the user gets out of it than lefts-demo.
+
+LEFTS can be credited prominently in the README as the inspiration.
+
+A concrete first milestone
+I would make the first milestone deliberately small:
+
+demo-ml-utils/
+    lib/experiment.mlpl
+    demos/lifted-regression.mlpl
+experiment.mlpl initially contains only whatever helpers emerge naturally.
+
+The demo:
+
+dataset
+    ↓
+split into groups
+    ↓
+train one tiny model per group
+    ↓
+predict with every model
+    ↓
+combine/display results
+Acceptance criteria:
+
+entirely .mlpl;
+
+no parser changes;
+
+no new builtin functions;
+
+no Rust;
+
+models/computations are first-class enough to compose;
+
+implementation is concise enough that the abstraction actually looks attractive;
+
+intermediate values can be printed/inspected;
+
+final demo runs from the normal live/editor path if practical.
+
+Then attempt feed.
+
+feed is probably the most revealing second test, because it forces the language to represent composition between learned computations rather than merely arrays of results.
+
+If feed breaks down, investigate the exact missing primitive.
+
+Only then should demo-extensions receive work.
+
+So the revised architecture is
+             sw-MLPL language
+                  │
+          ordinary .mlpl features
+                  │
+                  ▼
+        reusable MLPL library
+          experiment.mlpl
+                  │
+                  ▼
+           demo-ml-utils
+       LEFTS-inspired examples
+                  │
+         ┌────────┴────────┐
+         │                 │
+     works fine       missing capability
+                           │
+                           ▼
+                    demo-extensions
+                      experiment
+                           │
+                           ▼
+                standalone extension
+                   if justified
+That is better than beginning with an extension because the experiment now actively tries to prove that sw-MLPL doesn't need one.
+
+And if it does need one, the resulting Rust code has a much clearer justification: not "LEFTS does this," but "this precise general-purpose capability cannot presently be expressed efficiently or correctly in MLPL."
+
+That would make the demo useful both as ML functionality and as a language-design test.
+
+
+Which repo(s) need to change to support this (including any new ones)?  I need instructions per-agent per repo to proceed.  Maybe an overview document (this discussion) and a per-repo plan
+
+Worked for 30s
+
+Analysis paused
+Yes. I’d proceed with one primary repo and two conditional repos, with no new repo yet.
+
+demo-ml-utils is the primary implementation owner because its current mission explicitly keeps substantive algorithms in MLPL wherever possible. demo-extensions remains the research/incubator repo for a specific proven native gap, consistent with its existing purpose. sw-mlpl changes only if the experiment exposes a genuinely general language/runtime deficiency. demo-functional-pipelines should initially remain unchanged; it can later absorb a non-ML pipeline idiom if one emerges.
+
+I created a set of agent-ready planning documents:
+
+OVERVIEW.md — cross-repo architecture, ownership, sequencing, blocker classification, naming, and exit criteria.
+
+AGENT-demo-ml-utils.md — the primary agent brief: pure .mlpl first, capability probes, explicit baseline, then split → lift → ensemble → feed → tune, followed by an end-to-end composed demo.
+
+AGENT-demo-extensions.md — conditional brief activated only by a demonstrated NATIVE_CAPABILITY_GAP.
+
+AGENT-sw-mlpl.md — conditional brief activated only by a demonstrated LANGUAGE_EXPRESSIVENESS_GAP.
+
+AGENT-demo-functional-pipelines.md — explicitly says no initial work; later extract only genuinely domain-neutral pipeline lessons.
+
+Download all five plans
+
+Recommended agent sequence
+The important part is not to launch all agents concurrently.
+
+Start only the demo-ml-utils agent. Its job is deliberately adversarial toward adding features: try hard to express everything using today's MLPL, and produce minimized blockers where it cannot.
+
+The intended dependency flow is:
+
+demo-ml-utils agent
+       |
+       +---- works in pure MLPL
+       |          |
+       |          +--> keep going
+       |
+       +---- LIBRARY_GAP
+       |          |
+       |          +--> solve in demo-ml-utils
+       |
+       +---- LANGUAGE_EXPRESSIVENESS_GAP
+       |          |
+       |          +--> activate sw-mlpl agent
+       |
+       +---- NATIVE_CAPABILITY_GAP
+       |          |
+       |          +--> activate demo-extensions agent
+       |
+       +---- general pipeline lesson
+                  |
+                  +--> optionally activate
+                       demo-functional-pipelines agent
+This avoids the common multi-agent failure mode where the upstream agent eagerly invents a language feature while the downstream agent independently invents a workaround.
+
+The first demo-ml-utils milestone
+I’d give that agent a fairly strict first checkpoint before allowing cross-repo work:
+
+tiny learner
+    ↓
+explicit grouped/split workflow
+    ↓
+one computation/model per context
+    ↓
+predictions
+    ↓
+aggregation
+Entirely .mlpl, deterministic, self-checking, and with intermediate values inspectable.
+
+Then factor it and ask whether a named lift abstraction is even useful. It may turn out that current MLPL naturally says something like:
+
+contexts
+|> each(make_model)
+|> each(predict)
+|> mean
+in which case one of the strongest findings would be:
+
+LEFTS needs lift; MLPL's existing array/HOF vocabulary already expresses that idea directly.
+
+That is better evidence for the language than reproducing the LEFTS API.
+
+The current sw-MLPL roadmap already contains relevant HOF work around callable machinery, each, table, over, combinators, records, nested arrays, and future namespaces, so the upstream agent brief specifically instructs the agent to reconcile any blocker against those mechanisms rather than designing a parallel feature.
+
+No new repo yet
+I would specifically not create demo-workflows, demo-lefts, or demo-experiments now.
+
+A new repo becomes justified later if either:
+
+the experiment discovers a substantial domain-neutral computation/workflow abstraction with multiple non-ML consumers; or
+
+a native capability incubated in demo-extensions matures enough to deserve its own independent extension repo.
+
+That preserves the useful distinction:
+
+demo-ml-utils
+    proves the need/usefulness
+
+demo-extensions
+    incubates native capability
+
+sw-mlpl
+    accepts only fundamental/general mechanisms
+
+standalone extension repo
+    graduates proven native work
+The first agent I would launch now is therefore only AGENT-demo-ml-utils.md. The other briefs are effectively escalation contracts, which should make coordinating independent coding agents much safer.
+
+

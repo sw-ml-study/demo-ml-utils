@@ -163,6 +163,7 @@ capabilities, and status.
 - [Shipped upstream contract](docs/upstream-contract.md)
 - [Peer repository audit](docs/peer-repository-audit.md)
 - [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
+- [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)
 
 ## Copyright and license
 
