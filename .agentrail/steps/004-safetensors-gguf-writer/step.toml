@@ -1,8 +1,9 @@
 number = 4
 slug = "safetensors-gguf-writer"
-status = "in-progress"
+status = "completed"
 description = "Implement a bounded Safetensors-to-GGUF writer with read-back self-validation and no hidden external conversion."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T08:30:11"
-commits = []
+completed_at = "2026-08-09T09:21:55"
+commits = ["bfec4df029501d2217e96f93fbfa717cd155a56c"]
