@@ -1,0 +1,8 @@
+number = 5
+slug = "checkpoint-security-acceptance"
+status = "pending"
+description = "Add trusted-oracle cross-format verification, adversarial security acceptance evidence, final docs, and close the saga."
+role = "legacy"
+context_files = []
+created_at = "2026-08-09T09:59:03"
+commits = []

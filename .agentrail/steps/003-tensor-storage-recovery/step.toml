@@ -1,0 +1,8 @@
+number = 3
+slug = "tensor-storage-recovery"
+status = "pending"
+description = "Recover declarative tensor metadata and storage references while rejecting globals, reduce, constructors, extensions, and disallowed persistence."
+role = "legacy"
+context_files = []
+created_at = "2026-08-09T09:59:03"
+commits = []

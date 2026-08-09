@@ -1,0 +1,8 @@
+number = 4
+slug = "tensor-safetensors-extraction"
+status = "pending"
+description = "Extract approved tensor storage into deterministic atomic Safetensors output with self-validation."
+role = "legacy"
+context_files = []
+created_at = "2026-08-09T09:59:03"
+commits = []
