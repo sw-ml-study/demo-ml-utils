@@ -51,6 +51,10 @@ adaptation-curve-ir:
 fine-tuning-acceptance:
     ./scripts/run-fine-tuning-acceptance
 
+# Demonstrate the bounded frozen-parameter ICL record contract.
+icl-contract:
+    ./scripts/run-icl-contract
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

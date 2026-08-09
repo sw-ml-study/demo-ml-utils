@@ -240,6 +240,10 @@ data, resource ceilings, reproducibility, atomic publication and read-back, and
 destination preservation. Native production-scale training and LLM inference
 are not currently claimed.
 
+Saga 8 has begun with a runnable ICL context/query contract, disjoint stable
+IDs, frozen deployment fingerprints, a zero-update invariant, and an explicit
+zero-shot held-out baseline. Associative context use is next.
+
 ## Cross-cutting gates
 
 - Default tests use generated, redistributable, tiny fixtures.

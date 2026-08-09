@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/icl-contract.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS ICL context record contract'
+echo "Context/query schema, leakage, frozen fingerprints, zero-shot baseline, determinism, and resource-budget checks passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/icl_contract.mlpl"

@@ -1,6 +1,6 @@
 number = 1
 slug = "context-record-contract"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, define a versioned bounded context/query record schema for in-cont..."
 role = "production"
 context_files = []

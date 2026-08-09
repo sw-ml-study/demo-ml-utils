@@ -1,0 +1,11 @@
+include "../src/adaptation/icl_contract.mlpl";
+def u:icreq(v,m) { "Require one ICL contract invariant."; if v { ok(1) } else { err(m) } }
+def u:icb(context,query,comparisons,output) { "Return bounded ICL contract limits."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:10,max_json_elements:4096,max_output_bytes: output,max_context_examples: context,max_query_examples: query,max_query_elements:32,max_context_query_comparisons: comparisons,max_abs_prediction:1000} }
+b=u:icb(4,4,16,32768); built=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],b)?; r=built.report;
+u:icreq(equal([r.record.provenance.context_examples,r.record.provenance.query_examples,r.budgets.context_query_comparisons],[2,3,6])*equal(r.record.context.ids,[201,202])*equal(r.record.query.ids,[301,302,303]),"context/query split golden")?;
+u:icreq(equal(r.zero_shot.predictions,[0,0,0])*eq(r.zero_shot.mse,65)*eq(r.zero_shot.context_labels_used,0),"zero-shot baseline golden")?;
+u:icreq(equal(r.deployment.fingerprint_before,r.deployment.fingerprint_after)*eq(r.deployment.updates,0)*eq(r.mode.parameter_updates,0),"frozen deployment golden")?;
+u:icreq(equal(u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],b)?.json,built.json),"deterministic tagged JSON golden")?;
+leak={schema:"sw-ml-study.icl-record",version:1,context:{ids:[1],x:[0,0],labels:[0]},query:{ids:[1],x:[0,0],targets:[0]},provenance:{features:2}}; u:icreq(is_err(u:icl_record_validate(leak,b)),"context/query leakage rejection")?;
+u:icreq(is_err(u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],u:icb(1,4,16,32768))),"context example budget rejection")?; u:icreq(is_err(u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],u:icb(4,2,16,32768))),"query example budget rejection")?; u:icreq(is_err(u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],u:icb(4,4,5,32768))),"comparison budget rejection")?; u:icreq(is_err(u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[0,0,0],u:icb(4,4,16,100))),"output budget rejection")?;
+print("PASS ICL context record contract"); ok(1)

@@ -112,6 +112,9 @@ channels for headless consumers and future renderers.
 The [fine-tuning acceptance report](docs/fine-tuning-acceptance.md) closes that
 bounded saga with deterministic, adversarial, and atomic-publication evidence
 plus explicit limitations.
+The [ICL record contract](docs/icl-contract.md) begins frozen-parameter
+in-context learning with disjoint context/query records and an honest zero-shot
+baseline.
 
 ## Running the project
 

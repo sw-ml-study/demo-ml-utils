@@ -144,6 +144,9 @@ Build a frozen associative-attention learner, context controls and leakage
 checks, comparison visualization, and an optional pinned external-model
 adapter. Deployment parameters must remain unchanged.
 
+Current status: the versioned bounded context/query record, split/leakage
+evidence, frozen deployment fingerprint, and zero-shot baseline are runnable.
+
 ## Saga 9 — `in-context-reinforcement-learning` (planned)
 
 Build deterministic bandit baselines, source learning histories, a miniature
