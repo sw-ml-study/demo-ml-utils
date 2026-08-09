@@ -54,6 +54,9 @@ The [self-validating writer](docs/safetensors-to-gguf.md) converts one bounded
 signed-integer Safetensors tensor into deterministic GGUF v3 and reads it back.
 The [quantization and conversion acceptance report](docs/quantization-conversion-acceptance.md)
 records the complete supported slice and an opt-in independent oracle adapter.
+The [passive checkpoint inventory](docs/checkpoint-risk-inventory.md) begins the
+restricted-extraction work by classifying ZIP/pickle risk without loading or
+executing serialized content.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

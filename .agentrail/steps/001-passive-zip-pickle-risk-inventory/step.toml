@@ -1,6 +1,6 @@
 number = 1
 slug = "passive-zip-pickle-risk-inventory"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, implement a passive bounded inventory for tiny generated PyTorch-s..."
 role = "production"
 context_files = []

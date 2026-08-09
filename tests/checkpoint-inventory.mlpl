@@ -1,0 +1,23 @@
+include "../src/checkpoint/passive_inventory.mlpl";
+def u:creq(v,m) { "Require a passive checkpoint invariant."; if v { ok(1) } else { err(m) } }
+def u:cb(artifact,members,pickle,opcodes,strings,string_bytes,memo,depth,iterations,output,elements) { "Return passive checkpoint inventory budgets."; {max_artifact_bytes: artifact,max_members: members,max_pickle_bytes: pickle,max_opcodes: opcodes,max_strings: strings,max_string_bytes:64,max_total_string_bytes: string_bytes,max_memo_entries: memo,max_depth: depth,max_iterations: iterations,max_output_bytes: output,max_json_depth:8,max_json_elements: elements} }
+b=u:cb(512,4,128,64,8,128,8,8,64,4096,128); benign=u:checkpoint_inventory("fixtures/checkpoint/benign.pt",b)?;
+multi=u:checkpoint_multi_inventory("fixtures/checkpoint/benign.pt",b)?; u:creq(equal(multi.json,benign.json),"single/general ZIP inventory parity")?;
+u:creq(equal([benign.report.container.artifact_bytes,benign.report.container.member_count,benign.report.container.data_pickle_bytes],[141,1,27]),"checkpoint container golden")?;
+u:creq(equal([benign.report.pickle.protocol,benign.report.pickle.opcode_count,benign.report.pickle.declarative_opcodes,benign.report.pickle.dangerous_opcodes,benign.report.pickle.memo_opcodes,benign.report.pickle.max_mark_depth],[2,12,12,0,2,1]),"benign pickle inventory golden")?;
+u:creq(equal(benign.report.pickle.risk,"declarative-inventory-only")*eq(benign.report.pickle.execution_performed,0),"benign passive policy")?;
+danger=u:checkpoint_inventory("fixtures/checkpoint/dangerous-global.pt",b)?; u:creq(equal([danger.report.pickle.opcode_count,danger.report.pickle.dangerous_opcodes,danger.report.pickle.global_opcodes],[3,1,1])*equal(danger.report.pickle.risk,"high")*eq(danger.report.pickle.execution_performed,0),"dangerous GLOBAL passive risk golden")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/path-traversal.pt",b)),"ZIP traversal rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/encrypted.pt",b)),"ZIP encryption rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/compressed.pt",b)),"ZIP compression rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/duplicate-member.pt",b)),"ZIP duplicate member rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/truncated.pt",b)),"ZIP truncation rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(140,4,128,64,8,128,8,8,64,4096,128))),"artifact budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,0,128,64,8,128,8,8,64,4096,128))),"member budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,4,26,64,8,128,8,8,64,4096,128))),"pickle byte budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,4,128,11,8,128,8,8,64,4096,128))),"opcode budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,4,128,64,8,128,1,8,64,4096,128))),"memo budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,4,128,64,8,128,8,0,64,4096,128))),"depth budget rejection")?;
+u:creq(is_err(u:checkpoint_inventory("fixtures/checkpoint/benign.pt",u:cb(512,4,128,64,8,128,8,8,64,100,128))),"output budget rejection")?;
+u:creq(is_err(u:passive_pickle_inventory([128,2,255,46],b)),"unknown opcode rejection")?;
+print("PASS passive checkpoint risk inventory"); ok(1)

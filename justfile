@@ -28,6 +28,7 @@ capabilities:
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write
     ./scripts/generate-gguf-fixtures --write
+    ./scripts/generate-checkpoint-fixtures --write
 
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
@@ -84,6 +85,10 @@ simple-q4:
 # Demonstrate bounded self-validating Safetensors-to-GGUF writing.
 safetensors-to-gguf:
     ./scripts/run-safetensors-to-gguf
+
+# Demonstrate passive no-execution checkpoint risk inventory.
+checkpoint-inventory:
+    ./scripts/run-checkpoint-inventory
 
 # Opt-in: compare a generated GGUF with an explicit external Python oracle.
 external-oracle:

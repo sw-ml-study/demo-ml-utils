@@ -102,7 +102,9 @@ Status: acceptance complete. See the
 Gate: format and threat-model review is complete and resource budgets can be
 enforced before allocation.
 
-1. Passive ZIP/pickle opcode inventory and risk report.
+1. Passive ZIP/pickle opcode inventory and risk report — runnable for a tiny
+   stored `data.pkl` container with dangerous-opcode reporting and zero
+   deserialization/execution.
 2. Budgeted allow-listed primitive stack-machine parser.
 3. Tensor metadata/storage-reference recovery with executable constructs
    rejected rather than invoked.

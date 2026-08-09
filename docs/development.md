@@ -53,6 +53,10 @@ just safetensors-headers
 just safetensors-catalog
 ```
 
+Fixture regeneration also covers deterministic shell-built checkpoint ZIPs.
+They contain hand-authored pickle bytes; generation never imports Python,
+PyTorch, or a pickle implementation.
+
 The routine gate checks that committed fixture bytes exactly match fresh
 generation before running the MLPL decoder tests.
 

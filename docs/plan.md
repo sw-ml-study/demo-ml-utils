@@ -184,6 +184,13 @@ Acceptance: adversarial fixtures execute nothing, unsupported constructs fail
 closed, and successful output contains tensor data plus declarative metadata
 only. Documentation says the serialization path is risky—not the weights.
 
+Current status: passive inventory is runnable for a tightly restricted stored,
+unencrypted, single-disk ZIP with exactly one safe `data.pkl` member. It
+validates matching local/central/end records, inventories known bounded pickle
+opcodes and arguments without stack evaluation, reports dangerous globals and
+related executable categories as high risk, and keeps execution evidence at
+zero. Allow-listed primitive evaluation remains next.
+
 ## Cross-cutting gates
 
 - Default tests use generated, redistributable, tiny fixtures.
