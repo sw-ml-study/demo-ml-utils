@@ -16,6 +16,7 @@ check_demo() {
 }
 
 check_demo capabilities scripts/run-capability-probe
+check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo safetensors-headers scripts/run-safetensors-header-tests
 check_demo safetensors-catalog scripts/run-safetensors-catalog
 check_demo safetensors-slice scripts/run-safetensors-slice

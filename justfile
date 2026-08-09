@@ -29,6 +29,11 @@ generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write
     ./scripts/generate-gguf-fixtures --write
     ./scripts/generate-checkpoint-fixtures --write
+    ./scripts/generate-adaptation-fixtures --write
+
+# Demonstrate the shared fine-tuning, ICL, and ICRL evidence contract.
+adaptation-contract:
+    ./scripts/run-adaptation-contract
 
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:

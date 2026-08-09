@@ -7,6 +7,7 @@ max_fixture_bytes=1048576
 "$repo_root/scripts/generate-safetensors-fixtures" --check >/dev/null
 "$repo_root/scripts/generate-gguf-fixtures" --check >/dev/null
 "$repo_root/scripts/generate-checkpoint-fixtures" --check >/dev/null
+"$repo_root/scripts/generate-adaptation-fixtures" --check >/dev/null
 
 if [ -d "$repo_root/fixtures" ]; then
   if find "$repo_root/fixtures" -type l -print | grep -q .; then

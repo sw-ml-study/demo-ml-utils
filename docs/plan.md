@@ -223,9 +223,12 @@ held-out splits, leakage checks, baselines, ablations, deterministic fixtures,
 and adversarial resource limits pass. See the detailed
 [adaptation demo plan](adaptation-demos-plan.md).
 
-Current status: planned. Tiny manual-gradient, associative-context, and fixed
-reward-tape foundations appear expressible with current MLPL arithmetic.
-Native production-scale training and LLM inference are not currently claimed.
+Current status: the shared adaptation contract is runnable. It validates a
+generated deterministic train/context/evaluation dataset with explicit leakage
+checks, pins exact parameter-fingerprint semantics and mode distinctions, and
+probes seeded randomness, dot/matrix multiplication, stable softmax, sigmoid,
+and exp/log. Linear fine-tuning is next. Native production-scale training and
+LLM inference are not currently claimed.
 
 ## Cross-cutting gates
 

@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/adaptation-contract.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS bounded adaptation contract'
+echo "Dataset schema/splits, leakage, terminology, fingerprints, numeric evidence, round-trip, determinism, and resource-budget checks passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/contract.mlpl"

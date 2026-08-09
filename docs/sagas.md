@@ -126,6 +126,9 @@ Build the shared adaptation evidence contract, a manual-gradient linear
 fine-tuning demo, a teaching-sized low-rank adapter, a learning-curve IR, and
 deterministic/oracle acceptance.
 
+Current status: the shared contract, deterministic split/leakage fixture,
+canonical parameter fingerprint, and numeric capability evidence are runnable.
+
 ## Saga 8 — `in-context-learning` (planned)
 
 Build a frozen associative-attention learner, context controls and leakage

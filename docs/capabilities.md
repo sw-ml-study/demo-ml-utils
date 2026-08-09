@@ -54,3 +54,12 @@ Browser/server metric streaming is unrelated to binary file consumption and
 does not satisfy the remaining gaps. Large-file tensor statistics can now be
 built from repeated bounded reads. The bounded arbitrary-name Safetensors
 catalog is now runnable.
+
+## Adaptation consequences
+
+`just adaptation-contract` additionally pins deterministic seeded `random`,
+`dot`, `matmul`, stable row-wise `softmax`, `sigmoid`, and `exp`/`log` on tiny
+goldens. These operations are sufficient for the planned teaching-scale manual
+gradient and associative-attention implementations. This evidence does not
+claim production-scale stability, accelerator execution, tokenizer/model
+inference, or packed arrays at native-extension boundaries.

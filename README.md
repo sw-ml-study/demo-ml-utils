@@ -92,6 +92,15 @@ deliberately constrained, non-PyTorch-deserializing path:
 The constrained restricted-checkpoint slice is complete. It does not claim
 general PyTorch/pickle compatibility.
 
+### Adaptation
+
+The [shared adaptation contract](docs/adaptation-contract.md) defines distinct
+proof requirements for fine-tuning, ICL, and ICRL; validates deterministic
+train/context/evaluation splits; and pins the numeric operations needed by the
+first teaching-scale learners. The broader
+[adaptation demo plan](docs/adaptation-demos-plan.md) records the sequence and
+production-scale limitations.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
