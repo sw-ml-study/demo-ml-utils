@@ -1,8 +1,9 @@
 number = 2
 slug = "symmetric-int8-q8-roundtrips"
-status = "in-progress"
+status = "completed"
 description = "Implement bounded symmetric INT8 and Q8_0 encode/decode round trips with deterministic byte goldens and error comparisons."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T08:30:11"
-commits = []
+completed_at = "2026-08-09T08:57:22"
+commits = ["cc6f4ddc7f63e873f069d084b821971e3c17b9ff"]
