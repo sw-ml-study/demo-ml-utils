@@ -10,8 +10,8 @@ the default test gate.
 the requested tensor name exactly from its retained byte table, and checks its
 known extent against the caller's payload-read budget. Only then does it derive
 the absolute offset from the aligned tensor-data start and issue one exact
-`read_bytes` call for the selected range. Unsupported F32 and Q8_0 descriptors
-remain visible in the catalog but fail closed before payload I/O.
+`read_bytes` call for the selected range. Unsupported F32 descriptors fail
+closed before payload I/O; Q8_0 uses its separate budgeted block decoder.
 
 Native code supplies sandboxed `file_size` and bounded `read_bytes`. MLPL owns
 catalog validation, exact name resolution, dtype policy, budget enforcement,

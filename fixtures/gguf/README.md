@@ -8,6 +8,9 @@ plus bad-magic, unsupported-version, excessive-count, unsupported-metadata,
 truncated, invalid-alignment, misaligned-offset, and unsupported-tensor-type
 variants. The expanded fixture adds multiple tensor descriptors, scalar
 metadata types, duplicate names, a catalog-visible Q8_0 type, and a known
-extent overlap. Its I16 payload encodes `[-32768, -2, 32767, 42]` and its I8
+extent overlap. Its Q8_0 payload has binary16 scale 0.5 and signed quants
+`-16..15`; its I16 payload encodes `[-32768, -2, 32767, 42]` and its I8
 payload encodes `[-128, -1, 0, 127]` as exact golden selective-read evidence;
 unrelated payload ranges remain synthetic zeros.
+The malformed Q8_0 fixture declares 33 parameters, proving incomplete
+32-value blocks fail before payload reads.

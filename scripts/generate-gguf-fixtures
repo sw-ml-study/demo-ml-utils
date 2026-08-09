@@ -39,10 +39,13 @@ string general.file_type "$file"; u32 4 "$file"; u32 7 "$file"
 string custom.enabled "$file"; u32 7 "$file"; printf '\001' >> "$file"
 string alpha "$file"; u32 1 "$file"; u64 4 "$file"; u32 0 "$file"; u64 0 "$file"
 string quant "$file"; u32 1 "$file"; u64 32 "$file"; u32 8 "$file"; u64 32 "$file"
-string ints "$file"; u32 1 "$file"; u64 4 "$file"; u32 25 "$file"; u64 64 "$file"
-string bytes "$file"; u32 1 "$file"; u64 4 "$file"; u32 24 "$file"; u64 96 "$file"
+string ints "$file"; u32 1 "$file"; u64 4 "$file"; u32 25 "$file"; u64 96 "$file"
+string bytes "$file"; u32 1 "$file"; u64 4 "$file"; u32 24 "$file"; u64 128 "$file"
 bytes=$(wc -c < "$file" | tr -d ' '); pad=$(((32 - (bytes % 32)) % 32)); i=0; while [ "$i" -lt "$pad" ]; do printf '\000' >> "$file"; i=$((i + 1)); done
-i=0; while [ "$i" -lt 64 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+i=0; while [ "$i" -lt 32 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+# One ggml block_q8_0: binary16 scale 0.5 (0x3800), then signed quants -16..15.
+printf '\000\070\360\361\362\363\364\365\366\367\370\371\372\373\374\375\376\377\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017' >> "$file"
+i=0; while [ "$i" -lt 30 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
 printf '\000\200\376\377\377\177\052\000' >> "$file"
 i=0; while [ "$i" -lt 24 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
 printf '\200\377\000\177' >> "$file"
@@ -50,6 +53,7 @@ printf '\200\377\000\177' >> "$file"
 file="$work_dir/duplicate-metadata.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 0 "$file"; u64 2 "$file"; string general.architecture "$file"; u32 8 "$file"; string demo "$file"; string general.architecture "$file"; u32 8 "$file"; string again "$file"
 file="$work_dir/duplicate-tensor.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 2 "$file"; u64 1 "$file"; string general.architecture "$file"; u32 8 "$file"; string demo "$file"; string same "$file"; u32 1 "$file"; u64 1 "$file"; u32 0 "$file"; u64 0 "$file"; string same "$file"; u32 1 "$file"; u64 1 "$file"; u32 0 "$file"; u64 32 "$file"
 file="$work_dir/overlapping-known.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 2 "$file"; u64 1 "$file"; string general.architecture "$file"; u32 8 "$file"; string demo "$file"; string first "$file"; u32 1 "$file"; u64 16 "$file"; u32 0 "$file"; u64 0 "$file"; string second "$file"; u32 1 "$file"; u64 4 "$file"; u32 0 "$file"; u64 32 "$file"; bytes=$(wc -c < "$file" | tr -d ' '); pad=$(((32 - (bytes % 32)) % 32)); i=0; while [ "$i" -lt "$pad" ]; do printf '\000' >> "$file"; i=$((i + 1)); done; i=0; while [ "$i" -lt 48 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+file="$work_dir/partial-q8-block.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 1 "$file"; u64 1 "$file"; string general.architecture "$file"; u32 8 "$file"; string demo "$file"; string broken "$file"; u32 1 "$file"; u64 33 "$file"; u32 8 "$file"; u64 0 "$file"
 
 case "$mode" in
   --write) mkdir -p "$fixture_dir"; for generated in "$work_dir"/*; do cp "$generated" "$fixture_dir/$(basename -- "$generated")"; done ;;

@@ -46,9 +46,11 @@ def u:gguf_type_active(type_id) { "Recognize catalog-visible active ggml type ID
   gt(type_id, -1) * lt(type_id, 40) * (1 - eq(type_id,4)) * (1 - eq(type_id,5)) * (1 - eq(type_id,31)) * (1 - eq(type_id,32)) * (1 - eq(type_id,33)) * (1 - eq(type_id,36)) * (1 - eq(type_id,37)) * (1 - eq(type_id,38))
 }
 
-def u:gguf_known_tensor_bytes(type_id, parameters, maximum_parameters) { "Return exact bytes for simple unquantized layouts, or -1 for catalog-only types.";
+def u:gguf_known_tensor_bytes(type_id, parameters, maximum_parameters) { "Return exact bytes for supported fixed-width and Q8_0 layouts, or -1 for catalog-only types.";
+  if eq(type_id,8) { if 1 - eq(mod(parameters,32),0) { err("GGUF Q8_0 parameters must form complete 32-value blocks") } else { blocks = parameters / 32; if gt(blocks,floor(maximum_parameters / 34)) { err("GGUF Q8_0 byte extent exceeds the exact budget") } else { ok(blocks * 34) } } } else {
   if eq(type_id,0) + eq(type_id,26) { width = 4 } else { if eq(type_id,1) + eq(type_id,25) + eq(type_id,30) { width = 2 } else { if eq(type_id,24) { width = 1 } else { if eq(type_id,27) + eq(type_id,28) { width = 8 } else { return ok(-1) } } } };
   if gt(parameters, floor(maximum_parameters / width)) { err("GGUF tensor byte budget exceeded") } else { ok(parameters * width) }
+  }
 }
 
 def u:gguf_layout(rows, index, data_bytes) { "Validate sorted tensor starts and all extents whose byte layout is known.";

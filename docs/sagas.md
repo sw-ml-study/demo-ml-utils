@@ -44,14 +44,15 @@ record enumeration are shipped and covered by the repository gate.
 
 Status: active. Bounded GGUF v3 scalar metadata and multiple-tensor cataloging
 are runnable over tiny generated fixtures; exact-name selective I8/I16 payload
-decoding is also runnable while unsupported types remain catalog-visible. See the
+decoding and one-block Q8_0 golden dequantization are also runnable while
+unsupported types remain catalog-visible. See the
 [bounded-analysis report](bounded-analysis-report.md) for the gate evidence.
 
 1. GGUF header, metadata, tensor directory, and alignment fixtures/parser.
 2. Multiple-tensor cataloging, scalar metadata coverage, and catalog-visible
    active tensor type IDs — runnable without payload reads.
 3. Unquantized selective I8/I16 tensor decoding — runnable in the default gate.
-4. Q8_0 golden block decode and reference parity.
+4. Q8_0 golden block decode and ggml reference parity — runnable in the default gate.
 5. Bounded tensor sampling/statistics and acceptance report.
 
 ## Saga 4 — `model-visualization`

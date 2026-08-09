@@ -1,0 +1,14 @@
+include "../src/formats/gguf_q8_0.mlpl";
+def u:require_q8(value,message) { "Require a Q8_0 golden invariant."; if value { ok(1) } else { err(message) } }
+def u:q8_fixture(read_budget,block_budget,output_budget) { "Decode the generated Q8_0 fixture."; u:read_gguf_q8_0("fixtures/gguf/valid-catalog.gguf","quant",4096,8,4,256,4,1000000,read_budget,block_budget,output_budget) }
+
+golden = u:q8_fixture(34,1,32)?;
+u:require_q8(equal(golden.scales,[0.5]),"Q8_0 binary16 scale conversion")?;
+u:require_q8(equal(golden.values,range(32) / 2 - 8),"Q8_0 ggml dequantize_row_q8_0 oracle parity")?;
+u:require_q8(equal([golden.byte_count,golden.blocks,golden.parameters],[34,1,32]),"Q8_0 extent and block accounting")?;
+u:require_q8(is_err(u:q8_fixture(33,1,32)),"Q8_0 read budget rejection")?;
+u:require_q8(is_err(u:q8_fixture(34,0,32)),"Q8_0 block budget rejection")?;
+u:require_q8(is_err(u:q8_fixture(34,1,31)),"Q8_0 output budget rejection")?;
+u:require_q8(is_err(u:gguf_decode_q8_0(fill([33],0),1,32)),"Q8_0 partial payload rejection")?;
+u:require_q8(is_err(u:gguf_fp16([0,124])),"Q8_0 non-finite scale rejection")?;
+print("PASS GGUF Q8_0 golden decode"); ok(1)

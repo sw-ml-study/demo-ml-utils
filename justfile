@@ -57,6 +57,10 @@ gguf-catalog:
 gguf-slice:
     ./scripts/run-gguf-slice
 
+# Demonstrate one bounded GGUF Q8_0 block and its visible scale conversion.
+gguf-q8-0:
+    ./scripts/run-gguf-q8-0
+
 # Opt-in: generate a 1 MiB sparse artifact and enforce its peak-RSS bound.
 sparse-acceptance:
     ./scripts/run-sparse-safetensors-acceptance

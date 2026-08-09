@@ -18,8 +18,8 @@ Multiple unique tensor descriptors are retained as name-byte tables and rows
 of `[relative_offset, parameters, ggml_type_id, known_bytes]`. Active type IDs
 from the pinned specification remain catalog-visible. `known_bytes` is `-1`
 when this project has not established the type's block-size rule, explicitly
-meaning “cataloged, not decoded.” Simple F32/F16/BF16 and signed integer extents
-are computed, sorted by offset for layout validation, and rejected if they
+meaning “cataloged, extent unknown.” Simple F32/F16/BF16, signed integer, and
+complete Q8_0 block extents are computed, sorted by offset for layout validation, and rejected if they
 overlap or exceed the data buffer. Tensor payload bytes are never requested.
 
 Native code supplies generic sandboxed `file_size` and exact bounded
@@ -37,8 +37,8 @@ outside configured exact bounds fail closed.
 
 Big-endian v3, metadata arrays, floating and signed-64 metadata, decoded scalar
 metadata values beyond architecture/alignment, and exact extent rules for
-quantized types remain later work. A separate [selective decoder](gguf-slice.md)
-now reads catalog-validated I8/I16 payloads; floating and quantization-block
-decode remain unsupported.
+other quantized types remain later work. Separate selective decoders read
+catalog-validated [I8/I16 payloads](gguf-slice.md) and [Q8_0 blocks](gguf-q8-0.md);
+floating and other quantization-block decode remain unsupported.
 Exact name tables avoid hash collisions but intentionally trade quadratic
 comparison work for simple fail-closed behavior under small count budgets.

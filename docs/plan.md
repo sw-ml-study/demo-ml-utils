@@ -109,7 +109,9 @@ Current status: bounded GGUF v3 scalar metadata and multiple-tensor cataloging
 are runnable. Active tensor type IDs remain visible without decode; known
 simple extents receive overlap/file-bound validation. Exact-name selective I8
 and I16 payload reads and signed little-endian decoding are runnable under an
-explicit read budget; floating and quantized decode remain later work.
+explicit read budget. Exact Q8_0 block extents and selective dequantization are
+runnable with binary16-scale golden evidence; other floating and quantized
+types remain later work.
 
 ### Phase 3 — hierarchical 3D visualization
 
@@ -167,6 +169,6 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Continue active `gguf-inspection` from [sagas.md](sagas.md) with a golden Q8_0
-block decoder and named reference parity. Keep every user-invoked `just` demo
-narrative and self-describing.
+Continue active `gguf-inspection` from [sagas.md](sagas.md) with bounded
+sampling/statistics and a measured acceptance report. Keep every user-invoked
+`just` demo narrative and self-describing.
