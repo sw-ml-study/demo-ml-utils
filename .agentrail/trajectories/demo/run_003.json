@@ -1,0 +1,11 @@
+{
+  "task_type": "demo",
+  "state": {
+    "number": 4,
+    "step": "tune-without-leakage"
+  },
+  "action": "Added TDD output assertions, MLPL source/test/demo, three-way provenance validation, bounded candidate scoring and deterministic selection, runner, catalog and Just recipes, report and roadmap documentation; ran just tune and just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T16:53:22"
+}
