@@ -1,8 +1,9 @@
 number = 5
 slug = "icrl-acceptance"
-status = "in-progress"
+status = "completed"
 description = "Close the bounded ICRL saga with deterministic and adversarial held-out evide..."
 role = "validation"
 context_files = []
 created_at = "2026-08-09T14:09:26"
-commits = []
+completed_at = "2026-08-09T16:17:47"
+commits = ["febf3da07d27eb9f2158c50b27b9018f6d245428"]
