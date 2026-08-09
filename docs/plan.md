@@ -248,6 +248,9 @@ contribution evidence; context controls are next.
 Context controls are now runnable; the shared ICL comparison IR is next.
 The shared ICL comparison IR is now runnable; final deterministic and
 adversarial ICL acceptance is next.
+Deterministic and adversarial ICL acceptance is now complete with frozen-state
+proof and atomic report publication. The bounded ICRL saga is the next planned
+adaptation increment.
 
 ## Cross-cutting gates
 

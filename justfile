@@ -67,6 +67,10 @@ icl-controls:
 icl-comparison-ir:
     ./scripts/run-icl-comparison-ir
 
+# Run final deterministic, adversarial, and atomic ICL acceptance.
+icl-acceptance:
+    ./scripts/run-icl-acceptance
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

@@ -152,6 +152,10 @@ Context controls now expose order invariance, zero-effect distractors,
 contradiction harm, truncation, empty selection, leakage, and budget failures.
 The renderer-neutral ICL comparison IR now exposes aligned zero/one/few-shot
 context, similarity, prediction, MSE, accuracy, fingerprint, and provenance data.
+Status: acceptance complete. The final gate adds reproducibility, hostile data
+and resource cases, atomic exact/semantic read-back, destination preservation,
+attribution, and explicit limitations. See the
+[ICL acceptance report](icl-acceptance.md).
 
 ## Saga 9 — `in-context-reinforcement-learning` (planned)
 

@@ -1,6 +1,6 @@
 number = 5
 slug = "icl-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Close the ICL saga with deterministic and adversarial native acceptance, repr..."
 role = "validation"
 context_files = []

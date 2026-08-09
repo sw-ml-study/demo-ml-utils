@@ -123,6 +123,8 @@ contradiction, truncation, empty-context, and leakage effects explicit.
 The [ICL comparison IR](docs/icl-comparison-ir.md) normalizes context,
 similarities, predictions, loss, exact-match accuracy, fingerprints, and
 provenance for renderer-neutral consumers.
+The [ICL acceptance report](docs/icl-acceptance.md) closes the saga with
+reproducible, adversarial, frozen-state, and atomic-publication evidence.
 
 ## Running the project
 
