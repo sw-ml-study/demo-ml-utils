@@ -130,6 +130,8 @@ Current status: the shared contract, deterministic split/leakage fixture,
 canonical parameter fingerprint, and numeric capability evidence are runnable.
 Manual-gradient linear fine-tuning is also runnable with visible parameter,
 trajectory, stopping, rejection, and held-out evidence.
+Frozen-base low-rank adaptation is runnable with rank-one training, rank-two
+shape support, merge parity, and explicit parameter-efficiency caveats.
 
 ## Saga 8 — `in-context-learning` (planned)
 

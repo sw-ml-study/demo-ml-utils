@@ -1,6 +1,6 @@
 number = 3
 slug = "low-rank-adapter"
-status = "pending"
+status = "in-progress"
 description = "Implement a teaching-sized frozen-base rank-one/rank-two adapter. Demonstrate..."
 role = "production"
 context_files = []

@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/low-rank-adapter.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS frozen-base low-rank adapter'
+echo "Rank-one training, rank-two support, frozen-base fingerprint, factor update, merge parity, held-out loss, trajectory, and resource-budget checks passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/low_rank_adapter.mlpl"

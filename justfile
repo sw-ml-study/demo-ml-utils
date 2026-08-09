@@ -39,6 +39,10 @@ adaptation-contract:
 linear-fine-tune:
     ./scripts/run-linear-fine-tune
 
+# Demonstrate a frozen-base rank-one/rank-two adapter mechanism.
+low-rank-adapter:
+    ./scripts/run-low-rank-adapter
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

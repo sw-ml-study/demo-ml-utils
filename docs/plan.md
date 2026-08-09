@@ -229,9 +229,11 @@ checks, pins exact parameter-fingerprint semantics and mode distinctions, and
 probes seeded randomness, dot/matrix multiplication, stable softmax, sigmoid,
 and exp/log. Manual linear fine-tuning is now runnable with explicit batch-MSE
 gradients, before/after fingerprints, selected loss/gradient evidence, and a
-held-out improvement over the no-training baseline. Low-rank adaptation is
-next. Native production-scale training and LLM inference are not currently
-claimed.
+held-out improvement over the no-training baseline. Frozen-base rank-one
+adaptation is also runnable with manual factor gradients, exact base
+fingerprints, merged/factorized parity, held-out evidence, and rank-two support.
+The shared adaptation curve IR is next. Native production-scale training and
+LLM inference are not currently claimed.
 
 ## Cross-cutting gates
 

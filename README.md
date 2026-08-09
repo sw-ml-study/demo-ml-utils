@@ -103,6 +103,9 @@ production-scale limitations.
 The [manual linear fine-tuning demo](docs/linear-fine-tuning.md) then performs
 real bounded parameter updates, exposes its loss/gradient trajectory, and
 compares no-training with fine-tuned held-out predictions.
+The [frozen-base low-rank adapter](docs/low-rank-adapter.md) exposes factor
+gradients, merge parity, unchanged base evidence, and honest trainable/storage
+parameter accounting for rank one and two.
 
 ## Running the project
 
