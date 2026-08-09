@@ -36,6 +36,10 @@ split-lift:
 ensemble-feed:
     ./scripts/run-ensemble-feed
 
+# Select a downstream configuration on validation, then evaluate held-out once.
+tune:
+    ./scripts/run-tune
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

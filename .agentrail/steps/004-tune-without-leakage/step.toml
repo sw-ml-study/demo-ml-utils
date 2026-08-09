@@ -1,6 +1,6 @@
 number = 4
 slug = "tune-without-leakage"
-status = "pending"
+status = "in-progress"
 description = "Using TDD, demonstrate a bounded Tune concept in pure MLPL: score every candi..."
 role = "production"
 context_files = []

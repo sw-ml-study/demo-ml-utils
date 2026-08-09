@@ -305,3 +305,8 @@ The two ensemble members expose their disagreement before their mean cancels
 opposite biases, and Feed exposes its upstream squared feature plus a harmful
 no-feed ablation. Both transformed computation records retain the same predict
 interface. Leakage-safe Tune is next; see [the composition demo](ensemble-feed.md).
+
+Leakage-safe Tune is now runnable. Training produces the base slope,
+validation exposes every candidate score and deterministically selects the
+lowest-index minimum, and held-out data is read only for one final evaluation.
+The composed rolling experiment is next; see [the Tune demo](tune.md).

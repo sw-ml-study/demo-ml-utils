@@ -224,6 +224,11 @@ disagreement, aggregation, intermediate fed features, ablation metrics, and a
 shared predict-record evaluator are visible. No cross-repository blocker was
 found. Leakage-safe Tune is next; see [the report](ensemble-feed.md).
 
+Tune is now runnable with three-way identity separation, visible candidate
+scores, deterministic lower-index tie behavior, zero test reads during
+selection, and exactly one held-out evaluation. The composed rolling
+experiment is next; see [the report](tune.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

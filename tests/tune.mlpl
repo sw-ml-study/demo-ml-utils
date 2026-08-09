@@ -1,0 +1,12 @@
+include "../src/experiments/tune.mlpl";
+def u:tr(c,m) { "Require one Tune golden."; if c { ok(1) } else { err(m) } }
+def u:td() { "Return disjoint train, validation, and held-out splits."; {train:{ids:[101,102],x:[0,1],y:[1,3]},validation:{ids:[201,202],x:[1,2],y:[3,5]},test:{ids:[301,302],x:[3,4],y:[7,9]}} }
+def u:tb(examples,candidates,elements,comparisons,abs_value) { "Return Tune budgets."; {max_examples: examples,max_candidates: candidates,max_elements: elements,max_id_comparisons: comparisons,max_abs_value: abs_value} }
+b=u:tb(8,8,64,64,100); r=u:tune_report(u:td(),[0,1,2],b)?;
+u:tr(eq(r.fitted.slope,2)*equal(r.selection.scores,[1,0,1])*eq(r.selection.selected_index,1)*eq(r.selection.selected_offset,1),"Tune selection golden")?;
+u:tr(equal(r.held_out.predictions,[7,9])*eq(r.held_out.mse,0)*eq(r.held_out.reads_before_selection,0)*eq(r.held_out.evaluations,1),"held-out golden")?;
+tie=u:tune_select(2,[1,2],[1,2],[3.5,5.5],b)?; u:tr(equal(tie.scores,[0.25,0.25])*eq(tie.selected_index,0),"deterministic tie golden")?;
+leaked=u:td(); leaked={train: leaked.train,validation: leaked.validation,test:{ids:[202,302],x: leaked.test.x,y: leaked.test.y}}; u:tr(is_err(u:tune_report(leaked,[0,1,2],b)),"test leakage rejection")?;
+u:tr(is_err(u:tune_report(u:td(),[],b)),"empty candidates rejection")?; u:tr(is_err(u:tune_report(u:td(),[0,1,2],u:tb(8,2,64,64,100))),"candidate budget rejection")?;
+bad=u:td(); bad={train: bad.train,validation:{ids: bad.validation.ids,x:[1,0/0],y: bad.validation.y},test: bad.test}; u:tr(is_err(u:tune_report(bad,[0,1,2],b)),"non-finite rejection")?;
+print("PASS leakage-safe Tune"); ok(1)

@@ -19,6 +19,7 @@ check_demo capabilities scripts/run-capability-probe
 check_demo lefts-capabilities scripts/run-lefts-capability-contract
 check_demo split-lift scripts/run-split-lift
 check_demo ensemble-feed scripts/run-ensemble-feed
+check_demo tune scripts/run-tune
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter
@@ -70,6 +71,20 @@ for marker in \
 do
   grep -Fqx "$marker" "$lefts_output" || {
     echo "LEFTS capability output lacks $marker" >&2
+    exit 1
+  }
+done
+
+tune_output="$work_dir/tune.txt"
+for marker in \
+  'CONCEPT Tune=validation-selects-downstream-configuration' \
+  'SELECTION deterministic_tie_break=lowest_candidate_index' \
+  'LEAKAGE held_out_reads_before_selection=0' \
+  'EVALUATION held_out_evaluations=1' \
+  'CLASSIFICATION cross_repo_blockers=none'
+do
+  grep -Fqx "$marker" "$tune_output" || {
+    echo "Tune output lacks $marker" >&2
     exit 1
   }
 done
