@@ -28,6 +28,7 @@ check_demo quantization-error scripts/run-quantization-error
 check_demo transport scripts/run-transport
 check_demo numeric-conversion scripts/run-numeric-conversion
 check_demo symmetric-roundtrip scripts/run-symmetric-roundtrip
+check_demo simple-q4 scripts/run-simple-q4
 check_demo gguf-catalog scripts/run-gguf-catalog
 check_demo gguf-slice scripts/run-gguf-slice
 check_demo gguf-q8-0 scripts/run-gguf-q8-0

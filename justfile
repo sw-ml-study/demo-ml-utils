@@ -77,6 +77,10 @@ numeric-conversion:
 symmetric-roundtrip:
     ./scripts/run-symmetric-roundtrip
 
+# Demonstrate an explicit teaching Q4 nibble round trip.
+simple-q4:
+    ./scripts/run-simple-q4
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

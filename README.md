@@ -48,6 +48,8 @@ quantization work with explicit saturating byte policies and reconstruction
 metrics implemented in MLPL.
 The [symmetric round-trip demo](docs/symmetric-roundtrip.md) adds deterministic
 INT8 payloads and GGUF-compatible Q8_0 blocks with binary16 scales.
+The [simple Q4 demo](docs/simple-q4.md) makes an 18-byte teaching nibble layout
+and its larger reconstruction tradeoff directly visible.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

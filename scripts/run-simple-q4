@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/simple-q4.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS simple Q4 round trip'
+echo "Internal byte-golden, decode, metric, zero-block, malformed-input, and budget validation passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/quantization/simple_q4.mlpl"

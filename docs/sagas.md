@@ -86,7 +86,8 @@ transport now provide reusable golden evidence for encoder work.
    saturating i8/u8, f64 identity, and deterministic comparison evidence.
 2. Symmetric INT8 and Q8_0 encode/decode round trips — runnable with exact
    bytes, independent existing-decoder acceptance, and reconstruction metrics.
-3. Simple Q4 encode/decode round trips.
+3. Simple Q4 encode/decode round trips — runnable with an explicit teaching
+   layout, exact nibble bytes, size ratio, and reconstruction evidence.
 4. Safetensors-to-GGUF writer with self-validation.
 5. Explicit external oracle adapters and reproducible comparison report.
 

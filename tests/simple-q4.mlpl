@@ -1,0 +1,16 @@
+include "../src/quantization/simple_q4.mlpl";
+def u:q4req(v,m) { "Require a simple Q4 invariant."; if v { ok(1) } else { err(m) } }
+def u:q4b(value_limit,iterations,outputs,bytes,blocks,scale_iterations) { "Return simple Q4 budgets."; {max_values: value_limit,max_iterations: iterations,max_output_values: outputs,max_abs_input:1000,max_output_bytes: bytes,max_decode_bytes:4096,max_json_depth:8,max_json_elements:256,max_report_fields:8,max_blocks: blocks,max_scale_iterations: scale_iterations} }
+b=u:q4b(64,64,64,64,2,32); source=range(32)-16; encoded=u:simple_q4_encode(source,b)?; decoded=u:simple_q4_decode(encoded.bytes,b)?;
+u:q4req(equal(encoded.reconstructed,decoded.values)*eq(encoded.blocks,1)*eq(tally(encoded.bytes),18),"simple Q4 encode/decode round trip")?;
+u:q4req(equal(encoded.bytes,[146,64,17,34,51,68,84,101,118,135,136,153,170,187,204,220,237,254]),"simple Q4 deterministic byte golden")?;
+u:q4req(lt(encoded.metrics.rmse,0.75)*lt(encoded.metrics.max_error,1.2)*gt(encoded.metrics.cosine,0.995),"simple Q4 metric bounds")?;
+zeros=u:simple_q4_encode(fill([32],0),b)?; u:q4req(equal(zeros.bytes,concat([0,0],fill([16],136)))*equal(zeros.reconstructed,fill([32],0)),"simple Q4 zero block golden")?;
+u:q4req(is_err(u:simple_q4_encode(range(31),b))*is_err(u:simple_q4_decode(fill([17],0),b)),"simple Q4 partial block rejection")?;
+u:q4req(is_err(u:simple_q4_encode(source,u:q4b(31,64,64,64,2,32))),"simple Q4 value budget rejection")?;
+u:q4req(is_err(u:simple_q4_encode(source,u:q4b(64,31,64,64,2,32))),"simple Q4 iteration budget rejection")?;
+u:q4req(is_err(u:simple_q4_encode(source,u:q4b(64,64,31,64,2,32))),"simple Q4 output value budget rejection")?;
+u:q4req(is_err(u:simple_q4_encode(source,u:q4b(64,64,64,17,2,32))),"simple Q4 byte budget rejection")?;
+u:q4req(is_err(u:simple_q4_encode(source,u:q4b(64,64,64,64,0,32))),"simple Q4 block budget rejection")?;
+u:q4req(is_err(u:simple_q4_decode(concat([0,60,256],fill([15],0)),b)),"simple Q4 invalid byte rejection")?;
+print("PASS simple Q4 round trip"); ok(1)

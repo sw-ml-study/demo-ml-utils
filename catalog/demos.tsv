@@ -16,4 +16,5 @@ quantization-error	demos/visualization/quantization_error.mlpl	scene-ir	q8-error
 visualization-transport	demos/visualization/transport.mlpl	scene-ir	jsonl-transport	mlpl-native	chunk-bounded	yes	to_json,parse_json,scene-ir	runnable
 numeric-conversion	demos/quantization/numeric_conversion.mlpl	numeric-vector	conversion-error-goldens	mlpl	not-applicable	yes	to_json,parse_json	runnable
 symmetric-roundtrip	demos/quantization/symmetric_roundtrip.mlpl	gguf-q8-0	symmetric-encode-decode	mlpl	not-applicable	yes	bit-ops,fp16-decode,dtype-decode	runnable
+simple-q4	demos/quantization/simple_q4.mlpl	teaching-q4	nibble-encode-decode	mlpl	not-applicable	yes	bit-ops,fp16-decode	runnable
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated

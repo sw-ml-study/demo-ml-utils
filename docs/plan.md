@@ -159,8 +159,10 @@ the non-narrowing floating path currently expressible without pretending to
 produce f32/f16 bits, and absolute/RMSE/maximum/cosine evidence is covered by
 golden and adversarial tests. Symmetric INT8 and GGUF-compatible Q8_0 encoders
 are also runnable with exact payload goldens, binary16 scale encoding,
-independent existing-decoder acceptance, and reconstruction metrics. Simple Q4
-is the next increment.
+independent existing-decoder acceptance, and reconstruction metrics. An
+explicit simple teaching Q4 layout is also runnable with exact nibble bytes,
+18-byte blocks, and reconstruction/size evidence. A self-validating writer is
+the next increment.
 
 ### Phase 5 — restricted checkpoint extraction
 

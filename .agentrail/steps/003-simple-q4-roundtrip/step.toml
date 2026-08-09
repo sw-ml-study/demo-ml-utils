@@ -1,6 +1,6 @@
 number = 3
 slug = "simple-q4-roundtrip"
-status = "pending"
+status = "in-progress"
 description = "Implement a bounded simple Q4 encode/decode round trip with explicit layout, size, and error evidence."
 role = "legacy"
 context_files = []
