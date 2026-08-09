@@ -1,0 +1,8 @@
+number = 3
+slug = "simple-q4-roundtrip"
+status = "pending"
+description = "Implement a bounded simple Q4 encode/decode round trip with explicit layout, size, and error evidence."
+role = "legacy"
+context_files = []
+created_at = "2026-08-09T08:30:11"
+commits = []

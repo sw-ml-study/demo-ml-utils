@@ -1,0 +1,8 @@
+number = 5
+slug = "oracle-acceptance-report"
+status = "pending"
+description = "Add optional external oracle adapters, reproducible comparisons, final acceptance documentation, and close the saga."
+role = "legacy"
+context_files = []
+created_at = "2026-08-09T08:30:11"
+commits = []
