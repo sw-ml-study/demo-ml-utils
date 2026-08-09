@@ -132,6 +132,8 @@ Manual-gradient linear fine-tuning is also runnable with visible parameter,
 trajectory, stopping, rejection, and held-out evidence.
 Frozen-base low-rank adaptation is runnable with rank-one training, rank-two
 shape support, merge parity, and explicit parameter-efficiency caveats.
+Both trainers now emit a shared renderer-neutral curve/update/prediction IR
+with aligned baselines, stable provenance, budgets, and headless validation.
 
 ## Saga 8 — `in-context-learning` (planned)
 

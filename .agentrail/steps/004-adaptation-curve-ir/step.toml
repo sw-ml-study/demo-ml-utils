@@ -1,6 +1,6 @@
 number = 4
 slug = "adaptation-curve-ir"
-status = "pending"
+status = "in-progress"
 description = "Build and headlessly validate a versioned renderer-neutral adaptation IR cove..."
 role = "production"
 context_files = []

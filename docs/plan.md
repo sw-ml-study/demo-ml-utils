@@ -232,8 +232,11 @@ gradients, before/after fingerprints, selected loss/gradient evidence, and a
 held-out improvement over the no-training baseline. Frozen-base rank-one
 adaptation is also runnable with manual factor gradients, exact base
 fingerprints, merged/factorized parity, held-out evidence, and rank-two support.
-The shared adaptation curve IR is next. Native production-scale training and
-LLM inference are not currently claimed.
+The shared renderer-neutral adaptation curve IR is runnable with canonical
+loss coordinates, dense and factorized update evidence, held-out predictions,
+explicit baselines, provenance, budgets, and tagged-JSON validation. Adversarial
+fine-tuning acceptance is next. Native production-scale training and LLM
+inference are not currently claimed.
 
 ## Cross-cutting gates
 

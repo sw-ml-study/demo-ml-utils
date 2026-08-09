@@ -1,0 +1,14 @@
+include "../src/adaptation/curve_ir.mlpl";
+def u:acreq(v,m) { "Require one adaptation IR invariant."; if v { ok(1) } else { err(m) } }
+def u:acb(curve,output,elements) { "Return adaptation IR consumer budgets."; {max_curve_points: curve,max_abs_value:10000,max_output_bytes: output,max_json_depth:12,max_json_elements: elements} }
+def u:training_b() { "Return shared superset training budgets."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:32,max_fingerprint_elements:32,max_fingerprint_bytes:512,max_dataset_bytes:2048,max_json_depth:8,max_json_elements:4096,max_output_bytes:65536,min_learning_rate:0.000001,max_learning_rate:1,max_steps:300,max_tolerance:1,max_iterations:300,max_abs_prediction:1000,max_gradient_norm:1000,max_abs_parameter:100,max_loss:10000,max_curve_points:301,max_adapter_elements:128,max_adapter_rank:2,max_base_parameters:32,max_adapter_parameters:32,max_parity_error:0.0000000001} }
+tb=u:training_b(); full=u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],{learning_rate:0.2,max_steps:60,tolerance:0.000001},tb)?; low=u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",reshape(fill([6],0),[2,3]),reshape([0.1,-0.1],[2,1]),reshape([0.5,0.5,0.5],[1,3]),{learning_rate:0.05,max_steps:200,tolerance:0.00001},tb)?; b=u:acb(301,65536,8192); built=u:adaptation_curve_ir(full,low,b)?; ir=built.ir;
+u:acreq(equal(ir.schema,"sw-ml-study.adaptation-curve-ir")*eq(ir.version,1)*equal(record_keys(ir.runs),["full","low_rank"]),"root golden")?;
+u:acreq(eq(tally(ir.runs.full.curve.losses),61)*eq(tally(ir.runs.low_rank.curve.losses),127)*equal(take(ir.runs.full.curve.loss_steps,0,60),60)*equal(take(ir.runs.low_rank.curve.loss_steps,0,126),126),"canonical curve coordinates")?;
+u:acreq(equal(ir.runs.full.update.delta,ir.runs.full.update.final-ir.runs.full.update.initial)*eq(ir.runs.low_rank.update.rank,1)*equal(ir.runs.low_rank.update.base_fingerprint,ir.runs.low_rank.update.final_base_fingerprint),"update evidence golden")?;
+u:acreq(gt(ir.runs.full.baseline.loss,ir.runs.full.predictions.loss)*gt(ir.runs.low_rank.baseline.loss,ir.runs.low_rank.predictions.loss),"baseline improvement golden")?;
+rebuilt=u:adaptation_curve_ir(full,low,b)?; u:acreq(equal(rebuilt.json,built.json)*equal(parse_json(built.json,{max_depth:12,max_bytes:65536,max_elements:8192})?,ir),"deterministic tagged JSON rebuild and round trip")?;
+u:acreq(is_err(u:adaptation_curve_ir(full,low,u:acb(100,65536,8192))),"curve budget rejection")?;
+u:acreq(is_err(u:adaptation_curve_ir(full,low,u:acb(301,100,8192))),"output byte budget rejection")?;
+bad={schema: ir.schema,version:2,provenance: ir.provenance,runs: ir.runs}; u:acreq(is_err(u:adaptation_curve_validate(bad,b)),"version rejection")?;
+print("PASS adaptation curve IR"); ok(1)

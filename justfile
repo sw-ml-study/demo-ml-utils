@@ -43,6 +43,10 @@ linear-fine-tune:
 low-rank-adapter:
     ./scripts/run-low-rank-adapter
 
+# Normalize full and low-rank training evidence into a renderer-neutral IR.
+adaptation-curve-ir:
+    ./scripts/run-adaptation-curve-ir
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

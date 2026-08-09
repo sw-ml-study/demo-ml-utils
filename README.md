@@ -106,6 +106,9 @@ compares no-training with fine-tuned held-out predictions.
 The [frozen-base low-rank adapter](docs/low-rank-adapter.md) exposes factor
 gradients, merge parity, unchanged base evidence, and honest trainable/storage
 parameter accounting for rank one and two.
+The [adaptation curve IR](docs/adaptation-curve-ir.md) then normalizes both
+trainers into shared curve, update, prediction, baseline, and provenance
+channels for headless consumers and future renderers.
 
 ## Running the project
 

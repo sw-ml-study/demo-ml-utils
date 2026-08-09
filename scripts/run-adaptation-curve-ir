@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/adaptation-curve-ir.mlpl"); printf '%s\n' "$output" | grep -Fqx 'PASS adaptation curve IR'
+echo "Version, run IDs, canonical curves, updates, predictions, baselines, provenance, tagged JSON, and budget rejection checks passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/curve_ir.mlpl"
