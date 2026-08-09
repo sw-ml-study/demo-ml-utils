@@ -1,4 +1,4 @@
-number = 5
+number = 6
 slug = "checkpoint-security-acceptance"
 status = "pending"
 description = "Add trusted-oracle cross-format verification, adversarial security acceptance evidence, final docs, and close the saga."

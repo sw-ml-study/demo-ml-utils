@@ -1,92 +1,116 @@
 # demo-ml-utils
 
 Practical machine-learning artifact utilities written in sw-MLPL. The project
-will demonstrate bounded inspection, validation, visualization, conversion,
-and quantization of formats such as Safetensors, GGUF, and restricted
-tensor-only checkpoint representations.
+demonstrates bounded inspection, validation, visualization, conversion, and
+quantization for Safetensors, GGUF, and restricted tensor-only checkpoints.
 
-The governing principle is to implement algorithms in MLPL whenever the
-language can express them. Native or external tools may provide generic I/O,
-rendering, interoperability, performance baselines, and validation oracles,
-but documentation must identify which layer performs the substantive work.
+Substantive algorithms stay in MLPL wherever the language can express them.
+Native or external tools are limited to generic services such as I/O,
+rendering, interoperability, performance measurement, and independent
+validation. Each demo documents that boundary explicitly.
 
-## Project status
+## Current capabilities
 
-The bounded Safetensors analysis vertical slice is complete: the repository
-has executable capability probes, metadata cataloging, selective integer
-decoding, fixed-chunk statistics, measured sparse-artifact acceptance, and a
-versioned summary IR. GGUF metadata cataloging and selective signed-integer
-payload decoding are now runnable. See [the bounded-analysis report](docs/bounded-analysis-report.md),
-[the foundation report](docs/foundation-report.md),
-[the delivery plan](docs/plan.md), [the saga queue](docs/sagas.md), and
-[the peer repository audit](docs/peer-repository-audit.md).
+### Safetensors
 
-The [bounded GGUF v3 catalog](docs/gguf-catalog.md) now handles a safe scalar
-metadata subset and multiple tensor descriptors while preserving active type
-IDs. The [selective GGUF decoder](docs/gguf-slice.md) resolves a tensor by exact
-name and decodes only its budgeted I8 or I16 payload range.
-The [Q8_0 block decoder](docs/gguf-q8-0.md) adds exact 34-byte extents,
-binary16 scale conversion, and golden parity with ggml's dequantization rule.
-The [GGUF acceptance report](docs/gguf-acceptance-report.md) closes the bounded
-inspection slice with deterministic sampling, mergeable statistics, and
-measured sparse-artifact memory evidence.
-The [cross-format scene/tile IR](docs/scene-tile-ir.md) turns bounded
-Safetensors and GGUF summaries into stable, provenance-carrying JSON tiles and
-explicit links without requiring a renderer.
-The [tensor-city layout](docs/tensor-city.md) expands catalog-only metadata into
-two deterministic artifact districts with stable IDs and renderer-neutral
-building geometry, still without reading tensor payloads.
-The [detail-tile schema](docs/detail-tiles.md) adds bounded histograms and
-deterministic sampled surface strips for selected Safetensors and GGUF tensors.
-The [Q8_0 error tile](docs/quantization-error-tiles.md) exposes block evidence,
-pointwise reconstruction errors, and aggregate quality/size metrics.
-The [visualization acceptance report](docs/visualization-acceptance-report.md)
-closes the renderer-neutral slice with deterministic bounded JSONL transport
-and an optional dependency-free envelope inspector.
-The [numeric conversion goldens](docs/numeric-conversion.md) begin native
-quantization work with explicit saturating byte policies and reconstruction
-metrics implemented in MLPL.
-The [symmetric round-trip demo](docs/symmetric-roundtrip.md) adds deterministic
-INT8 payloads and GGUF-compatible Q8_0 blocks with binary16 scales.
-The [simple Q4 demo](docs/simple-q4.md) makes an 18-byte teaching nibble layout
-and its larger reconstruction tradeoff directly visible.
-The [self-validating writer](docs/safetensors-to-gguf.md) converts one bounded
-signed-integer Safetensors tensor into deterministic GGUF v3 and reads it back.
+- [Bounded header inspection](docs/bounded-analysis-report.md) uses range reads
+  and `file_size`, so memory is controlled by the header budget rather than
+  total artifact size.
+- [Deterministic metadata cataloging](docs/safetensors-catalog.md) discovers
+  arbitrary tensor names with duplicate-key rejection and bounded JSON reads.
+- [Selective integer decoding](docs/safetensors-slice.md) reads exact tensor
+  ranges for the currently supported integer dtypes.
+- [Fixed-chunk statistics](docs/safetensors-statistics.md) provides mergeable
+  summaries without loading a complete tensor.
+- [Summary IR](docs/safetensors-summary-ir.md) produces a versioned, budgeted
+  JSON handoff for visualization.
+
+The Safetensors analysis slice includes measured sparse-artifact acceptance.
+See the [foundation report](docs/foundation-report.md) for its consolidated
+evidence and limitations.
+
+### GGUF
+
+- [GGUF v3 catalog](docs/gguf-catalog.md) supports a safe scalar metadata
+  subset, multiple tensor descriptors, and visible active type IDs.
+- [Selective tensor decoding](docs/gguf-slice.md) resolves exact names and
+  reads bounded I8 or I16 payload ranges.
+- [Q8_0 block decoding](docs/gguf-q8-0.md) validates exact 34-byte blocks,
+  binary16 scales, and golden parity with ggml's dequantization rule.
+- [GGUF acceptance](docs/gguf-acceptance-report.md) covers deterministic
+  sampling, mergeable statistics, and measured sparse-artifact memory use.
+
+### Visualization
+
+- [Cross-format scene/tile IR](docs/scene-tile-ir.md) creates stable,
+  provenance-carrying JSON objects and links without requiring a renderer.
+- [Tensor-city layout](docs/tensor-city.md) maps complete bounded catalogs into
+  deterministic artifact districts and renderer-neutral building geometry.
+- [Detail tiles](docs/detail-tiles.md) add bounded histograms and sampled
+  surface strips for selected tensors.
+- [Q8_0 error tiles](docs/quantization-error-tiles.md) expose pointwise errors,
+  aggregate quality metrics, and size tradeoffs.
+- [Visualization acceptance](docs/visualization-acceptance-report.md) validates
+  deterministic bounded JSONL transport and an optional dependency-free
+  envelope inspector.
+
+### Quantization and conversion
+
+- [Numeric conversion goldens](docs/numeric-conversion.md) demonstrate explicit
+  saturating byte policies and reconstruction metrics.
+- [Symmetric INT8 and Q8_0](docs/symmetric-roundtrip.md) provide deterministic
+  encode/decode round trips with binary16 scales.
+- [Teaching Q4](docs/simple-q4.md) makes its 18-byte nibble layout and accuracy
+  tradeoff visible.
+- [Safetensors-to-GGUF](docs/safetensors-to-gguf.md) writes one bounded signed
+  integer tensor to deterministic GGUF v3 and validates the result by reading
+  it back.
+
 The [quantization and conversion acceptance report](docs/quantization-conversion-acceptance.md)
-records the complete supported slice and an opt-in independent oracle adapter.
-The [passive checkpoint inventory](docs/checkpoint-risk-inventory.md) begins the
-restricted-extraction work by classifying ZIP/pickle risk without loading or
-executing serialized content.
-The [restricted primitive machine](docs/checkpoint-primitive-machine.md) then
-reconstructs an inert dictionary/list graph while executable and persistence
-opcodes remain rejected rather than resolved.
-The [declarative tensor catalog](docs/checkpoint-tensor-metadata.md) validates
-tensor dtype, shape, and exact raw-storage member ranges without reading the
-storage payload or invoking persistence callbacks.
+summarizes the supported slice and its opt-in independent oracle.
 
-Development uses a thin `justfile`; [the development guide](docs/development.md)
-documents the validation gate, fixture policy, and non-installing sw-MLPL
-binary selection. The [demo catalog](catalog/README.md) records format,
-implementation layer, memory contract, required capabilities, and status.
-The [capability report](docs/capabilities.md) records executable observations
-from the configured interpreter and the resulting Safetensors constraints.
-The [bounded Safetensors catalog](docs/safetensors-catalog.md) documents its
-validation, attribution, output, and complexity contracts.
-The [selective tensor decoder](docs/safetensors-slice.md) documents bounded
-integer payload reads, implementation attribution, and current dtype limits.
-The [bounded statistics demo](docs/safetensors-statistics.md) adds fixed-chunk
-mergeable reductions without reading a complete tensor at once.
-Its opt-in sparse-artifact acceptance recipe measures and enforces peak RSS
-without downloading or committing a large model.
-The [visualization summary IR](docs/safetensors-summary-ir.md) provides a
-versioned, budgeted JSON handoff without coupling analysis to a renderer.
-The [shipped upstream contract](docs/upstream-contract.md) maps bounded I/O,
-decode budgets, and record discovery to executable downstream evidence.
+### Restricted checkpoints
 
-Safetensors header inspection uses bounded range reads and `file_size`, so its
-memory depends on the configured header budget rather than total model size.
-Arbitrary tensor cataloging is runnable with deterministic `record_keys`,
-duplicate-name rejection, and bounded header reads.
+This work treats pickle as untrusted executable serialization and uses a
+deliberately constrained, non-PyTorch-deserializing path:
+
+1. [Passive risk inventory](docs/checkpoint-risk-inventory.md) validates the
+   ZIP structure and classifies pickle opcodes without executing them.
+2. [Restricted primitive machine](docs/checkpoint-primitive-machine.md)
+   reconstructs inert dictionary/list graphs while rejecting executable and
+   persistence opcodes.
+3. [Declarative tensor catalog](docs/checkpoint-tensor-metadata.md) validates
+   dtype, shape, and exact raw-storage member ranges without reading storage
+   payloads or invoking persistence callbacks.
+
+Deterministic Safetensors extraction and final adversarial acceptance remain
+the next planned stages.
+
+## Running the project
+
+The repository uses a thin `justfile`:
+
+```sh
+just                 # list available recipes
+just check           # run the complete local pre-commit gate
+just checkpoint-tensor-metadata
+```
+
+Individual recipes print the scenario, implementation boundary, budgets,
+observable results, and interpretation—not only a pass/fail marker.
+
+See the [development guide](docs/development.md) for fixture policy, binary
+selection, and validation details. The [demo catalog](catalog/README.md)
+records each demo's format, implementation layer, memory contract, required
+capabilities, and status.
+
+## Project documentation
+
+- [Delivery plan](docs/plan.md)
+- [Saga queue and status](docs/sagas.md)
+- [Capability report](docs/capabilities.md)
+- [Shipped upstream contract](docs/upstream-contract.md)
+- [Peer repository audit](docs/peer-repository-audit.md)
 
 ## Copyright and license
 

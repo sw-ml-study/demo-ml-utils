@@ -1,4 +1,4 @@
-number = 4
+number = 5
 slug = "tensor-safetensors-extraction"
 status = "pending"
 description = "Extract approved tensor storage into deterministic atomic Safetensors output with self-validation."

@@ -1,0 +1,1 @@
+Reorganize and reformat README.md so it is concise, scannable, and grouped by capability area rather than reading like a run-on status sentence. Preserve accurate project claims, important documentation links, and copyright/license information.
