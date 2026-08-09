@@ -94,6 +94,10 @@ checkpoint-inventory:
 checkpoint-machine:
     ./scripts/run-checkpoint-machine
 
+# Demonstrate metadata-only tensor and storage-range recovery.
+checkpoint-tensor-metadata:
+    ./scripts/run-checkpoint-tensor-metadata
+
 # Opt-in: compare a generated GGUF with an explicit external Python oracle.
 external-oracle:
     ./scripts/run-external-oracle

@@ -60,6 +60,9 @@ executing serialized content.
 The [restricted primitive machine](docs/checkpoint-primitive-machine.md) then
 reconstructs an inert dictionary/list graph while executable and persistence
 opcodes remain rejected rather than resolved.
+The [declarative tensor catalog](docs/checkpoint-tensor-metadata.md) validates
+tensor dtype, shape, and exact raw-storage member ranges without reading the
+storage payload or invoking persistence callbacks.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

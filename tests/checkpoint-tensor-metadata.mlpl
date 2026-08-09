@@ -1,0 +1,20 @@
+include "../src/checkpoint/tensor_metadata.mlpl";
+def u:tmreq(v,m) { "Require one declarative tensor-metadata invariant."; if v { ok(1) } else { err(m) } }
+def u:tmb(max_tensors,max_rank,max_parameters,max_storage_bytes) { "Return bounded tensor-metadata recovery limits."; {max_artifact_bytes:512,max_members:4,max_pickle_bytes:256,max_opcodes:96,max_strings:16,max_string_bytes:64,max_total_string_bytes:256,max_memo_entries:8,max_depth:8,max_iterations:96,max_output_bytes:32768,max_json_depth:8,max_json_elements:2048,max_stack:24,max_nodes:32,max_list_items:16,max_dict_items:32,max_tensors: max_tensors,max_rank: max_rank,max_parameters: max_parameters,max_storage_bytes: max_storage_bytes} }
+b=u:tmb(4,4,64,128); recovered=u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-metadata.pt",b)?; r=recovered.report;
+u:tmreq(equal([r.tensor_count,r.member_count,r.artifact_bytes],[1,2,318]),"tensor/container count golden")?;
+u:tmreq(equal(u:tensor_catalog_text(r,0,"tensor"),"tensor_a")*equal(u:tensor_catalog_text(r,0,"storage"),"data/0"),"tensor/storage name golden")?;
+u:tmreq(equal(r.dtype_ids,[2])*equal(r.ranks,[2])*equal(r.shapes,[2,2,0,0])*equal(r.parameters,[4]),"dtype and shape golden")?;
+u:tmreq(equal(r.storage_member_indices,[1])*equal(r.storage_offsets,[0])*equal(r.byte_counts,[8]),"storage range golden")?;
+u:tmreq(equal([r.safety.global_resolution,r.safety.callable_invocation,r.safety.object_construction,r.safety.extension_resolution,r.safety.persistence_resolution,r.safety.storage_bytes_read],[0,0,0,0,0,0]),"metadata-only no-execution/no-payload policy")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/dangerous-global.pt",b)),"GLOBAL fixture rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/dangerous-persistence.pt",b)),"disallowed persistence fixture rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/benign.pt",b)),"non-tensor primitive schema rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-bad-dtype.pt",b)),"tensor dtype rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-bad-length.pt",b)),"tensor byte-length mismatch rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-missing-storage.pt",b)),"missing storage member rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-metadata.pt",u:tmb(0,4,64,128))),"tensor count budget rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-metadata.pt",u:tmb(4,1,64,128))),"rank budget rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-metadata.pt",u:tmb(4,4,3,128))),"parameter budget rejection")?;
+u:tmreq(is_err(u:checkpoint_tensor_metadata("fixtures/checkpoint/tensor-metadata.pt",u:tmb(4,4,64,7))),"storage byte budget rejection")?;
+print("PASS declarative tensor storage recovery"); ok(1)

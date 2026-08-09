@@ -107,8 +107,9 @@ enforced before allocation.
    deserialization/execution.
 2. Budgeted allow-listed primitive stack-machine parser — runnable for an
    inert protocol-2 dictionary/list graph with memo and no-execution evidence.
-3. Tensor metadata/storage-reference recovery with executable constructs
-   rejected rather than invoked.
+3. Tensor metadata/storage-reference recovery — runnable for strict primitive
+   five-field descriptors with member/range validation and zero payload reads;
+   executable constructs and persistence remain rejected rather than invoked.
 4. Tensor-only Safetensors extraction.
 5. Cross-format verification and adversarial security report.
 
