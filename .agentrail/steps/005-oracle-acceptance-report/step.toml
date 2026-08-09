@@ -1,8 +1,9 @@
 number = 5
 slug = "oracle-acceptance-report"
-status = "in-progress"
+status = "completed"
 description = "Add optional external oracle adapters, reproducible comparisons, final acceptance documentation, and close the saga."
 role = "legacy"
 context_files = []
 created_at = "2026-08-09T08:30:11"
-commits = []
+completed_at = "2026-08-09T09:50:26"
+commits = ["b4c45dfa74037956e3c618404314d7b30e2e3735"]
