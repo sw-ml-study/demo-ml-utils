@@ -293,3 +293,9 @@ and composition laws are executable on binary `7f6dee4d`. The smallest current
 fit/predict contract is documented in the
 [LEFTS capability report](lefts-capability-contract.md); no upstream blocker
 was found. The explicit Split/Lift baseline is next.
+
+The explicit Split/Lift baseline is now runnable. It exposes disjoint row IDs,
+global and group-specific offsets, held-out predictions, MSE improvement, and
+exact explicit-versus-factored parity. The concrete `grouped fit` helper is
+clearer than introducing a generic `experiment.lift`; Ensemble and Feed are
+next. See [the Split/Lift demo](split-lift.md).

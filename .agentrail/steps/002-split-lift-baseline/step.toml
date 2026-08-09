@@ -1,6 +1,6 @@
 number = 2
 slug = "split-lift-baseline"
-status = "pending"
+status = "in-progress"
 description = "Using TDD and the proven capability contract, build a pure-MLPL, self-describ..."
 role = "production"
 context_files = []

@@ -28,6 +28,10 @@ capabilities:
 lefts-capabilities:
     ./scripts/run-lefts-capability-contract
 
+# Compare a global baseline with explicit and factored per-group fitting.
+split-lift:
+    ./scripts/run-split-lift
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

@@ -17,6 +17,7 @@ check_demo() {
 
 check_demo capabilities scripts/run-capability-probe
 check_demo lefts-capabilities scripts/run-lefts-capability-contract
+check_demo split-lift scripts/run-split-lift
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter
@@ -68,6 +69,20 @@ for marker in \
 do
   grep -Fqx "$marker" "$lefts_output" || {
     echo "LEFTS capability output lacks $marker" >&2
+    exit 1
+  }
+done
+
+split_lift_output="$work_dir/split-lift.txt"
+for marker in \
+  'CONCEPT Split=train-and-evaluation-membership-is-explicit' \
+  'CONCEPT Lift=one-fitted-parameter-per-group' \
+  'PARITY explicit_equals_factored=yes' \
+  'DECISION named_experiment_lift=no' \
+  'CLASSIFICATION cross_repo_blockers=none'
+do
+  grep -Fqx "$marker" "$split_lift_output" || {
+    echo "Split/Lift output lacks $marker" >&2
     exit 1
   }
 done

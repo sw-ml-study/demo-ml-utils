@@ -213,6 +213,12 @@ descriptions, `each`, `map_ok`, `table`, `atop`, and `over` support the tiny
 fit/predict record without an upstream blocker. The explicit Split/Lift
 baseline is next; see the [capability report](lefts-capability-contract.md).
 
+The Split/Lift baseline is now runnable with explicit train/evaluation
+provenance, leakage rejection, a global MSE 9 baseline, per-group MSE 0,
+and exact explicit/factored parity. It retains the concrete grouped-fit name
+rather than prematurely adding `experiment.lift`. Ensemble and Feed are next;
+see [the demo report](split-lift.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

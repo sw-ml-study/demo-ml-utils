@@ -165,6 +165,7 @@ capabilities, and status.
 - [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
 - [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)
 - [LEFTS callable and functor-law capability contract](docs/lefts-capability-contract.md)
+- [Split and Lift-inspired grouped learning](docs/split-lift.md)
 
 ## Copyright and license
 
