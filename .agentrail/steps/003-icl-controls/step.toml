@@ -1,0 +1,8 @@
+number = 3
+slug = "icl-controls"
+status = "pending"
+description = "Add bounded ICL controls and adversarial demonstrations for context order, di..."
+role = "validation"
+context_files = []
+created_at = "2026-08-09T13:37:27"
+commits = []

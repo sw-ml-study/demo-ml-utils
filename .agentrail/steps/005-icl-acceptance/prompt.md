@@ -1,0 +1,1 @@
+Close the ICL saga with deterministic and adversarial native acceptance, reproducibility, malformed/non-finite data and resource limits, atomic report publication and read-back, optional pinned external-model corroboration, final attribution and limitations documentation, and the full repository gate.

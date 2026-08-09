@@ -1,0 +1,1 @@
+Add bounded ICL controls and adversarial demonstrations for context order, distractors, contradictions, truncation, duplicate/query leakage, empty context, and budget exhaustion. Explain the output effects rather than emitting test-only PASS lines, and retain frozen deployment parameters.

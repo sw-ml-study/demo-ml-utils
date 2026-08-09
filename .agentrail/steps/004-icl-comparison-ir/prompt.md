@@ -1,0 +1,1 @@
+Build and headlessly validate a deterministic versioned renderer-neutral ICL comparison IR covering context composition, attention/similarity, predictions, baselines, accuracy/loss, parameter fingerprints, budgets, and provenance. Add tagged JSON, a self-describing demo, and documentation.
