@@ -1,0 +1,9 @@
+include "curve_ir.mlpl";
+
+def u:write_adaptation_report(path,built,b) { "Atomically persist a validated adaptation IR and verify exact read-back bytes.";
+  u:adaptation_curve_validate(built.ir,b)?; bytes=tokenize_bytes(built.json);
+  if gt(tally(bytes),b.max_atomic_bytes)+1-eq(tally(bytes),built.utf8_bytes) { err("adaptation report atomic byte budget or accounting mismatch") } else {
+    write_atomic(path,bytes)?; observed=read_bytes(path)?;
+    if 1-equal(observed,bytes) { err("adaptation report atomic read-back mismatch") } else { decoded=parse_json(decode_bytes(observed),{max_depth: b.max_json_depth,max_bytes: b.max_atomic_bytes,max_elements: b.max_json_elements})?; u:adaptation_curve_validate(decoded,b)?; if 1-equal(decoded,built.ir) { err("adaptation report atomic semantic read-back mismatch") } else { ok({path: path,bytes: tally(observed),atomic_write:1,self_validated:1}) } }
+  }
+}

@@ -47,6 +47,10 @@ low-rank-adapter:
 adaptation-curve-ir:
     ./scripts/run-adaptation-curve-ir
 
+# Run deterministic, adversarial, and atomic fine-tuning acceptance.
+fine-tuning-acceptance:
+    ./scripts/run-fine-tuning-acceptance
+
 # Demonstrate bounded Safetensors header inspection and fail-closed cases.
 safetensors-headers:
     ./scripts/run-safetensors-header-tests

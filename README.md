@@ -109,6 +109,9 @@ parameter accounting for rank one and two.
 The [adaptation curve IR](docs/adaptation-curve-ir.md) then normalizes both
 trainers into shared curve, update, prediction, baseline, and provenance
 channels for headless consumers and future renderers.
+The [fine-tuning acceptance report](docs/fine-tuning-acceptance.md) closes that
+bounded saga with deterministic, adversarial, and atomic-publication evidence
+plus explicit limitations.
 
 ## Running the project
 

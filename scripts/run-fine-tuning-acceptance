@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl"); mkdir -p "$repo_root/tmp"; work_dir=$(mktemp -d "$repo_root/tmp/fine-tuning-acceptance.XXXXXX"); trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+output=$($mlpl --source-dir "$repo_root" "$repo_root/tests/fine-tuning-acceptance.mlpl" -- "$work_dir/test-report.json"); printf '%s\n' "$output" | grep -Fqx 'PASS fine-tuning adversarial and atomic acceptance'
+echo "Determinism, leakage, malformed/non-finite data, iteration/curve/output limits, and atomic preservation/read-back checks passed."
+$mlpl --source-dir "$repo_root" "$repo_root/demos/adaptation/fine_tuning_acceptance.mlpl" -- "$work_dir/demo-report.json"

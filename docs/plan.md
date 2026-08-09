@@ -234,9 +234,11 @@ adaptation is also runnable with manual factor gradients, exact base
 fingerprints, merged/factorized parity, held-out evidence, and rank-two support.
 The shared renderer-neutral adaptation curve IR is runnable with canonical
 loss coordinates, dense and factorized update evidence, held-out predictions,
-explicit baselines, provenance, budgets, and tagged-JSON validation. Adversarial
-fine-tuning acceptance is next. Native production-scale training and LLM
-inference are not currently claimed.
+explicit baselines, provenance, budgets, and tagged-JSON validation. Deterministic
+and adversarial fine-tuning acceptance now covers leakage, malformed/non-finite
+data, resource ceilings, reproducibility, atomic publication and read-back, and
+destination preservation. Native production-scale training and LLM inference
+are not currently claimed.
 
 ## Cross-cutting gates
 

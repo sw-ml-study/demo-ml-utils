@@ -1,6 +1,6 @@
 number = 5
 slug = "fine-tuning-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Add deterministic and adversarial fine-tuning acceptance: split leakage, malf..."
 role = "validation"
 context_files = []

@@ -126,7 +126,7 @@ Build the shared adaptation evidence contract, a manual-gradient linear
 fine-tuning demo, a teaching-sized low-rank adapter, a learning-curve IR, and
 deterministic/oracle acceptance.
 
-Current status: the shared contract, deterministic split/leakage fixture,
+Status: acceptance complete. The shared contract, deterministic split/leakage fixture,
 canonical parameter fingerprint, and numeric capability evidence are runnable.
 Manual-gradient linear fine-tuning is also runnable with visible parameter,
 trajectory, stopping, rejection, and held-out evidence.
@@ -134,6 +134,9 @@ Frozen-base low-rank adaptation is runnable with rank-one training, rank-two
 shape support, merge parity, and explicit parameter-efficiency caveats.
 Both trainers now emit a shared renderer-neutral curve/update/prediction IR
 with aligned baselines, stable provenance, budgets, and headless validation.
+The final acceptance gate adds reproducibility, hostile data/resource cases,
+atomic exact read-back and pre-write destination preservation. See the
+[fine-tuning acceptance report](fine-tuning-acceptance.md).
 
 ## Saga 8 — `in-context-learning` (planned)
 
