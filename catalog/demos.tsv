@@ -5,6 +5,7 @@ safetensors-catalog	demos/safetensors/catalog.mlpl	safetensors	metadata-catalog	
 safetensors-slice	demos/safetensors/tensor_slice.mlpl	safetensors	selective-integer-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode	runnable
 safetensors-statistics	demos/safetensors/statistics.mlpl	safetensors	tensor-statistics	mlpl-native	chunk-bounded	yes	bounded-range-io,dtype-decode,mergeable-statistics	runnable
 safetensors-summary	demos/visualization/safetensors_summary.mlpl	scene-ir	tensor-summary-json	mlpl-native	chunk-bounded	yes	bounded-range-io,mergeable-statistics,to_json,scene-ir	runnable
+scene-tiles	demos/visualization/scene_tiles.mlpl	scene-ir	cross-format-scene-json	mlpl-native	chunk-bounded	yes	bounded-range-io,mergeable-statistics,to_json,scene-ir	runnable
 gguf-catalog	demos/gguf/catalog.mlpl	gguf	metadata-catalog	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,bit-ops	runnable
 gguf-slice	demos/gguf/tensor_slice.mlpl	gguf	selective-integer-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,dtype-decode	runnable
 gguf-q8-0	demos/gguf/q8_0.mlpl	gguf	q8-0-block-decode	mlpl-native	chunk-bounded	yes	bounded-range-io,file-size,fp16-decode,dtype-decode	runnable

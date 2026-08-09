@@ -126,6 +126,11 @@ the [GGUF acceptance report](gguf-acceptance-report.md).
 Acceptance: object and payload budgets are enforced at every LOD; a headless
 snapshot validates the IR independently of the browser renderer.
 
+Current status: scene/tile IR version 1 is runnable for one bounded
+Safetensors tile and one bounded GGUF tile with stable IDs, provenance, an
+explicit comparison link, deterministic golden JSON, and object/link/label/
+output/decode budgets. Tensor-city layout and geometry remain the next step.
+
 ### Phase 4 — quantization, repacking, and conversion
 
 - Implement F32-to-F16/BF16, symmetric INT8, Q8_0, then simple Q4 in MLPL as
@@ -171,6 +176,6 @@ only. Documentation says the serialization path is risky—not the weights.
 
 ## Recommended next increment
 
-Begin `model-visualization` from [sagas.md](sagas.md) with a renderer-neutral,
-budget-validated scene/tile schema over the accepted Safetensors and GGUF
-summary paths. Keep every user-invoked `just` demo narrative and self-describing.
+Continue `model-visualization` from [sagas.md](sagas.md) with deterministic
+tensor-city layout over the versioned scene/tile foundation. Keep every
+user-invoked `just` demo narrative and self-describing.

@@ -22,5 +22,7 @@ an output that would narrowly fit; it intentionally fails closed.
 
 For header size H, tensor count T, selected payload bytes B, chunk bytes C, and
 encoded summary bytes J, time is O(H + T log T + B + J) and retained memory is
-O(H + T + C + J). Only the selected tensor is summarized. Multi-tensor scene
-layout, geometry, LOD tiles, and browser rendering remain future work.
+O(H + T + C + J). Only the selected tensor is summarized. The
+[cross-format scene/tile IR](scene-tile-ir.md) can now compose this summary
+with a bounded GGUF tile; multi-tensor layout, geometry, LOD tiles, and browser
+rendering remain future work.

@@ -1,0 +1,45 @@
+include "safetensors_summary.mlpl";
+include "../formats/gguf_statistics.mlpl";
+
+def u:scene_label(value,max_label_bytes) { "Validate one non-empty budgeted scene label.";
+  if 1 - equal(type_of(value),"string") { err("scene label must be a string") } else { length = tally(tokenize_bytes(value)); if lt(length,1) + gt(length,max_label_bytes) { err("scene label exceeds its byte budget") } else { ok(value) } }
+}
+
+def u:scene_tile_validate(tile,format,artifact_id,max_label_bytes) { "Validate one renderer-neutral tensor tile.";
+  if 1 - equal(record_keys(tile),["byte_count","format","id","label","parameters","statistics"]) { err("scene tile schema mismatch") } else {
+  u:scene_label(tile.label,max_label_bytes)?;
+  expected = u:summary_join(artifact_id,":tensor:",tile.label);
+  if (1 - equal(tile.format,format)) + (1 - equal(tile.id,expected)) + (1 - eq(rank(tile.byte_count),0)) + lt(tile.byte_count,0) + (1 - eq(rank(tile.parameters),0)) + lt(tile.parameters,0) { err("scene tile values mismatch") } else {
+  if 1 - equal(record_keys(tile.statistics),["count","maximum","mean","minimum","sum","variance"]) { err("scene tile statistics schema mismatch") } else { ok(1) }
+  } }
+}
+
+def u:scene_validate(ir,max_objects,max_links,max_label_bytes) { "Headlessly validate cross-format scene/tile IR version 1.";
+  u:summary_budget(max_objects,10,"scene object budget")?; u:summary_budget(max_links,1,"scene link budget")?; u:summary_budget(max_label_bytes,1,"scene label budget")?;
+  if 1 - equal(record_keys(ir),["links","provenance","schema","tiles","version"]) { err("scene root schema mismatch") } else {
+  if (1 - equal(ir.schema,"sw-ml-study.scene-tiles")) + (1 - eq(ir.version,1)) { err("scene schema version mismatch") } else {
+  if 1 - equal(record_keys(ir.provenance),["analyzer","sources"]) { err("scene provenance schema mismatch") } else {
+  if (1 - equal(ir.provenance.analyzer,"mlpl-bounded-cross-format-scene")) + (1 - equal(record_keys(ir.provenance.sources),["gguf","safetensors"])) { err("scene provenance values mismatch") } else {
+  if 1 - equal(record_keys(ir.tiles),["gguf","safetensors"]) { err("scene tile collection mismatch") } else {
+  u:scene_tile_validate(ir.tiles.gguf,"gguf",ir.provenance.sources.gguf.artifact_id,max_label_bytes)?; u:scene_tile_validate(ir.tiles.safetensors,"safetensors",ir.provenance.sources.safetensors.artifact_id,max_label_bytes)?;
+  if 1 - equal(record_keys(ir.links),["comparison"]) { err("scene link collection mismatch") } else { link = ir.links.comparison;
+  if 1 - equal(record_keys(link),["from","id","label","to"]) { err("scene link schema mismatch") } else { u:scene_label(link.label,max_label_bytes)?;
+  if (1 - equal(link.id,"comparison:bounded-statistics")) + (1 - equal(link.from,ir.tiles.safetensors.id)) + (1 - equal(link.to,ir.tiles.gguf.id)) { err("scene link endpoint mismatch") } else { ok(1) }
+  } } } } } } }
+}
+
+def u:cross_format_scene_json(safetensors_path,safetensors_artifact,safetensors_name,gguf_path,gguf_artifact,gguf_name,max_header_bytes,max_elements,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters,chunk_bytes,max_blocks,sample_stride,max_samples,max_iterations,max_objects,max_links,max_label_bytes,max_output_bytes,max_json_depth,max_json_elements) { "Build and round-trip a bounded two-tile cross-format scene.";
+  u:summary_budget(max_output_bytes,1,"scene output byte budget")?; u:summary_budget(max_json_depth,6,"scene JSON depth budget")?; u:summary_budget(max_json_elements,64,"scene JSON element budget")?; u:scene_label(safetensors_artifact,max_label_bytes)?; u:scene_label(gguf_artifact,max_label_bytes)?; u:scene_label(safetensors_name,max_label_bytes)?; u:scene_label(gguf_name,max_label_bytes)?;
+  safe = u:safetensors_summary_json(safetensors_path,safetensors_artifact,safetensors_name,max_header_bytes,max_elements,max_parameters,chunk_bytes,4,max_output_bytes)?;
+  catalog = u:catalog_gguf(gguf_path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?; gguf_index = u:gguf_find_tensor(catalog,gguf_name)?; gguf_row = take(catalog.tensor_rows,0,gguf_index);
+  gguf_report = u:gguf_tensor_statistics(gguf_path,gguf_name,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters,chunk_bytes,max_blocks,sample_stride,max_samples,max_iterations,9)?;
+  conservative = 1400 + 3 * (tally(tokenize_bytes(safetensors_path)) + tally(tokenize_bytes(gguf_path)) + tally(tokenize_bytes(safetensors_artifact)) + tally(tokenize_bytes(gguf_artifact)) + tally(tokenize_bytes(safetensors_name)) + tally(tokenize_bytes(gguf_name)));
+  if gt(conservative,max_output_bytes) { err("scene conservative output bound exceeds byte budget") } else {
+  safe_source = {artifact_id: safetensors_artifact, format: "safetensors", source: safetensors_path}; gguf_source = {artifact_id: gguf_artifact, format: "gguf", source: gguf_path};
+  safe_tile = {id: safe.ir.tensor.id, label: safetensors_name, format: "safetensors", parameters: safe.ir.tensor.statistics.count, byte_count: safe.ir.tensor.byte_count, statistics: safe.ir.tensor.statistics};
+  gguf_tile = {id: u:summary_join(gguf_artifact,":tensor:",gguf_name), label: gguf_name, format: "gguf", parameters: take(gguf_row,0,1), byte_count: take(gguf_row,0,3), statistics: gguf_report.statistics};
+  ir = {schema: "sw-ml-study.scene-tiles", version: 1, provenance: {analyzer: "mlpl-bounded-cross-format-scene", sources: {safetensors: safe_source, gguf: gguf_source}}, tiles: {safetensors: safe_tile, gguf: gguf_tile}, links: {comparison: {id: "comparison:bounded-statistics", from: safe_tile.id, to: gguf_tile.id, label: "bounded statistics comparison"}}};
+  u:scene_validate(ir,max_objects,max_links,max_label_bytes)?; json = to_json(ir)?; utf8_bytes = tally(tokenize_bytes(json)); if gt(utf8_bytes,max_output_bytes) { err("scene encoded output exceeds byte budget") } else {
+  decoded = parse_json(json,{max_depth: max_json_depth,max_bytes: max_output_bytes,max_elements: max_json_elements})?; u:scene_validate(decoded,max_objects,max_links,max_label_bytes)?; if 1 - equal(decoded,ir) { err("scene JSON round trip changed the IR") } else { ok({ir: ir,json: json,utf8_bytes: utf8_bytes,objects: 10,links: 1}) }
+  } }
+}

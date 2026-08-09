@@ -1,0 +1,11 @@
+include "../../src/visualization/scene_tile_ir.mlpl";
+scene = u:cross_format_scene_json("fixtures/safetensors/valid-decode.safetensors","safe-fixture","i16_values","fixtures/gguf/valid-catalog.gguf","gguf-fixture","ints",4096,256,4096,8,4,256,4,1000000,4,1,1,4,2,10,1,64,4096,8,128)?;
+print("DEMO: renderer-neutral cross-format scene/tile IR");
+print("Scenario: turn one bounded Safetensors summary and one bounded GGUF summary into two stable tensor tiles joined for comparison.");
+print("Native boundary: generic to_json and budgeted parse_json. MLPL work: artifact analysis, provenance, stable IDs, tile/link construction, preflight, and headless validation.");
+print("Budgets: 10 IR objects, one link, 64-byte labels, 4096 output bytes, JSON depth 8, 128 decoded elements, and bounded statistics underneath.");
+print("Scene inventory:"); print({schema: scene.ir.schema,version: scene.ir.version,objects: scene.objects,links: scene.links,encoded_bytes: scene.utf8_bytes});
+print("Stable comparison endpoints:"); print(scene.ir.links.comparison);
+print("Tile statistics:"); print({safetensors: scene.ir.tiles.safetensors.statistics,gguf: scene.ir.tiles.gguf.statistics});
+print("Interpretation: renderers receive derived summaries and an explicit relationship, not either complete tensor; identical IDs and JSON survive headless round-trip validation.");
+ok(1)

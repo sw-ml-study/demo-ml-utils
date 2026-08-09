@@ -49,6 +49,10 @@ safetensors-statistics:
 safetensors-summary:
     ./scripts/run-safetensors-summary
 
+# Demonstrate a headlessly validated cross-format scene/tile JSON handoff.
+scene-tiles:
+    ./scripts/run-scene-tiles
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog

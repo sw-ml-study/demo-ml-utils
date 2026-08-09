@@ -62,7 +62,8 @@ Gate: open. Both Safetensors and GGUF now provide bounded catalogs, selective
 decode, mergeable summaries, and measured large-artifact evidence suitable for
 a budgeted renderer-neutral handoff.
 
-1. Versioned renderer-neutral scene/tile schema and budget validation.
+1. Versioned renderer-neutral scene/tile schema and budget validation —
+   runnable with cross-format golden JSON and headless validation.
 2. Tensor-city model/layer layout.
 3. Selected-tensor distribution and sampled-surface tiles.
 4. Quantization-block and before/after error tiles.

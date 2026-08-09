@@ -1,0 +1,1 @@
+Completed bounded GGUF inspection, decoding, statistics, and measured acceptance; visualization gate opened.

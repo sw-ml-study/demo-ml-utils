@@ -30,6 +30,9 @@ binary16 scale conversion, and golden parity with ggml's dequantization rule.
 The [GGUF acceptance report](docs/gguf-acceptance-report.md) closes the bounded
 inspection slice with deterministic sampling, mergeable statistics, and
 measured sparse-artifact memory evidence.
+The [cross-format scene/tile IR](docs/scene-tile-ir.md) turns bounded
+Safetensors and GGUF summaries into stable, provenance-carrying JSON tiles and
+explicit links without requiring a renderer.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

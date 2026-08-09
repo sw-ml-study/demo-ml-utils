@@ -1,0 +1,18 @@
+include "../src/visualization/scene_tile_ir.mlpl";
+def u:require_scene(value,message) { "Require a scene IR invariant."; if value { ok(1) } else { err(message) } }
+def u:fixture_scene(objects,links,label_bytes,output_bytes,depth,elements) { "Build the cross-format golden fixture scene."; u:cross_format_scene_json("fixtures/safetensors/valid-decode.safetensors","safe-fixture","i16_values","fixtures/gguf/valid-catalog.gguf","gguf-fixture","ints",4096,256,4096,8,4,256,4,1000000,4,1,1,4,2,objects,links,label_bytes,output_bytes,depth,elements) }
+
+scene = u:fixture_scene(10,1,64,4096,8,128)?;
+golden = "{\"links\":{\"comparison\":{\"from\":\"safe-fixture:tensor:i16_values\",\"id\":\"comparison:bounded-statistics\",\"label\":\"bounded statistics comparison\",\"to\":\"gguf-fixture:tensor:ints\"}},\"provenance\":{\"analyzer\":\"mlpl-bounded-cross-format-scene\",\"sources\":{\"gguf\":{\"artifact_id\":\"gguf-fixture\",\"format\":\"gguf\",\"source\":\"fixtures/gguf/valid-catalog.gguf\"},\"safetensors\":{\"artifact_id\":\"safe-fixture\",\"format\":\"safetensors\",\"source\":\"fixtures/safetensors/valid-decode.safetensors\"}}},\"schema\":\"sw-ml-study.scene-tiles\",\"tiles\":{\"gguf\":{\"byte_count\":8,\"format\":\"gguf\",\"id\":\"gguf-fixture:tensor:ints\",\"label\":\"ints\",\"parameters\":4,\"statistics\":{\"count\":4,\"maximum\":32767,\"mean\":9.75,\"minimum\":-32768,\"sum\":39,\"variance\":536854875.1875}},\"safetensors\":{\"byte_count\":6,\"format\":\"safetensors\",\"id\":\"safe-fixture:tensor:i16_values\",\"label\":\"i16_values\",\"parameters\":3,\"statistics\":{\"count\":3,\"maximum\":32767,\"mean\":-1,\"minimum\":-32768,\"sum\":-3,\"variance\":715806038}}},\"version\":1}";
+u:require_scene(equal(scene.json,golden),"scene deterministic golden JSON")?;
+u:require_scene(equal([scene.objects,scene.links,scene.ir.tiles.safetensors.statistics.mean,scene.ir.tiles.gguf.statistics.mean],[10,1,-1,9.75]),"scene golden values")?;
+u:require_scene(equal(scene.ir.links.comparison.from,"safe-fixture:tensor:i16_values") * equal(scene.ir.links.comparison.to,"gguf-fixture:tensor:ints"),"scene stable link endpoints")?;
+u:require_scene(equal(parse_json(scene.json,{max_depth:8,max_bytes:4096,max_elements:128})?,scene.ir),"scene deterministic JSON round trip")?;
+u:require_scene(is_err(u:fixture_scene(9,1,64,4096,8,128)),"scene object budget rejection")?;
+u:require_scene(is_err(u:fixture_scene(10,0,64,4096,8,128)),"scene link budget rejection")?;
+u:require_scene(is_err(u:fixture_scene(10,1,3,4096,8,128)),"scene label budget rejection")?;
+u:require_scene(is_err(u:fixture_scene(10,1,64,512,8,128)),"scene output budget rejection")?;
+u:require_scene(is_err(u:fixture_scene(10,1,64,4096,5,128)),"scene depth budget rejection")?;
+wrong = {schema: scene.ir.schema,version: scene.ir.version,provenance: scene.ir.provenance,tiles: scene.ir.tiles,links: {comparison: {id: scene.ir.links.comparison.id,from: "wrong",to: scene.ir.links.comparison.to,label: scene.ir.links.comparison.label}}};
+u:require_scene(is_err(u:scene_validate(wrong,10,1,64)),"scene malformed endpoint rejection")?;
+print("PASS cross-format scene tile IR"); ok(1)
