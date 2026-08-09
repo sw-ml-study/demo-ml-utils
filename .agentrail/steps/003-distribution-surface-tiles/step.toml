@@ -1,8 +1,9 @@
 number = 3
 slug = "distribution-surface-tiles"
-status = "in-progress"
+status = "completed"
 description = "Implement selected-tensor distribution and sampled-surface tiles over the bou..."
 role = "production"
 context_files = []
 created_at = "2026-08-08T19:56:35"
-commits = []
+completed_at = "2026-08-08T20:01:36"
+commits = ["40e7def2968a880757e047dbf89f96da0b4b1dc4"]
