@@ -111,6 +111,7 @@ capabilities, and status.
 - [Capability report](docs/capabilities.md)
 - [Shipped upstream contract](docs/upstream-contract.md)
 - [Peer repository audit](docs/peer-repository-audit.md)
+- [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
 
 ## Copyright and license
 

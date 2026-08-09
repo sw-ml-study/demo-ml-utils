@@ -113,6 +113,28 @@ enforced before allocation.
 4. Tensor-only Safetensors extraction.
 5. Cross-format verification and adversarial security report.
 
+## Saga 7 — `bounded-fine-tuning` (planned)
+
+Build the shared adaptation evidence contract, a manual-gradient linear
+fine-tuning demo, a teaching-sized low-rank adapter, a learning-curve IR, and
+deterministic/oracle acceptance.
+
+## Saga 8 — `in-context-learning` (planned)
+
+Build a frozen associative-attention learner, context controls and leakage
+checks, comparison visualization, and an optional pinned external-model
+adapter. Deployment parameters must remain unchanged.
+
+## Saga 9 — `in-context-reinforcement-learning` (planned)
+
+Build deterministic bandit baselines, source learning histories, a miniature
+distilled history-conditioned policy, and held-out context-only reward
+adaptation with an optional external LLM reward loop. Programmed UCB/greedy
+baselines are not labeled ICRL.
+
+The exact steps, proof standards, blockers, and terminology are defined in the
+[adaptation demo plan](adaptation-demos-plan.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

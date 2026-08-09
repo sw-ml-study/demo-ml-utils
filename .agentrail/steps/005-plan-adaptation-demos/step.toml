@@ -1,0 +1,8 @@
+number = 5
+slug = "plan-adaptation-demos"
+status = "in-progress"
+description = "Create a concrete repository plan for adding demonstrable fine-tuning, in-con..."
+role = "meta"
+context_files = []
+created_at = "2026-08-09T12:06:50"
+commits = []

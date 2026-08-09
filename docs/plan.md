@@ -198,6 +198,28 @@ names, I8/I16 dtype, positive bounded shape, offset, and exact byte length are
 validated against the ZIP member catalog while storage bytes remain unread.
 Deterministic Safetensors extraction is next.
 
+### Phase 6 — adaptation demos: fine-tuning, ICL, and ICRL
+
+- Demonstrate full-parameter and low-rank fine-tuning on tiny deterministic
+  numeric tasks with visible update/loss/held-out evidence.
+- Demonstrate ICL with a fixed-parameter associative-attention learner whose
+  predictions change only as labeled examples enter context.
+- Demonstrate ICRL with a miniature algorithm-distillation bandit: training
+  produces a frozen history-conditioned policy, then held-out reward history
+  drives deployment adaptation without parameter updates.
+- Keep real tokenizer/foundation-model execution opt-in and external, with
+  pinned model/provider attribution and MLPL-owned orchestration/scoring.
+
+Acceptance: all three modes share a versioned bounded report and learning-curve
+IR; parameter fingerprints prove which phases do and do not update weights;
+held-out splits, leakage checks, baselines, ablations, deterministic fixtures,
+and adversarial resource limits pass. See the detailed
+[adaptation demo plan](adaptation-demos-plan.md).
+
+Current status: planned. Tiny manual-gradient, associative-context, and fixed
+reward-tape foundations appear expressible with current MLPL arithmetic.
+Native production-scale training and LLM inference are not currently claimed.
+
 ## Cross-cutting gates
 
 - Default tests use generated, redistributable, tiny fixtures.
@@ -219,4 +241,6 @@ Continue `restricted-checkpoint-extraction` from [sagas.md](sagas.md) by
 copying only approved cataloged storage ranges into deterministic Safetensors
 with atomic replacement and self-validation. Keep executable constructs
 rejected, do not invoke native PyTorch deserialization, and keep every
-user-invoked `just` demo narrative and self-describing.
+user-invoked `just` demo narrative and self-describing. After that saga closes,
+begin the shared adaptation contract in the
+[fine-tuning/ICL/ICRL plan](adaptation-demos-plan.md).
