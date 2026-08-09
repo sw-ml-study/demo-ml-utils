@@ -84,7 +84,8 @@ transport now provide reusable golden evidence for encoder work.
 
 1. Numeric conversion/error metric golden vectors — runnable with bounded
    saturating i8/u8, f64 identity, and deterministic comparison evidence.
-2. Symmetric INT8 and Q8_0 encode/decode round trips.
+2. Symmetric INT8 and Q8_0 encode/decode round trips — runnable with exact
+   bytes, independent existing-decoder acceptance, and reconstruction metrics.
 3. Simple Q4 encode/decode round trips.
 4. Safetensors-to-GGUF writer with self-validation.
 5. Explicit external oracle adapters and reproducible comparison report.

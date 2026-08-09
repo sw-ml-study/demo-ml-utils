@@ -46,6 +46,8 @@ and an optional dependency-free envelope inspector.
 The [numeric conversion goldens](docs/numeric-conversion.md) begin native
 quantization work with explicit saturating byte policies and reconstruction
 metrics implemented in MLPL.
+The [symmetric round-trip demo](docs/symmetric-roundtrip.md) adds deterministic
+INT8 payloads and GGUF-compatible Q8_0 blocks with binary16 scales.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

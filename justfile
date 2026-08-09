@@ -73,6 +73,10 @@ transport:
 numeric-conversion:
     ./scripts/run-numeric-conversion
 
+# Demonstrate symmetric INT8 and GGUF-compatible Q8_0 round trips.
+symmetric-roundtrip:
+    ./scripts/run-symmetric-roundtrip
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog
