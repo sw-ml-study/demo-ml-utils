@@ -1,8 +1,9 @@
 number = 2
 slug = "history-generator"
-status = "in-progress"
+status = "completed"
 description = "Generate bounded source-learner histories across deterministic training bandi..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T14:09:25"
-commits = []
+completed_at = "2026-08-09T14:28:32"
+commits = ["654e44a9bf3961f5b8e61eeef2997c228ad6ad71"]
