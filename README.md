@@ -33,6 +33,9 @@ measured sparse-artifact memory evidence.
 The [cross-format scene/tile IR](docs/scene-tile-ir.md) turns bounded
 Safetensors and GGUF summaries into stable, provenance-carrying JSON tiles and
 explicit links without requiring a renderer.
+The [tensor-city layout](docs/tensor-city.md) expands catalog-only metadata into
+two deterministic artifact districts with stable IDs and renderer-neutral
+building geometry, still without reading tensor payloads.
 
 Development uses a thin `justfile`; [the development guide](docs/development.md)
 documents the validation gate, fixture policy, and non-installing sw-MLPL

@@ -64,7 +64,8 @@ a budgeted renderer-neutral handoff.
 
 1. Versioned renderer-neutral scene/tile schema and budget validation —
    runnable with cross-format golden JSON and headless validation.
-2. Tensor-city model/layer layout.
+2. Deterministic cross-format tensor-city layout — runnable from bounded
+   catalogs without payload reads.
 3. Selected-tensor distribution and sampled-surface tiles.
 4. Quantization-block and before/after error tiles.
 5. CLI/server transport and WASM 3D client, with headless snapshots retained.

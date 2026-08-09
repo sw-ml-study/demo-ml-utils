@@ -1,6 +1,6 @@
 number = 2
 slug = "tensor-city-layout"
-status = "pending"
+status = "in-progress"
 description = "Implement deterministic tensor-city model/layer layout over scene/tile IR ver..."
 role = "production"
 context_files = []

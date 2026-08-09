@@ -31,8 +31,9 @@ is O(Hs + Hg + bounded payload chunks + J). Construction holds the two source
 summaries, scene IR, encoded JSON, and round-trip decoded IR simultaneously;
 the 4096-byte output cap bounds this deliberate copy-heavy validation path.
 
-Version 1 is a foundation, not a 3D scene claim. It supports exactly two named
-tiles and one comparison link; positions, arbitrary tile collections,
-hierarchy, LOD, geometry, histograms, surfaces, renderer transport, and browser
-interaction remain later steps. Renderers must consume derived tiles and must
-not infer permission to load complete tensor payloads.
+Version 1 is a foundation, not a rendered 3D scene claim. It supports exactly
+two named tiles and one comparison link. The separate
+[tensor-city schema](tensor-city.md) now provides arbitrary bounded catalog
+columns, hierarchy, and geometry; LOD, histograms, surfaces, renderer
+transport, and browser interaction remain later steps. Renderers must consume
+derived tiles and must not infer permission to load complete tensor payloads.

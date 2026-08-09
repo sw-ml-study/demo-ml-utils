@@ -1,0 +1,15 @@
+include "../../src/visualization/tensor_city.mlpl";
+budgets = {max_header_bytes:4096,max_elements:256,max_catalog_bytes:4096,max_metadata:8,max_tensors:4,max_string_bytes:256,max_rank:4,max_parameters:1000000,max_objects:12,max_tiles:7,max_links:0,max_hierarchy_depth:1,max_coordinate:40,max_label_bytes:64,max_id_bytes:128,max_iterations:7,max_output_bytes:32768,max_json_depth:8,max_json_elements:4096};
+qv17 = u:build_tensor_city("fixtures/safetensors/valid-catalog.safetensors","safe-city","fixtures/gguf/valid-catalog.gguf","gguf-city",budgets)?;
+print("DEMO: deterministic cross-format tensor city");
+print("Scenario: catalog three Safetensors tensors and four GGUF tensors, then place their summaries as two artifact districts without reading payload bytes.");
+print("Native boundary: bounded catalog I/O plus generic tagged to_json/parse_json. MLPL work: sorted name discovery, stable IDs, hierarchy, coordinates, extents, scalar attributes, collision checks, and headless validation.");
+print("Budgets: 12 logical objects, seven tiles/iterations, hierarchy depth 1, coordinates through 40, 64-byte names, 128-byte IDs, 32768 output bytes, JSON depth 8, and 4096 decoded elements.");
+print("Layout policy: Safetensors district z=0 and GGUF district z=4; names keep deterministic catalog order; x advances by 2; width/depth are 1; height is 1 + parameter_count and y centers each building.");
+print("Ordered name lengths (tensor_a, tensor_b, tensor_c, alpha, quant, ints, bytes):"); print(qv17.ir.tensor_columns.name_lengths);
+print("District/group codes:"); print(qv17.ir.tensor_columns.group_ids);
+print("Dot-separated name hierarchy depths:"); print(qv17.ir.tensor_columns.name_depths);
+print("Building x, z, and height columns:"); print({x: qv17.ir.tensor_columns.x,z: qv17.ir.tensor_columns.z,height: qv17.ir.tensor_columns.heights});
+print("Representative stable ID:"); print(u:city_text(flatten(qv17.ir.tensor_columns.id_bytes),qv17.ir.tensor_columns.id_lengths,4,128));
+print("Interpretation: quant is visibly tallest at height 33, the empty Safetensors tensor remains a height-1 building, districts cannot overlap in z, and renderers receive catalog-derived geometry rather than tensor payloads.");
+ok(1)

@@ -53,6 +53,10 @@ safetensors-summary:
 scene-tiles:
     ./scripts/run-scene-tiles
 
+# Demonstrate deterministic catalog-only tensor-city geometry.
+tensor-city:
+    ./scripts/run-tensor-city
+
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:
     ./scripts/run-gguf-catalog
