@@ -1,8 +1,9 @@
 number = 1
 slug = "model-contract-and-preflight"
-status = "in-progress"
+status = "completed"
 description = "Document the local model inventory and select Qwen2.5-Coder-7B-Instruct-4bit;..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T11:49:55"
-commits = []
+completed_at = "2026-08-10T11:55:50"
+commits = ["59720d6d2d69ba177d07c45674bad278d3089016"]
