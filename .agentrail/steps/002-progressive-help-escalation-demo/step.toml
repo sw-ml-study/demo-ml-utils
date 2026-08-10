@@ -1,8 +1,9 @@
 number = 2
 slug = "progressive-help-escalation-demo"
-status = "in-progress"
+status = "completed"
 description = "Read docs/built-in-help-escalation-demo.txt; document the deferred MLX traini..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T13:22:43"
-commits = []
+completed_at = "2026-08-10T13:28:41"
+commits = ["4c0fa9b59ec12fa21c0022de0d52c1caa410d5ff"]
