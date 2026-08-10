@@ -1,9 +1,10 @@
 number = 1
 slug = "guided-web-ui-narrative"
-status = "in-progress"
+status = "completed"
 description = "Using TDD, revise the standalone LEFTS page MLPL file so its output begins wi..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T17:10:02"
+completed_at = "2026-08-09T17:11:13"
 task_type = "documentation"
-commits = []
+commits = ["b5f8675469beb289b97e9ff4e371ec71011767e9"]
