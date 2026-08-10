@@ -144,6 +144,11 @@ evaluate Qwen2.5-Coder 7B against a frozen Agentrail workflow contract and a
 separately captured live-help drift check. Foundation-model downloads and
 training remain outside `just check`.
 
+The [progressive help escalation demo](docs/help-escalation.md) is runnable
+without those model prerequisites. It shows how grounded browser help returns
+typed answers or explicit documentation/program/repository/reasoning escalation
+results, while consent-minimized bundles never send context or execute commands.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -171,6 +176,8 @@ capabilities, and status.
 - [Peer repository audit](docs/peer-repository-audit.md)
 - [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
 - [Coding-model training plan: Agentrail with sw-MLPL and MLX](docs/training-plan.md)
+- [Progressive built-in help escalation](docs/help-escalation.md)
+- [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)
 - [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)

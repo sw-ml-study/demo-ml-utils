@@ -24,6 +24,10 @@ mlpl-path:
 agentrail-mlx-preflight:
     ./scripts/check-agentrail-mlx-preflight
 
+# Demonstrate grounded browser help and explicit progressive escalation.
+help-escalation:
+    ./scripts/run-help-escalation
+
 # Demonstrate the configured binary's verified capabilities and limitations.
 capabilities:
     ./scripts/run-capability-probe

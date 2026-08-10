@@ -1,0 +1,1117 @@
+ChatGPT Pro
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+what sw-MLPL really could use is a built in help agent (a cpu-based LLM that is trained on sw-MLPL or at least able to direct users to documentation.  This is inspired by Gemini built-in to Google Colab.  However the github.io static hosting cannot run a gpu or forward to a cloud AI to do this (and it wouldn't be low cost).  If we could use sw-MLPL to train an in-browser CPU inference model that quickly can answer basic questions, including why, how, where type questions, that would be great.  It would also be a good demo-ml-utils example
+
+Worked for 17s
+Yes. I think this is a particularly good direction because it connects three goals that otherwise look separate:
+
+make the GitHub-hosted live environment much more approachable,
+
+demonstrate that sw-MLPL can do practical ML work rather than merely call somebody else's ML stack, and
+
+create another strong forcing function for the language and demo-ml-utils.
+
+The important reframing is: don't initially build a tiny general-purpose LLM. Build a tiny sw-MLPL help agent.
+
+What the browser agent actually needs to do
+Its universe is unusually constrained. It should answer questions like:
+
+“How do I map a function over an array?”
+
+“Why does this expression return a scalar?”
+
+“Why did I get unknown function: ge?”
+
+“Where is take documented?”
+
+“What's the difference between each, over, and table?”
+
+“How do I write a moving average?”
+
+“Can this loop be expressed as a pipeline?”
+
+“What does this error mean?”
+
+“Show me an example using drop.”
+
+“Why would I use a UDF instead of adding a language primitive?”
+
+That does not require encyclopedic world knowledge.
+
+It needs excellent knowledge of perhaps a few megabytes of:
+
+language reference
+tutorials
+examples
+error messages
+standard library
+demo repositories
+idioms
+FAQ
+migration/comparison notes
+That changes the engineering problem enormously.
+
+I would make it a hybrid agent, not just an LLM
+My preferred architecture would be:
+
+              question
+                 |
+                 v
+        +------------------+
+        | query classifier |
+        +------------------+
+          |     |      |
+       where?  how?   why?
+          \      |      /
+           \     |     /
+            v    v    v
+       +-------------------+
+       | documentation     |
+       | retrieval/index   |
+       +-------------------+
+                |
+          top relevant
+        documentation chunks
+                |
+                v
+       +-------------------+
+       | tiny help model   |
+       | / answer composer |
+       +-------------------+
+                |
+                v
+        answer + links +
+          examples
+The retrieval system should carry most of the factual burden.
+
+That means the model doesn't need to memorize the entire language reference. It needs to learn things like:
+
+Given this question and these three pieces of documentation, construct a short useful answer.
+
+That's a dramatically easier model to train and shrink.
+
+Even better: make the model optional at first
+Version 1 could actually be:
+
+question
+   ↓
+semantic + lexical retrieval
+   ↓
+intent detection
+   ↓
+structured response generator
+   ↓
+answer
+For example:
+
+Q: Where is take documented?
+
+Doesn't need generation at all.
+
+take is an array operation. See Array Operations → take.
+Here's the shortest example:
+
+take(3, values)
+
+Likewise:
+
+Q: Why do I get unknown function: ge?
+
+could map the error message itself to the documentation and known alternatives.
+
+Then we add a learned answer composer.
+
+That gives you a very useful feature before you've successfully trained a useful language model.
+
+CPU-only browser inference is quite realistic
+There is already a good deployment substrate for this. ONNX Runtime Web explicitly supports CPU inference through WebAssembly, and its WASM build supports SIMD and multithreading. 
+
+Transformers.js sits on top of ONNX Runtime and currently defaults to CPU/WASM in the browser unless WebGPU is explicitly selected. 
+
+So the deployment side could initially be:
+
+sw-MLPL training/experimentation
+          ↓
+model export
+          ↓
+       ONNX
+          ↓
+ONNX Runtime Web / WASM SIMD
+          ↓
+       browser CPU
+That's attractive because the actual GitHub Pages application remains completely static. No inference server, account, API key, GPU, or per-query cost is required.
+
+WebGPU could later become an optional accelerator rather than a requirement. Systems such as WebLLM are explicitly designed for completely local browser inference, although WebLLM itself is primarily WebGPU-oriented rather than fitting your CPU-first requirement. 
+
+The model should probably be surprisingly small
+I would not start with something like a quantized 0.5B chat model.
+
+Even if it works, you've created several problems:
+
+large initial download;
+
+relatively high memory consumption;
+
+slow first-token latency on weak CPUs;
+
+more hallucination;
+
+much harder training;
+
+much harder evaluation;
+
+a tendency to answer general questions rather than remain a sw-MLPL specialist.
+
+And GitHub Pages gives you another reason to care about size. GitHub currently recommends keeping a Pages source repository around 1 GB or less, limits a published Pages site to 1 GB, and has a soft 100 GB/month bandwidth limit. Individual ordinary Git objects above 100 MiB are blocked. 
+
+Imagine 1,000 visitors downloading a 300-MB model:
+
+~300 GB
+That's exactly the wrong shape for this application.
+
+I'd give ourselves an aggressive initial target:
+
+Complete help-agent assets under roughly 25–50 MB compressed.
+
+Eventually it would be interesting to see whether sw-MLPL can get it below 10 MB.
+
+That itself becomes a compelling ML challenge.
+
+This suggests several stages of intelligence
+I could see a very clean progression inside demo-ml-utils.
+
+Stage	Implementation	ML required
+0	exact symbol/error search	none
+1	BM25/lexical doc retrieval	little/none
+2	learned query intent classifier	tiny
+3	semantic embedding search	small
+4	question → relevant docs ranking	small
+5	extractive answer model	small
+6	tiny generative answer composer	moderate
+7	code-aware help agent	moderate
+8	diagnose loaded Editor program	moderate
+Stages 0–3 could already be extremely useful.
+
+And each stage lets you compare:
+
+accuracy
+model size
+startup time
+inference latency
+peak RAM
+tokens/sec
+CPU utilization
+quality
+That's exactly the sort of instrumentation I'd want from something called demo-ml-utils.
+
+This becomes a fantastic sw-MLPL training demo
+Here's where I think your idea becomes especially important.
+
+Rather than:
+
+“Here's a pretrained model that sw-MLPL can execute.”
+
+the interesting demonstration is:
+
+“Here's a help model for sw-MLPL that was trained using sw-MLPL.”
+
+That forces you to dogfood the ML capabilities.
+
+You potentially need:
+
+documentation ingestion
+        ↓
+text normalization
+        ↓
+tokenization
+        ↓
+array/tensor representation
+        ↓
+dataset creation
+        ↓
+train/validation split
+        ↓
+model definition
+        ↓
+loss
+        ↓
+backpropagation
+        ↓
+optimizer
+        ↓
+training loop
+        ↓
+evaluation
+        ↓
+quantization
+        ↓
+serialization/export
+        ↓
+WASM/browser inference
+Notice how many sw-MLPL language/library questions this immediately exposes.
+
+This is almost a completeness test for the ML side of the language.
+
+More importantly, don't train it solely by memorizing documentation
+I'd construct training data around questions users actually ask.
+
+For example, documentation might say:
+
+take(n, xs)
+Returns the first n elements of xs.
+Training examples should include things like:
+
+Where is take documented?
+
+How do I get the first three items?
+
+Isn't there already a take function?
+
+Do I need a loop to get the beginning of an array?
+
+What's the difference between take and drop?
+
+Why isn't slice necessary here?
+
+Can I compose take with map?
+All refer back to the same authoritative source.
+
+So the training corpus becomes approximately:
+
+(question,
+ intent,
+ relevant-document,
+ relevant-span,
+ answer,
+ suggested-example)
+That is much richer than simply language-model-training the Markdown files.
+
+And why, how, and where really are different tasks
+I like your choice of those examples because they suggest an explicit architecture.
+
+where
+Primarily retrieval:
+
+"Where is broadcasting explained?"
+      ↓
+docs://arrays/broadcasting
+Very little generation needed.
+
+how
+Retrieval plus example synthesis:
+
+"How do I apply square to every item?"
+      ↓
+docs + examples
+      ↓
+each(square, values)
+why
+Requires explanation and possibly program analysis:
+
+"Why does this produce a nested array?"
+This may need:
+
+parse tree
+type/shape information
+runtime result
+documentation
+That's significantly more interesting.
+
+Eventually the help agent should have tools.
+
+That's where it starts becoming much better than a chatbot
+Because the agent is built into the sw-MLPL environment, don't make it guess about the program.
+
+Give it structured queries into the interpreter.
+
+For example:
+
+help_agent:
+    lookup_symbol(name)
+    lookup_error(error_code)
+    get_ast(selection)
+    infer_shape(expression)
+    evaluate_safely(expression)
+    find_examples(symbol)
+    find_docs(symbol)
+Then:
+
+Why does foo(values) produce [3,4]?
+
+doesn't have to rely purely on a language model.
+
+It can effectively receive:
+
+expression AST
+input shapes
+function signature
+result shape
+relevant docs
+and explain them.
+
+That is a much more interesting built-in programming assistant than “we squeezed a chatbot into WASM.”
+
+Error messages are probably the killer initial application
+This may be where I would start.
+
+You've already encountered things like:
+
+error: unknown function: ge
+Imagine instead:
+
+error: unknown function: ge
+
+Ask sw-MLPL Help
+and Help responds:
+
+ge isn't currently a defined built-in function. If you're trying to
+compare values using “greater than or equal”, use ...
+
+You may have encountered ge in an older example.
+
+See:
+
+Comparisons
+
+Boolean expressions
+
+Updated moving-average example
+
+This doesn't require GPT-level intelligence.
+
+And unlike generic LLM help, it can be version-aware.
+
+The docs/model/index can contain:
+
+language_version: 0.x.y
+So it never tells somebody about a function that hasn't shipped.
+
+I would separate the knowledge index from the neural model
+That's an architectural point I feel fairly strongly about.
+
+Don't create:
+
+docs → train → model
+such that every documentation typo requires retraining.
+
+Instead:
+
+          docs
+           |
+     +-----+------+
+     |            |
+     v            v
+ search index   training corpus
+     |            |
+     |            v
+     |          model
+     |            |
+     +------v-----+
+            |
+         browser
+Then ordinary documentation changes require rebuilding the index, not necessarily retraining the model.
+
+The model learns how to answer questions from context.
+
+The index contains what is currently true.
+
+This greatly reduces hallucination and stale knowledge.
+
+There's an especially nice sw-MLPL angle: arrays all the way down
+A very small help model could deliberately be chosen to demonstrate sw-MLPL's strengths.
+
+For example, even a modest transformer-style encoder forces:
+
+token arrays
+embedding lookup
+matrix operations
+broadcasting
+normalization
+attention
+softmax
+pooling
+similarity
+top-k
+quantization
+Those are precisely the array-oriented operations sw-MLPL ought to express elegantly.
+
+So instead of hiding all of this behind:
+
+model.train(...)
+demo-ml-utils/help-agent/ could show increasingly lower-level implementations.
+
+Something like:
+
+01-tokenize/
+02-vector-search/
+03-intent-classifier/
+04-embedding-model/
+05-reranker/
+06-answer-model/
+07-quantize/
+08-export/
+09-browser-help-agent/
+That would be very pedagogically strong.
+
+In fact, I'd make model compression part of the demo
+This creates a natural progression:
+
+FP32 teacher
+   ↓
+FP16
+   ↓
+INT8
+   ↓
+INT4
+   ↓
+distillation
+   ↓
+pruning
+   ↓
+smaller student architecture
+And graph:
+
+model size   vs   help accuracy
+latency      vs   help accuracy
+RAM          vs   help accuracy
+Now the demo isn't merely “train a model.”
+
+It's:
+
+How small can we make a useful programming-language assistant?
+
+That is a much more distinctive demonstration.
+
+We may even discover that an “LLM” isn't the best answer
+This would be a scientifically useful result rather than a failure.
+
+Suppose testing shows:
+
+BM25 + embeddings + reranker + templates
+gets 92% useful answers using 8 MB, while:
+
+150M parameter generator
+gets 89%, takes 180 MB, and occasionally invents functions.
+
+Then the former wins.
+
+That's exactly the kind of experiment sw-MLPL should be good at conducting.
+
+I'd deliberately compare:
+
+lexical retrieval
+semantic retrieval
+small classifier
+small encoder
+extractive QA
+tiny seq2seq
+tiny causal LM
+hybrid systems
+One model I would not insist on
+I wouldn't require the same trained artifact to work everywhere.
+
+Eventually the architecture could support:
+
+GitHub Pages
+    -> tiny CPU/WASM help agent
+
+desktop sw-MLPL
+    -> larger local model if available
+
+IDE integration
+    -> local llama.cpp / MLX / etc.
+
+optional user-configured remote model
+    -> much more capable agent
+with a common interface:
+
+HelpProvider
+Conceptually:
+
+help.ask(question, context)
+and providers like:
+
+browser_tiny
+local_llm
+external_agent
+So the tiny browser implementation establishes the minimum guaranteed capability rather than constraining everything else.
+
+demo-ml-utils is exactly where I'd incubate this
+I would not create demo-help-agent yet.
+
+At this stage, the interesting work is ML machinery:
+
+document chunking
+tokenization
+embeddings
+similarity
+top-k
+training
+distillation
+quantization
+model serialization
+ONNX export
+WASM CPU inference
+evaluation
+Those are reusable ML utilities.
+
+So I'd put something like:
+
+demo-ml-utils/
+  examples/
+    help-agent/
+or:
+
+demo-ml-utils/
+  help-agent/
+Once the help system matures into an actual sw-MLPL product feature, its runtime components belong elsewhere—probably ultimately in the live UI and/or core tooling—but the experiment and reproducible training pipeline remain in demo-ml-utils.
+
+A roadmap I think would work particularly well
+I'd make the first milestone deliberately non-generative.
+
+Milestone 1 — “Ask the Docs.” Build a compact documentation corpus and browser-side lexical search. Questions return relevant passages, symbols and runnable examples.
+
+Milestone 2 — Semantic retrieval. Train or use a very small embedding encoder, run it through WASM CPU inference, and evaluate semantic search against lexical search. Transformers.js and ONNX Runtime Web already demonstrate the viability of CPU/WASM browser inference. 
+
+Milestone 3 — Train it with sw-MLPL. Implement the necessary training primitives in sw-MLPL and train a query-intent classifier and/or tiny retrieval model. This gives you a realistic training problem without immediately needing a generative transformer.
+
+Milestone 4 — Explanations. Add extractive QA or a very small answer composer receiving retrieved documentation as context.
+
+Milestone 5 — Editor context. Pass current source, selected expression, parser information, runtime errors and shape/type metadata to the help system.
+
+Milestone 6 — Code-aware assistant. Let it answer “why?” questions using interpreter tools rather than hallucinating.
+
+Milestone 7 — Compression challenge. Quantize/distill/prune until the complete help payload reaches a size and latency you're happy shipping on every page load—or lazy-load it on first use.
+
+The architectural target I'd choose
+I would define the eventual built-in system roughly as:
+
+             sw-MLPL Help
+                  |
+       +----------+----------+
+       |                     |
+       v                     v
+ interpreter context    question analysis
+       |                     |
+       +----------+----------+
+                  |
+                  v
+          hybrid retrieval
+       lexical + semantic
+                  |
+                  v
+          tiny local model
+             CPU/WASM
+                  |
+                  v
+        grounded response
+          + doc citations
+          + runnable code
+And give it one strict rule:
+
+It may explain only things grounded in the current sw-MLPL documentation, examples, or interpreter state.
+
+That constraint is actually an advantage. It makes a tiny model viable.
+
+The result could become a surprisingly compelling claim for the project:
+
+The sw-MLPL browser IDE includes its own local programming assistant. It runs entirely in your browser, requires no account or API key, sends no code anywhere, costs nothing to operate, and the ML used to build it is itself demonstrated in sw-MLPL.
+
+That is substantially more interesting than merely adding “AI chat” to the live demo. It becomes a demonstration of small-model training, retrieval, quantization, CPU inference, WASM deployment, language tooling, and dogfooding all at once.
+
+
+If we use a small model, can that use Engram as an optimization?  When this built-in helper cannot understand or answer a question, it could suggest installing sw-mlpl serve on a system with a local ollama to answer more contextual questions, or using a cloud AI to read the repos, docs, and transcript to provide better contextural answers/
+
+Worked for 10s
+Yes. I’d make Engram an experimental optimization for the small local model, and independently make escalation a first-class part of the help architecture.
+
+1. Engram looks unusually well matched to this problem
+DeepSeek’s Engram is essentially a conditional-memory mechanism: recurring token n-grams are mapped through deterministic lookup into learned memory embeddings, which are then fused with the model’s hidden state. Its purpose is to move some “static pattern reconstruction” out of the Transformer’s compute path and into cheap lookup. 
+
+That seems particularly appropriate for a sw-MLPL assistant because its domain contains an enormous number of recurring phrases and code fragments:
+
+take
+drop
+each
+over
+table
+shape
+broadcast
+unknown function
+undefined variable
+moving average
+u:...
+Editor > Load > Run
+And sequences such as:
+
+"unknown function"
+"how do I"
+"what does ... mean"
+"difference between each and"
+"first n elements"
+are exactly the sort of reusable local patterns Engram can encode.
+
+The original Engram work reports that delegating these local dependencies to lookup improved not only factual retrieval but reasoning, code/math benchmarks, and long-context behavior, while deterministic addressing permits prefetching from slower memory. 
+
+But there is an important qualification
+I wouldn't assume:
+
+small Transformer + Engram = automatically much better small Transformer.
+
+The published DeepSeek experiments are primarily about much larger models and scaling allocation between neural computation and conditional memory. 
+
+So for us it should be an experiment, not an architectural prerequisite.
+
+In fact this is almost tailor-made for demo-ml-utils:
+
+TinyHelp baseline
+TinyHelp + Engram
+TinyHelp + RAG
+TinyHelp + Engram + RAG
+Compare:
+
+Variant	Size	CPU latency	RAM	Accuracy	Hallucination
+tiny model					
++ Engram					
++ retrieval					
++ both					
+That would tell us whether Engram is actually buying something useful at browser scale.
+
+There's already interesting follow-on research pointing toward making Engram itself substantially smaller. A June 2026 paper, Tensorized Engram, reports comparable or better performance than conventional Engram-style n-gram memories while using substantially fewer parameters. 
+
+That might ultimately be more relevant to a 10–50 MB browser assistant than the original large Engram design.
+
+2. But Engram and documentation retrieval should do different jobs
+I'd keep these conceptually separate:
+
+Engram
+  = learned/local phrase memory inside model
+
+RAG/index
+  = authoritative current sw-MLPL facts outside model
+For example:
+
+“What does take do?”
+
+might benefit heavily from Engram because the vocabulary and phrase patterns are repetitive.
+
+But:
+
+“Was window_over added yet?”
+
+should come from the versioned documentation index, not from model memory.
+
+That gives us:
+
+question
+   |
+   +--> Engram ----+
+   |               |
+   +--> doc RAG ---+--> tiny model --> answer
+   |               |
+   +--> IDE state -+
+The neural model provides language understanding and composition.
+
+The docs provide truth.
+
+The interpreter provides program state.
+
+3. And yes: failure should explicitly trigger escalation
+I think this improves the design significantly.
+
+The browser helper should not pretend that it can answer everything.
+
+Instead, give it an explicit capability/confidence router:
+
+             User question
+                   |
+                   v
+          Browser Help Agent
+                   |
+          +--------+--------+
+          |                 |
+      confident          uncertain
+          |                 |
+          v                 v
+       answer          escalation
+But “uncertain” shouldn't mean merely:
+
+softmax < .72
+I'd combine several signals:
+
+retrieval score
+intent confidence
+answer/document consistency
+known-symbol coverage
+question complexity
+requested scope
+current-code requirements
+For instance:
+
+“How does drop work?”
+
+Very likely Tier 0.
+
+“Why is this 70-line program returning a rank-3 array when I expected rank 2?”
+
+Potentially Tier 1.
+
+“Compare this implementation to BQN's rank polymorphism and suggest changes to sw-MLPL.”
+
+Almost certainly Tier 2.
+
+4. I see three natural help tiers
+┌───────────────────────────────────────┐
+│ Tier 0 — Browser                     │
+│                                       │
+│ tiny sw-MLPL specialist               │
+│ Engram + local docs + current editor  │
+│ WASM / CPU                            │
+│ zero setup / zero cost                │
+└─────────────────┬─────────────────────┘
+                  │ can't answer
+                  v
+┌───────────────────────────────────────┐
+│ Tier 1 — sw-mlpl serve               │
+│                                       │
+│ local full repo/docs                  │
+│ local Ollama / llama.cpp / MLX etc.   │
+│ much larger context                   │
+│ private / no cloud cost               │
+└─────────────────┬─────────────────────┘
+                  │ optional
+                  v
+┌───────────────────────────────────────┐
+│ Tier 2 — External AI                 │
+│                                       │
+│ ChatGPT / Claude / Gemini / etc.      │
+│ repo + docs + editor + transcript     │
+│ strongest reasoning/model             │
+└───────────────────────────────────────┘
+That is much better than choosing between “tiny toy model” and “expensive cloud model.”
+
+The tiny model becomes the front desk, not the entire engineering staff.
+
+5. sw-mlpl serve could expose a local help protocol
+I like this a lot.
+
+The static web application could probe something like:
+
+http://localhost:PORT/help/capabilities
+and discover:
+
+{
+  "provider": "ollama",
+  "models": ["qwen..."],
+  "repo_access": true,
+  "docs_access": true,
+  "max_context": 65536
+}
+Then the browser can show:
+
+Help provider:
+
+● Browser Assistant
+○ Local sw-mlpl server
+○ External AI
+Or preferably use automatic escalation with user control.
+
+For example:
+
+I can explain the documented behavior of `each`, but
+your question involves several functions in the current
+program and exceeds my local analysis capability.
+
+A local sw-mlpl help server can inspect the complete
+program and repository.
+
+[Ask local assistant]
+That is a much nicer experience than:
+
+“Sorry, I don't know.”
+
+6. More importantly, escalation can package the context correctly
+This solves one of the huge shortcomings of generic AI questions.
+
+Rather than sending:
+
+Why doesn't this work?
+the help layer constructs a context bundle.
+
+Something like:
+
+HelpRequest {
+    question,
+    language_version,
+    editor_source,
+    selection,
+    runtime_error,
+    ast_summary,
+    shape_information,
+    retrieved_docs,
+    relevant_examples,
+    conversation,
+}
+Then Tier 1 can additionally add:
+
+repo files
+git revision
+library source
+tests
+issues
+CHANGELOG
+And the stronger assistant receives something like:
+
+QUESTION
+Why can't I compose these functions?
+
+LANGUAGE
+sw-MLPL commit 8ac...
+
+CURRENT SOURCE
+...
+
+RUNTIME
+...
+
+RELEVANT DOCUMENTATION
+...
+
+RELEVANT IMPLEMENTATION
+...
+
+PREVIOUS HELP DISCUSSION
+...
+That's a context broker, not merely a chatbot button.
+
+7. The browser assistant could even say why it is escalating
+This is an important UX feature.
+
+Instead of:
+
+I can't answer this.
+
+say:
+
+I found documentation for each and over, but your question depends on the implementation of u:compose, which isn't included in my browser knowledge package.
+
+or:
+
+This question requires examining multiple repository files.
+
+or:
+
+I understand the syntax question, but diagnosing the result requires running your complete program.
+
+That gives the user useful information even before escalation.
+
+8. We should distinguish “I don't know” from “I need more capability”
+Perhaps return an internal result type like:
+
+HelpResult =
+    Answer(...)
+  | NeedDocs(...)
+  | NeedProgramContext(...)
+  | NeedRepository(...)
+  | NeedReasoning(...)
+  | OutsideDomain(...)
+Then the UI knows what to offer.
+
+For example:
+
+NeedRepository
+    -> suggest sw-mlpl serve
+
+NeedReasoning
+    -> suggest local large model
+       or external AI
+
+OutsideDomain
+    -> don't pretend this is sw-MLPL help
+This makes escalation deterministic rather than letting a tiny model decide everything conversationally.
+
+9. Local escalation is particularly attractive
+I'd strongly favor this order:
+
+Browser
+   ↓
+Local
+   ↓
+Cloud
+because sw-mlpl serve can offer capabilities the hosted site fundamentally cannot:
+
+filesystem access
+repository search
+git history
+full documentation
+run tests
+execute sw-MLPL
+large local context
+larger local models
+And the user pays the inference cost on their own machine.
+
+The server does not necessarily need Ollama specifically. Define something like:
+
+HelpBackend
+with adapters:
+
+OllamaBackend
+LlamaCppBackend
+OpenAICompatibleBackend
+MLXBackend
+Then sw-mlpl serve doesn't become architecturally coupled to Ollama.
+
+10. Cloud escalation should be user-mediated
+I would not have the GitHub page silently send code or transcripts to anybody.
+
+Instead:
+
+Browser assistant couldn't answer.
+
+Stronger assistance can include:
+[x] question
+[x] current program
+[x] relevant documentation
+[ ] help transcript
+[ ] repository references
+
+Destination:
+○ local sw-mlpl server
+○ configured cloud provider
+
+[Continue]
+That makes the privacy boundary extremely obvious.
+
+And it gives us an elegant principle:
+
+Local by default; progressively disclose context only when greater capability is requested.
+
+11. There's another clever possibility: no direct cloud API at all
+The static site doesn't necessarily have to contain credentials or pay for anything.
+
+It could generate a portable help bundle:
+
+swmlpl-help.json
+or formatted Markdown:
+
+Copy for AI
+containing the question, relevant docs, current source, diagnostics and URLs.
+
+Then the user can paste/drop that into whatever AI they already subscribe to.
+
+That means the GitHub Pages site can support:
+
+ChatGPT
+Claude
+Gemini
+local agents
+future agents
+without sw-MLPL needing API keys, billing, or provider integration.
+
+Later, sw-mlpl serve can automate the exact same protocol.
+
+12. This makes the tiny model's task much easier
+The model doesn't need to know:
+
+everything that an AI programmer might ever need.
+
+Its task becomes:
+
+1. Understand ordinary-language questions.
+2. Retrieve sw-MLPL knowledge.
+3. Explain straightforward answers.
+4. Diagnose straightforward errors.
+5. Recognize when the problem exceeds its capability.
+6. Construct a good escalation request.
+Number 5 might be almost as important as number 3.
+
+A small specialist that says:
+
+“This requires repository-level analysis; I can package the relevant context for a stronger assistant.”
+
+is vastly more useful than a somewhat larger model that confidently makes up an answer.
+
+13. And that itself gives demo-ml-utils another excellent ML problem
+We can actually train/evaluate the escalation classifier.
+
+Construct datasets labelled:
+
+LOCAL_ANSWER
+DOC_LOOKUP
+PROGRAM_ANALYSIS
+REPO_ANALYSIS
+GENERAL_AI
+Questions might be:
+
+"What does drop do?"
+    -> LOCAL_ANSWER
+
+"Where is broadcasting documented?"
+    -> DOC_LOOKUP
+
+"Why does this expression produce shape 3 4 5?"
+    -> PROGRAM_ANALYSIS
+
+"Why does parser.rs reject this syntax?"
+    -> REPO_ANALYSIS
+
+"Compare this design with category-theoretic applicatives."
+    -> GENERAL_AI
+A tiny classifier could probably do this extraordinarily cheaply.
+
+So one plausible browser pipeline becomes:
+
+               question
+                  |
+                  v
+           intent/router
+             tiny model
+                  |
+        +---------+---------+
+        |                   |
+      local              escalation
+        |
+        v
+   lexical/RAG
+        |
+        v
+   Engram-assisted
+    tiny answerer
+        |
+        v
+ grounded answer
+That may be far smaller than trying to build one monolithic mini-chat model.
+
+My revised target
+I would now describe the project as “progressive sw-MLPL Help”, not “an in-browser LLM.”
+
+Its key architectural property is:
+
+tiny specialist
+      ↓
+local coding assistant
+      ↓
+full external AI
+with a common structured context protocol between them.
+
+And Engram becomes one of the experiments that makes Tier 0 stronger without making its Transformer substantially larger. That's very consistent with the motivation of the original Engram work: move reusable/local pattern knowledge into scalable lookup rather than repeatedly spending neural computation reconstructing it. 
+
+I think this is actually a stronger demo-ml-utils story than the one we had one turn ago, because now the demo isn't merely “train a tiny sw-MLPL chatbot.” It can demonstrate tokenization → retrieval → Engram/conditional memory → tiny-model inference → confidence/calibration → routing → context construction → progressive model escalation. And the finished artifact would solve a real usability problem in the live sw-MLPL site rather than being an artificial benchmark.
+
+

@@ -1,4 +1,4 @@
-number = 5
+number = 6
 slug = "live-help-drift-evaluation"
 status = "pending"
 description = "Probe agentrail from PATH at runtime, capture and bound --version/--help, det..."

@@ -1,0 +1,13 @@
+include "../src/help/escalation.mlpl";
+def u:hreq(condition,message) { "Require one progressive-help invariant."; if condition { ok(1) } else { err(message) } }
+b={max_question_bytes:256,max_context_bytes:4096,max_source_bytes:512,max_transcript_bytes:512};
+r=u:help_escalation_demo(b)?;
+u:hreq(equal(r.local.outcome,"Answer")*equal(r.local.tier,"browser")*equal(r.local.answer.example,"drop(2, [10,20,30,40])"),"grounded browser answer golden")?;
+u:hreq(equal(r.program.outcome,"NeedProgramContext")*equal(r.program.tier,"local-server")*eq(r.program.bundle.include_source,1),"program escalation golden")?;
+u:hreq(equal(r.repository.outcome,"NeedRepository")*equal(r.repository.tier,"local-server"),"repository escalation golden")?;
+u:hreq(equal(r.reasoning.outcome,"NeedReasoning")*equal(r.reasoning.tier,"portable-external")*eq(r.reasoning.bundle.include_source,0)*equal(r.reasoning.bundle.source,"[withheld]"),"reasoning privacy golden")?;
+u:hreq(equal(r.docs.outcome,"NeedDocs")*equal(r.docs.tier,"browser-index"),"stale docs golden")?;
+u:hreq(equal(r.outside.outcome,"OutsideDomain")*equal(r.outside.tier,"none"),"outside-domain golden")?;
+u:hreq(equal(r.counts,[1,1,1,1,1,1]),"typed outcome counts golden")?;
+u:hreq(is_err(u:help_route(r.fixtures.oversized,{max_question_bytes:8,max_context_bytes:4096,max_source_bytes:512,max_transcript_bytes:512})),"question budget rejection")?;
+print("PASS progressive help escalation mechanics"); ok(1)

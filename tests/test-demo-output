@@ -16,6 +16,7 @@ check_demo() {
 }
 
 check_demo capabilities scripts/run-capability-probe
+check_demo help-escalation scripts/run-help-escalation
 check_demo lefts-capabilities scripts/run-lefts-capability-contract
 check_demo split-lift scripts/run-split-lift
 check_demo ensemble-feed scripts/run-ensemble-feed

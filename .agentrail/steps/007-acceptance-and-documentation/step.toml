@@ -1,4 +1,4 @@
-number = 6
+number = 7
 slug = "acceptance-and-documentation"
 status = "pending"
 description = "Consolidate two-stage outputs, reproducibility, memory evidence, failure mode..."
