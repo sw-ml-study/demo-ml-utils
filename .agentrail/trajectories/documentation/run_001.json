@@ -1,0 +1,11 @@
+{
+  "task_type": "documentation",
+  "state": {
+    "number": 1,
+    "step": "write-sw-mlpl-web-handoff"
+  },
+  "action": "Inspected the adjacent Web demo registry, grouping implementation, tests, build and deploy scripts, and repository instructions; wrote the handoff and ran just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T17:16:20"
+}

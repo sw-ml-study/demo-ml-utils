@@ -1,9 +1,10 @@
 number = 1
 slug = "write-sw-mlpl-web-handoff"
-status = "in-progress"
+status = "completed"
 description = "Write docs/plan-lefts-web-demo.md as a precise agent brief covering why Exper..."
 role = "meta"
 context_files = []
 created_at = "2026-08-09T17:14:48"
+completed_at = "2026-08-09T17:16:20"
 task_type = "documentation"
-commits = []
+commits = ["c8c0d88b6e24fed1f59cc9f7771a9b8482045e7e"]
