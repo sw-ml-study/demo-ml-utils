@@ -1,0 +1,1 @@
+Added a genuinely CPU-trained six-class help-route proposer using Engram conditional bigram memory and 160 Adam updates. The demo proves lower held-out loss, six correct held-out class proposals, 18 written memory rows, gate activity, and an inert handoff to deterministic evidence/consent gates; integrated focused/full tests, catalog, Just, README, and detailed documentation.
