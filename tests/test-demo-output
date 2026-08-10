@@ -21,6 +21,7 @@ check_demo split-lift scripts/run-split-lift
 check_demo ensemble-feed scripts/run-ensemble-feed
 check_demo tune scripts/run-tune
 check_demo rolling-experiment scripts/run-rolling-experiment
+check_demo lefts-acceptance scripts/run-lefts-acceptance
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter
@@ -72,6 +73,20 @@ for marker in \
 do
   grep -Fqx "$marker" "$lefts_output" || {
     echo "LEFTS capability output lacks $marker" >&2
+    exit 1
+  }
+done
+
+lefts_acceptance_output="$work_dir/lefts-acceptance.txt"
+for marker in \
+  'ACCEPTANCE concepts=Split,Lift,Ensemble,Feed,Tune' \
+  'ACCEPTANCE deterministic_reruns=yes' \
+  'PROMOTION sw_mlpl_changes=none' \
+  'PROMOTION native_extensions=none' \
+  'CLAIM formal_functor_protocol=no'
+do
+  grep -Fqx "$marker" "$lefts_acceptance_output" || {
+    echo "LEFTS acceptance output lacks $marker" >&2
     exit 1
   }
 done

@@ -169,6 +169,7 @@ capabilities, and status.
 - [Ensemble and Feed composition](docs/ensemble-feed.md)
 - [Leakage-safe Tune](docs/tune.md)
 - [Composed rolling experiment](docs/rolling-experiment.md)
+- [LEFTS-inspired acceptance and promotion report](docs/lefts-acceptance.md)
 
 ## Copyright and license
 

@@ -1,6 +1,6 @@
 number = 6
 slug = "lefts-acceptance"
-status = "pending"
+status = "in-progress"
 description = "Close the LEFTS-inspired saga with deterministic reruns, hostile input and re..."
 role = "validation"
 context_files = []

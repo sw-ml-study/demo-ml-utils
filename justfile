@@ -44,6 +44,10 @@ tune:
 rolling-experiment:
     ./scripts/run-rolling-experiment
 
+# Rerun the complete LEFTS-inspired slice and report promotion decisions.
+lefts-acceptance:
+    ./scripts/run-lefts-acceptance
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

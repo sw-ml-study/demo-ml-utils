@@ -316,3 +316,10 @@ It combines Split, grouped fitting, Feed, and Ensemble, proves explicit parity,
 and emits a stable seven-node/six-edge computation IR that independently
 round-trips and validates. Final adversarial acceptance and promotion decisions
 are next; see [the rolling demo](rolling-experiment.md).
+
+LEFTS-inspired acceptance is complete. All component runners are byte-stable
+across repeated execution, hostile and resource cases pass, implementation
+layers and limitations are explicit, and no language/native blocker remains.
+The promotion decision retains callable records and concrete MLPL helpers but
+adds no generic Functor protocol, LEFTS syntax, extension, or repository. See
+the [acceptance report](lefts-acceptance.md).

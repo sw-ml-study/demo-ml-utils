@@ -234,6 +234,12 @@ per-window fitted artifacts, visible fed signals and ensemble members, exact
 explicit parity, and an independently round-tripped seven-node/six-edge IR.
 Final acceptance is next; see [the report](rolling-experiment.md).
 
+Status: acceptance complete. Repeated component outputs are byte-identical;
+adversarial and resource cases, catalog/navigation, attribution, limitations,
+and promotion decisions are documented. No `sw-mlpl`, native-extension, generic
+Functor, or new-repository work is justified by the bounded slice. See the
+[LEFTS acceptance report](lefts-acceptance.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

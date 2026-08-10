@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/lefts-acceptance.XXXXXX")
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+for runner in run-lefts-capability-contract run-split-lift run-ensemble-feed run-tune run-rolling-experiment; do
+  "$repo_root/scripts/$runner" >"$work_dir/$runner.1"
+  "$repo_root/scripts/$runner" >"$work_dir/$runner.2"
+  cmp "$work_dir/$runner.1" "$work_dir/$runner.2"
+done
+mlpl=$("$repo_root/scripts/select-mlpl")
+$mlpl --source-dir "$repo_root" "$repo_root/demos/experiments/lefts_acceptance.mlpl"
