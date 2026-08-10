@@ -1,9 +1,10 @@
 number = 1
 slug = "standalone-lefts-page-example"
-status = "in-progress"
+status = "completed"
 description = "Using TDD, add one standalone include-free MLPL file loadable in the sw-MLPL ..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T17:03:44"
+completed_at = "2026-08-09T17:06:05"
 task_type = "demo"
-commits = []
+commits = ["a3523542545d91598dc0511cde4a833471dfe8c4"]

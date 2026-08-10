@@ -1,0 +1,11 @@
+{
+  "task_type": "demo",
+  "state": {
+    "number": 1,
+    "step": "standalone-lefts-page-example"
+  },
+  "action": "Verified the official LEFTS page, added a TDD output check, standalone MLPL demo, runner, catalog/Just/README integration, ran just lefts-page-example and just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T17:06:05"
+}
