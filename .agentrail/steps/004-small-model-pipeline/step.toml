@@ -1,4 +1,4 @@
-number = 3
+number = 4
 slug = "small-model-pipeline"
 status = "pending"
 description = "Implement the opt-in Stage 1 Qwen2.5-Coder-1.5B MLX QLoRA demo for an exact, ..."

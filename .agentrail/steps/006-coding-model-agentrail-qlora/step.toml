@@ -1,4 +1,4 @@
-number = 5
+number = 6
 slug = "coding-model-agentrail-qlora"
 status = "pending"
 description = "Run the same bounded pipeline with Qwen2.5-Coder-7B-Instruct-4bit, train an A..."

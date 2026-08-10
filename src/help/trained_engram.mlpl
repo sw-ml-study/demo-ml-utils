@@ -1,0 +1,13 @@
+def u:trained_help_engram_demo() { "Train a bounded CPU Engram to map help-query phrase features to six route proposals.";
+  train_ids=[10,11,12, 20,21,22, 30,31,32, 40,41,42, 50,51,52, 60,61,62];
+  held_ids=[99,11,12, 98,21,22, 97,31,32, 96,41,42, 95,51,52, 94,61,62];
+  labels=[0,0,0, 1,1,1, 2,2,2, 3,3,3, 4,4,4, 5,5,5];
+  h=fill([18,6],0); targets=one_hot(labels,6);
+  e=engram(6,[2],1,256,6,17);
+  before_loss=mean((apply_engram(e,h,held_ids)-targets)*(apply_engram(e,h,held_ids)-targets));
+  experiment "cpu_help_engram" { train 160 { adam(mean((apply_engram(e,h,train_ids)-targets)*(apply_engram(e,h,train_ids)-targets)),e,0.05,0.9,0.999,0.00000001) } };
+  after=apply_engram(e,h,held_ids); after_loss=mean((after-targets)*(after-targets));
+  predictions=argmax(after,1); selected=reshape(gather_rows(reshape(predictions,[18,1]),[2,5,8,11,14,17]),[6]);
+  stats=engram_stats(e,h,train_ids);
+  ok({schema: "sw-ml-study.trained-help-engram",version: 1,training: {device: "cpu",optimizer: "adam",steps: 160,examples: 6,generated_by: "MLPL fixed-vocabulary feature generator"},before_loss: before_loss,after_loss: after_loss,route_legend: {class_0: "Answer",class_1: "NeedDocs",class_2: "NeedProgramContext",class_3: "NeedRepository",class_4: "NeedReasoning",class_5: "OutsideDomain"},expected_classes: [0,1,2,3,4,5],predicted_classes: selected,memory: stats,policy: {role: "learned route proposal only",automatic_send: 0,automatic_execute: 0,deterministic_gates: ["domain","evidence","repository access","consent"]}})
+}

@@ -262,10 +262,12 @@ Ollama Qwen2.5-Coder 7B GGUF for inference, but neither required MLX Qwen
 checkpoint nor MLX-LM is installed. See the
 [two-stage demo contract](agentrail-mlx-finetuning.md).
 
-The Qwen execution steps are temporarily queued behind
-`progressive-help-escalation-demo`, an inserted bounded step that implements the
-model-independent typed routing/privacy/context-bundle mechanics from the
-built-in-help research. Missing MLX prerequisites are recorded in
+The Qwen execution steps are temporarily queued behind two bounded CPU steps.
+`progressive-help-escalation-demo` implements the model-independent typed
+routing, privacy, and context-bundle mechanics. `trained-help-engram` then
+trains an actual six-class route proposer with Engram and Adam, checks held-out
+phrase variants, and keeps the learned result subordinate to the deterministic
+evidence and consent boundary. Missing MLX prerequisites are recorded in
 [mlx-traiing-todo.md](mlx-traiing-todo.md).
 
 ## Saga 12 — `agentrail-glm-qwen-distillation` (planned)

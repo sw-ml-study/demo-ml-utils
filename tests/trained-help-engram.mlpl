@@ -1,0 +1,8 @@
+include "../src/help/trained_engram.mlpl";
+def u:treq(condition,message) { if condition { ok(1) } else { err(message) } }
+r=u:trained_help_engram_demo()?;
+u:treq(gt(r.before_loss,r.after_loss),"training must reduce held-out loss")?;
+u:treq(gt(r.memory.nonzero_rows,0),"training must write Engram rows")?;
+u:treq(equal(r.predicted_classes,r.expected_classes),"trained Engram must classify held-out help phrases")?;
+u:treq(eq(r.policy.automatic_send,0)*eq(r.policy.automatic_execute,0),"learned routes must remain inert proposals")?;
+print("PASS CPU-trained Engram help router"); ok(1)

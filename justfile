@@ -28,6 +28,10 @@ agentrail-mlx-preflight:
 help-escalation:
     ./scripts/run-help-escalation
 
+# Train and evaluate a tiny CPU help router with Engram phrase memory.
+trained-help-engram:
+    ./scripts/run-trained-help-engram
+
 # Demonstrate the configured binary's verified capabilities and limitations.
 capabilities:
     ./scripts/run-capability-probe

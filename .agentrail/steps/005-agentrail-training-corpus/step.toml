@@ -1,4 +1,4 @@
-number = 4
+number = 5
 slug = "agentrail-training-corpus"
 status = "pending"
 description = "Create and validate a frozen, licensed Agentrail workflow corpus with valid t..."

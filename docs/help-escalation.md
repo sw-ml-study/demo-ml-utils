@@ -12,6 +12,11 @@ program without its runtime context, claim repository access, or silently send
 private code to a larger assistant. The demo makes those boundaries executable
 before choosing retrieval models, Engram, embeddings, or answer generators.
 
+This recipe is deliberately not trained. The companion
+[`just trained-help-engram`](trained-help-engram.md) performs actual CPU Adam
+updates on an Engram route classifier and feeds learned class proposals toward
+this non-learned authority boundary.
+
 ## Contract
 
 Every request carries bounded feature/evidence fields. Initially these are

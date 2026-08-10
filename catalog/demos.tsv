@@ -1,6 +1,7 @@
 id	path	format	operation	implementation_layer	memory_bound	default_gate	required_features	status
 capability-probe	probes/capabilities.mlpl	runtime	binary-capability-probe	mlpl	not-applicable	yes	current	runnable
 help-escalation	demos/help/escalation.mlpl	help-protocol	progressive-grounded-help-routing	mlpl	not-applicable	yes	records,results,to_json,record-keys	runnable
+trained-help-engram	demos/help/trained_engram.mlpl	help-model	cpu-trained-route-classifier	mlpl	not-applicable	yes	engram,apply-engram,engram-stats,adam,argmax	runnable
 lefts-capabilities	demos/experiments/lefts_capabilities.mlpl	experiment-contract	callable-mapping-law-probe	mlpl	not-applicable	yes	call,partials,records,each,map-ok,table,atop,over	runnable
 split-lift	demos/experiments/split_lift.mlpl	experiment-run	split-and-grouped-fit	mlpl	not-applicable	yes	records,reduce,fit-predict-contract	runnable
 ensemble-feed	demos/experiments/ensemble_feed.mlpl	experiment-run	ensemble-and-fed-feature-composition	mlpl	not-applicable	yes	callable-records,reduce,fit-predict-contract	runnable

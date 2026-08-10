@@ -149,6 +149,11 @@ without those model prerequisites. It shows how grounded browser help returns
 typed answers or explicit documentation/program/repository/reasoning escalation
 results, while consent-minimized bundles never send context or execute commands.
 
+The companion [CPU-trained Engram help router](docs/trained-help-engram.md)
+trains a real six-class route proposer with Adam, verifies held-out predictions
+and written phrase-memory rows, and then hands proposals to that deterministic
+evidence and consent boundary. It is a small classifier, not a generative agent.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -177,6 +182,7 @@ capabilities, and status.
 - [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
 - [Coding-model training plan: Agentrail with sw-MLPL and MLX](docs/training-plan.md)
 - [Progressive built-in help escalation](docs/help-escalation.md)
+- [CPU-trained help router with Engram](docs/trained-help-engram.md)
 - [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

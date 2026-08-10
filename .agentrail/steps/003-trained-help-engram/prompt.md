@@ -1,0 +1,1 @@
+Implement a CPU-trained help-routing demo: generate bounded labeled examples in MLPL, train a baseline and an Engram conditional-memory model, compare held-out behavior and memory statistics, and pass learned proposals through deterministic escalation and consent gates.
