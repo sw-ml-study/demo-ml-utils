@@ -22,4 +22,35 @@ if MLPL=relative/mlpl "$repo_root/scripts/select-mlpl" >/dev/null 2>&1; then
   exit 1
 fi
 
+# The opt-in MLX fine-tuning preflight must be deterministic and must accept
+# complete local Qwen checkpoints without downloading or importing model code.
+fake_bin="$test_root/bin"; mkdir -p "$fake_bin"
+cat > "$fake_bin/agentrail" <<'EOF'
+#!/bin/sh
+case "${1:-}" in
+  --version) echo 'agentrail 0.1.0' ;;
+  --help) echo 'Commands:'; echo '  next'; echo '  begin'; echo '  complete' ;;
+  *) exit 2 ;;
+esac
+EOF
+cat > "$fake_bin/python3" <<'EOF'
+#!/bin/sh
+test "${1:-}" = -c
+EOF
+chmod +x "$fake_bin/agentrail" "$fake_bin/python3"
+for model in small coding; do
+  model_dir="$test_root/$model-model"; mkdir -p "$model_dir"
+  printf '{}\n' > "$model_dir/config.json"
+  printf '{}\n' > "$model_dir/tokenizer.json"
+  printf 'weights\n' > "$model_dir/model.safetensors"
+done
+preflight=$(PATH="$fake_bin:/usr/bin:/bin" \
+  AGENTRAIL_SMALL_MODEL="$test_root/small-model" \
+  AGENTRAIL_CODING_MODEL="$test_root/coding-model" \
+  "$repo_root/scripts/check-agentrail-mlx-preflight")
+printf '%s\n' "$preflight" | grep -Fqx 'overall=ready'
+printf '%s\n' "$preflight" | grep -Fqx 'memory_limit_mib=12288'
+printf '%s\n' "$preflight" | grep -Fqx 'small_model=ready'
+printf '%s\n' "$preflight" | grep -Fqx 'coding_model=ready'
+
 echo "PASS validation tests"

@@ -1,0 +1,1 @@
+Run the same bounded pipeline with Qwen2.5-Coder-7B-Instruct-4bit, train an Agentrail adapter, and compare base versus adapted held-out workflow behavior under the 12 GiB limit.

@@ -1,0 +1,1 @@
+Create and validate a frozen, licensed Agentrail workflow corpus with valid transitions, invalid-action counterexamples, explanations, held-out scenarios, and a pinned help-interface manifest; exclude live help from training.

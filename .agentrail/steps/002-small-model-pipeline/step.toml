@@ -1,0 +1,8 @@
+number = 2
+slug = "small-model-pipeline"
+status = "pending"
+description = "Implement the opt-in Stage 1 Qwen2.5-Coder-1.5B MLX QLoRA demo for an exact, ..."
+role = "production"
+context_files = []
+created_at = "2026-08-10T11:50:27"
+commits = []

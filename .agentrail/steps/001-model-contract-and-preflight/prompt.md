@@ -1,0 +1,1 @@
+Document the local model inventory and select Qwen2.5-Coder-7B-Instruct-4bit; define licensing, 12 GiB memory, dependency, PATH, checkpoint, data-separation, and live-help drift contracts; add a deterministic preflight that reports actionable unavailable reasons without downloading or installing anything.

@@ -1,0 +1,1 @@
+Implement the opt-in Stage 1 Qwen2.5-Coder-1.5B MLX QLoRA demo for an exact, bounded repository-state to next-action task, with before/after held-out scoring, adapter evidence, and measured memory.

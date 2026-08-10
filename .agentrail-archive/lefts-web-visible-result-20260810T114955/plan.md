@@ -1,0 +1,1 @@
+Make the standalone LEFTS Web example teach through source comments and return one visible structured result instead of relying on print output, without changing CLI-oriented demos.

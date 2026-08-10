@@ -1,0 +1,8 @@
+number = 5
+slug = "live-help-drift-evaluation"
+status = "pending"
+description = "Probe agentrail from PATH at runtime, capture and bound --version/--help, det..."
+role = "production"
+context_files = []
+created_at = "2026-08-10T11:50:27"
+commits = []

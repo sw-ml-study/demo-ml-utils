@@ -1,0 +1,8 @@
+number = 6
+slug = "acceptance-and-documentation"
+status = "pending"
+description = "Consolidate two-stage outputs, reproducibility, memory evidence, failure mode..."
+role = "production"
+context_files = []
+created_at = "2026-08-10T11:50:27"
+commits = []

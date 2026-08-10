@@ -1,0 +1,8 @@
+number = 3
+slug = "agentrail-training-corpus"
+status = "pending"
+description = "Create and validate a frozen, licensed Agentrail workflow corpus with valid t..."
+role = "production"
+context_files = []
+created_at = "2026-08-10T11:50:27"
+commits = []

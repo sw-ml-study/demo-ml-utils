@@ -137,6 +137,13 @@ reward-context adaptation, frozen fingerprints, regret, and ablations.
 The [ICRL acceptance report](docs/icrl-acceptance.md) closes the adaptation
 roadmap with renderer-neutral histories, adversarial checks, and atomic evidence.
 
+The next opt-in adaptation slice is a
+[two-stage Agentrail coding-model fine-tune](docs/agentrail-mlx-finetuning.md):
+first prove the MLX QLoRA pipeline with Qwen2.5-Coder 1.5B, then train and
+evaluate Qwen2.5-Coder 7B against a frozen Agentrail workflow contract and a
+separately captured live-help drift check. Foundation-model downloads and
+training remain outside `just check`.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -163,6 +170,9 @@ capabilities, and status.
 - [Shipped upstream contract](docs/upstream-contract.md)
 - [Peer repository audit](docs/peer-repository-audit.md)
 - [Fine-tuning, ICL, and ICRL plan](docs/adaptation-demos-plan.md)
+- [Coding-model training plan: Agentrail with sw-MLPL and MLX](docs/training-plan.md)
+- [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
+- [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)
 - [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)
 - [LEFTS callable and functor-law capability contract](docs/lefts-capability-contract.md)
 - [Split and Lift-inspired grouped learning](docs/split-lift.md)

@@ -20,6 +20,10 @@ tests:
 mlpl-path:
     ./scripts/select-mlpl
 
+# Check local prerequisites for the opt-in two-stage Agentrail MLX demo.
+agentrail-mlx-preflight:
+    ./scripts/check-agentrail-mlx-preflight
+
 # Demonstrate the configured binary's verified capabilities and limitations.
 capabilities:
     ./scripts/run-capability-probe

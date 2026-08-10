@@ -240,6 +240,38 @@ and promotion decisions are documented. No `sw-mlpl`, native-extension, generic
 Functor, or new-repository work is justified by the bounded slice. See the
 [LEFTS acceptance report](lefts-acceptance.md).
 
+## Saga 11 — `agentrail-qwen-mlx-finetune` (active)
+
+Build an opt-in two-stage coding-model QLoRA demonstration under a measured
+12 GiB limit. Qwen2.5-Coder-1.5B first proves the shared MLX pipeline on a
+narrow exact-action task; Qwen2.5-Coder-7B then learns the Agentrail workflow.
+MLPL remains responsible for contracts, validation, drift comparison, scoring,
+and evidence, while a thin external adapter owns process execution and MLX-LM
+owns tokenizer/causal-model operations.
+
+1. `model-contract-and-preflight` — model inventory, license/provenance,
+   dependency, PATH, checkpoint, data-separation, and memory contracts.
+2. `small-model-pipeline` — Stage 1 Qwen2.5-Coder-1.5B before/after pipeline.
+3. `agentrail-training-corpus` — frozen workflow corpus and held-out scenarios.
+4. `coding-model-agentrail-qlora` — Stage 2 Qwen2.5-Coder-7B adaptation.
+5. `live-help-drift-evaluation` — deterministic live-interface comparison.
+6. `acceptance-and-documentation` — consolidated evidence and CUDA handoff.
+
+Current status: step 1 is runnable with a read-only preflight. This host has an
+Ollama Qwen2.5-Coder 7B GGUF for inference, but neither required MLX Qwen
+checkpoint nor MLX-LM is installed. See the
+[two-stage demo contract](agentrail-mlx-finetuning.md).
+
+## Saga 12 — `agentrail-glm-qwen-distillation` (planned)
+
+Use a configured GLM-5.x teacher to generate validated synthetic Agentrail
+examples, then distill two different goals into two local MLX students. Stage 1
+trains Qwen2.5-Coder-1.5B for exact one-step action/rejection behavior. Stage 2
+trains Qwen2.5-Coder-7B for multi-step planning, recovery, explanation, and
+help-drift-aware behavior. GLM-5.x is an external teacher because its roughly
+745B-parameter MoE is not a 12 GiB local candidate. See the
+[distillation plan](plan-agentrail-distillation.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

@@ -1,0 +1,84 @@
+#!/bin/sh
+set -eu
+
+# Read-only preflight for the opt-in two-stage Agentrail MLX demo. It never
+# installs packages, downloads weights, changes Agentrail state, or loads
+# remote model code.
+
+memory_limit_mib=${AGENTRAIL_MLX_MEMORY_LIMIT_MIB:-12288}
+hf_home=${HF_HOME:-${HOME}/.cache/huggingface}
+
+find_snapshot() {
+  repo_dir=$1
+  for candidate in "$repo_dir"/snapshots/*; do
+    if [ -d "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+  printf '%s\n' ''
+}
+
+model_status() {
+  model_dir=$1
+  if [ -z "$model_dir" ] || [ ! -d "$model_dir" ]; then
+    printf '%s\n' missing
+    return
+  fi
+  if [ ! -f "$model_dir/config.json" ] || \
+     { [ ! -f "$model_dir/tokenizer.json" ] && [ ! -f "$model_dir/tokenizer.model" ]; }; then
+    printf '%s\n' incomplete
+    return
+  fi
+  for weights in "$model_dir"/*.safetensors; do
+    if [ -f "$weights" ]; then
+      printf '%s\n' ready
+      return
+    fi
+  done
+  printf '%s\n' incomplete
+}
+
+small_default="$hf_home/hub/models--mlx-community--Qwen2.5-Coder-1.5B-Instruct-4bit"
+coding_default="$hf_home/hub/models--mlx-community--Qwen2.5-Coder-7B-Instruct-4bit"
+small_model=${AGENTRAIL_SMALL_MODEL:-$(find_snapshot "$small_default")}
+coding_model=${AGENTRAIL_CODING_MODEL:-$(find_snapshot "$coding_default")}
+small_status=$(model_status "$small_model")
+coding_status=$(model_status "$coding_model")
+
+agentrail_bin=${AGENTRAIL_BIN:-$(command -v agentrail || true)}
+agentrail_status=missing
+if [ -n "$agentrail_bin" ] && [ -x "$agentrail_bin" ]; then
+  help=$($agentrail_bin --help 2>/dev/null || true)
+  if printf '%s\n' "$help" | grep -q 'next' && \
+     printf '%s\n' "$help" | grep -q 'begin' && \
+     printf '%s\n' "$help" | grep -q 'complete'; then
+    agentrail_status=ready
+  else
+    agentrail_status=changed
+  fi
+fi
+
+python_bin=${MLX_LM_PYTHON:-$(command -v python3 || true)}
+mlx_lm_status=missing
+if [ -n "$python_bin" ] && [ -x "$python_bin" ] && \
+   "$python_bin" -c 'import mlx, mlx_lm' >/dev/null 2>&1; then
+  mlx_lm_status=ready
+fi
+
+overall=unavailable
+if [ "$agentrail_status" = ready ] && [ "$mlx_lm_status" = ready ] && \
+   [ "$small_status" = ready ] && [ "$coding_status" = ready ]; then
+  overall=ready
+fi
+
+printf '%s\n' \
+  "overall=$overall" \
+  "memory_limit_mib=$memory_limit_mib" \
+  "agentrail=$agentrail_status" \
+  "mlx_lm=$mlx_lm_status" \
+  "small_model=$small_status" \
+  "small_model_path=$small_model" \
+  "coding_model=$coding_status" \
+  "coding_model_path=$coding_model"
+

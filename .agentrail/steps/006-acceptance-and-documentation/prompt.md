@@ -1,0 +1,1 @@
+Consolidate two-stage outputs, reproducibility, memory evidence, failure modes, model/data licenses, opt-in recipes, CUDA handoff notes, catalog/README/plan updates, and final acceptance.

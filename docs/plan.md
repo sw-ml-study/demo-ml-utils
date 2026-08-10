@@ -323,3 +323,14 @@ layers and limitations are explicit, and no language/native blocker remains.
 The promotion decision retains callable records and concrete MLPL helpers but
 adds no generic Functor protocol, LEFTS syntax, extension, or repository. See
 the [acceptance report](lefts-acceptance.md).
+
+### Phase 8 — coding-model training and distillation
+
+Build two opt-in, two-stage Agentrail demonstrations. First prove a shared MLX
+QLoRA pipeline with Qwen2.5-Coder-1.5B, then adapt Qwen2.5-Coder-7B to the
+workflow under a measured 12 GiB limit. After that saga closes, use GLM-5.x as
+an external teacher to distill one-step behavior into the 1.5B student and
+multi-step planning/recovery into the 7B student. sw-MLPL owns deterministic
+supervised/self-supervised data generation, validation, live-help drift,
+scoring, and evidence; external adapters own process, teacher, tokenizer, and
+MLX effects. See the [training plan](training-plan.md).

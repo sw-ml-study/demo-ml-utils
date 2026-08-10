@@ -1,0 +1,1 @@
+Probe agentrail from PATH at runtime, capture and bound --version/--help, deterministically compare its command/interface manifest with the frozen training contract in MLPL, then evaluate the adapted model without treating it as drift authority.
