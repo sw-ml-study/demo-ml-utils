@@ -1,0 +1,9 @@
+number = 1
+slug = "write-sw-mlpl-web-handoff"
+status = "in-progress"
+description = "Write docs/plan-lefts-web-demo.md as a precise agent brief covering why Exper..."
+role = "meta"
+context_files = []
+created_at = "2026-08-09T17:14:48"
+task_type = "documentation"
+commits = []

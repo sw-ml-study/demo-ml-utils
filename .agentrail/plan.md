@@ -1,1 +1,1 @@
-Improve the standalone LEFTS Web UI example as a guided lesson with opening expectations, domain/problem context, concept explanations, and a closing recap while preserving its include-free execution and deterministic evidence.
+Capture a self-contained sw-mlpl agent handoff for integrating the standalone LEFTS-inspired rolling retrain lesson into the existing Web UI demo registry.

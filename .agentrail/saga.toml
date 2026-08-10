@@ -1,6 +1,6 @@
-name = "explain-standalone-lefts-demo"
-status = "completed"
+name = "lefts-web-demo-handoff"
+status = "active"
 current_step = 1
-created_at = "2026-08-09T17:10:02"
+created_at = "2026-08-09T17:14:48"
 plan_file = ".agentrail/plan.md"
 retroactive = false
