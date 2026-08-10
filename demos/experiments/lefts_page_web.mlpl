@@ -32,9 +32,22 @@ u:page_require(eq(tally(result.predictions),12)*eq(tally(result.targets),12),"co
 u:page_require(eq(result.mse,result.mse),"rolling MSE must be finite")?;
 
 print("DEMO: standalone LEFTS landing-page equivalent for the sw-MLPL Web UI");
+print("=== WHAT YOU ARE ABOUT TO SEE ===");
+print("WHAT WILL COME: twelve leakage-safe monthly retrains, their routed predictions, and an inspectable workflow tree");
+print("DOMAIN: forecast monthly demand from temperature, humidity, and hour-like activity");
+print("The practical problem: demand changes with weather and activity, and the relationship may drift over the year. A model used in January cannot learn from July. We therefore simulate the decision available at each month: train only on the past, predict that month, then move forward.");
+print("Why not fit once on the whole year? That would let future observations influence earlier predictions and make the backtest look better than a deployable forecast. Expanding-window retraining preserves time order while letting later models learn from more history.");
 print("Scenario: mirror LEFTS's rolling monthly retrain example with twelve independent Ridge-like tabular models. Model m trains on every row before month m, predicts month m only, and the twelve routed predictions are coalesced in calendar order.");
 print("Native boundary: sw-MLPL supplies numeric arrays, records, loops, reshape, and reductions. This single MLPL file owns generated tabular data, Ridge gradient descent, expanding-window filters, twelve fits, routing, aggregation, checks, and explanation.");
 print("Budgets: 12 models, 13 tiny rows including prior history, 240 gradient steps per fit, at most 40000 row-steps, four parameters per model, and no I/O or external dependencies.");
+print("=== KEY CONCEPTS ===");
+print("Leaf: one ordinary Ridge-like learner with fit and predict behavior. It learns a bias and weights for temperature, humidity, and activity.");
+print("KEY CONCEPT: Lift turns one Ridge leaf into twelve independently fitted monthly computations");
+print("Train filter: monthly model m sees rows whose month is strictly less than m. Its training count therefore grows from 1 to 12.");
+print("Test routing: a row from month m receives a prediction only from model m; the other eleven models do not contribute to that cell.");
+print("Coalesce: the twelve non-overlapping monthly outputs are assembled into one calendar-ordered prediction vector.");
+print("Inspectability: before interpreting metrics, we can print the workflow shape and then inspect every monthly fit, routing count, prediction, and target.");
+print("=== WORKFLOW BEFORE EXECUTION ===");
 print("Equivalent workflow tree:");
 print("Lift 'monthly_retrain' (12 models): [month 1, ..., month 12] => coalesce -> monthly_retrain");
 print("    `-- Leaf 'ridge' (bias + temp + humidity + hour)");
@@ -43,9 +56,18 @@ print("Expanding training-row count for each independent monthly model:"); print
 print("Fitted rows are [bias, temp, humidity, hour], one row per monthly model:"); print(result.weights);
 print("Each month receives only its matching model's prediction:"); print({months: result.model_months,predictions: result.predictions,actual_demand: result.targets,mse: result.mse});
 print("Output explanation: early models have little history and less stable coefficients; later models see progressively more prior months. The coalesced vector is out-of-time because no model trains on its own month or a future month.");
+print("The MSE summarizes all twelve forecast errors, but the predictions and targets remain visible so the metric is explainable. This tiny dataset is intentionally educational: it demonstrates experimental structure, not production forecast quality.");
 print("EQUIVALENCE structure=leaf+lift+expanding-train-filter+monthly-test-filter+coalesce");
 print("MODELS fitted=12");
 print("LEAKAGE current_or_future_rows_in_fit=0");
 print("COMPATIBILITY python_lefts_api=no");
 print("Interpretation: this reproduces the landing page's experiment structure and inspectable Lift-to-Leaf story in ordinary MLPL. It uses a tiny in-file gradient-descent Ridge analogue instead of sklearn Ridge and numeric months instead of Polars dates, so it is conceptually equivalent rather than an API port.");
+print("=== WHAT WE SHOWED ===");
+print("WHAT WE SHOWED: expanding history -> independent fits -> month routing -> coalesced out-of-time predictions");
+print("1. One Leaf learner can be treated as a reusable computation description.");
+print("2. Lift repeats that learner across twelve month contexts without mixing their fitted parameters.");
+print("3. Train and test filters encode the time-causal experiment: past trains, matching month tests.");
+print("4. Coalescing reconstructs one useful forecast series from twelve disjoint model outputs.");
+print("5. The printed tree, fitted weights, row counts, predictions, targets, and MSE make the transformed workflow inspectable rather than opaque.");
+print("Takeaway: the interesting LEFTS idea is closure and composition around fit/predict computations. This standalone MLPL version shows that useful structure directly, without adding LEFTS-specific syntax or hiding the experiment in a library call.");
 ok(1)

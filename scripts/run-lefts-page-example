@@ -4,6 +4,10 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/sc
 output=$($mlpl --source-dir "$repo_root" "$repo_root/demos/experiments/lefts_page_web.mlpl")
 printf '%s\n' "$output"
 for marker in \
+  "WHAT WILL COME: twelve leakage-safe monthly retrains, their routed predictions, and an inspectable workflow tree" \
+  "DOMAIN: forecast monthly demand from temperature, humidity, and hour-like activity" \
+  "KEY CONCEPT: Lift turns one Ridge leaf into twelve independently fitted monthly computations" \
+  "WHAT WE SHOWED: expanding history -> independent fits -> month routing -> coalesced out-of-time predictions" \
   "EQUIVALENCE structure=leaf+lift+expanding-train-filter+monthly-test-filter+coalesce" \
   "MODELS fitted=12" \
   "LEAKAGE current_or_future_rows_in_fit=0" \

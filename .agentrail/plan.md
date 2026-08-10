@@ -1,1 +1,1 @@
-Create and validate one self-contained MLPL file for the web UI that mirrors the official LEFTS landing-page rolling monthly Ridge Lift example, including 12 expanding-window fits, per-month predictions, coalesced output, inspectable tree, explanatory output, attribution, and explicit equivalence boundaries.
+Improve the standalone LEFTS Web UI example as a guided lesson with opening expectations, domain/problem context, concept explanations, and a closing recap while preserving its include-free execution and deterministic evidence.
