@@ -1,9 +1,10 @@
 number = 6
 slug = "lefts-acceptance"
-status = "in-progress"
+status = "completed"
 description = "Close the LEFTS-inspired saga with deterministic reruns, hostile input and re..."
 role = "validation"
 context_files = []
 created_at = "2026-08-09T16:33:43"
+completed_at = "2026-08-09T17:01:53"
 task_type = "acceptance"
-commits = []
+commits = ["99bc7692c94fec9a8da64c9168c9a94684a87a78"]
