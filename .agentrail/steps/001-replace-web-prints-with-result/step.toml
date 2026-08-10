@@ -1,0 +1,9 @@
+number = 1
+slug = "replace-web-prints-with-result"
+status = "in-progress"
+description = "Refactor demos/experiments/lefts_page_web.mlpl so Web UI explanation lives in..."
+role = "production"
+context_files = []
+created_at = "2026-08-09T17:24:24"
+task_type = "implementation"
+commits = []

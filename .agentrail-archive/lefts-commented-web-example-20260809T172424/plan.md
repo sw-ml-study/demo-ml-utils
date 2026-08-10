@@ -1,0 +1,1 @@
+Enhance the standalone LEFTS Web example itself with source-level prologue, theory annotations, practical problem/solution commentary, and an epilogue while preserving its executable self-description.

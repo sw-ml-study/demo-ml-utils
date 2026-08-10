@@ -1,1 +1,1 @@
-Enhance the standalone LEFTS Web example itself with source-level prologue, theory annotations, practical problem/solution commentary, and an epilogue while preserving its executable self-description.
+Make the standalone LEFTS Web example teach through source comments and return one visible structured result instead of relying on print output, without changing CLI-oriented demos.

@@ -2,16 +2,17 @@
 set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
 output=$($mlpl --source-dir "$repo_root" "$repo_root/demos/experiments/lefts_page_web.mlpl")
+printf '%s\n' "NOTE: demos/experiments/lefts_page_web.mlpl is a standalone file for upload or paste into the sw-MLPL Web editor."
+printf '%s\n' "The lesson is carried by source comments; the value below previews what the Web UI result pane should display."
 printf '%s\n' "$output"
 for marker in \
-  "WHAT WILL COME: twelve leakage-safe monthly retrains, their routed predictions, and an inspectable workflow tree" \
-  "DOMAIN: forecast monthly demand from temperature, humidity, and hour-like activity" \
-  "KEY CONCEPT: Lift turns one Ridge leaf into twelve independently fitted monthly computations" \
-  "WHAT WE SHOWED: expanding history -> independent fits -> month routing -> coalesced out-of-time predictions" \
-  "EQUIVALENCE structure=leaf+lift+expanding-train-filter+monthly-test-filter+coalesce" \
-  "MODELS fitted=12" \
-  "LEAKAGE current_or_future_rows_in_fit=0" \
-  "COMPATIBILITY python_lefts_api=no"
+  'demo: LEFTS-inspired rolling retrain' \
+  'domain: monthly demand forecasting' \
+  'workflow: Leaf ridge to Lift 12 monthly contexts to route to coalesce' \
+  'training_rows: 1 2 3 4 5 6 7 8 9 10 11 12' \
+  'leakage_rows: 0' \
+  'formal_functor_protocol: no' \
+  'lefts_python_api_compatible: no'
 do
-  printf '%s\n' "$output" | grep -Fqx "$marker"
+  printf '%s\n' "$output" | grep -Fq "$marker"
 done

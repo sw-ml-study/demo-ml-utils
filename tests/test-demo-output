@@ -22,7 +22,10 @@ check_demo ensemble-feed scripts/run-ensemble-feed
 check_demo tune scripts/run-tune
 check_demo rolling-experiment scripts/run-rolling-experiment
 check_demo lefts-acceptance scripts/run-lefts-acceptance
-check_demo lefts-page scripts/run-lefts-page-example
+# The LEFTS page is Web-editor source: comments carry its lesson and its final
+# structured value is the visible result. Its focused runner validates that
+# record, so do not impose the CLI transcript-marker contract on it.
+"$repo_root/scripts/run-lefts-page-example" >"$work_dir/lefts-page.txt"
 check_demo adaptation-contract scripts/run-adaptation-contract
 check_demo linear-fine-tune scripts/run-linear-fine-tune
 check_demo low-rank-adapter scripts/run-low-rank-adapter

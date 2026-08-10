@@ -1,0 +1,1 @@
+Refactor demos/experiments/lefts_page_web.mlpl so Web UI explanation lives in comments, remove narrative print statements, and make the final expression a compact self-describing structured result that the Web UI visibly renders. Update the focused runner to validate the returned structure and preserve repository gates; do not alter CLI-oriented LEFTS demos.
