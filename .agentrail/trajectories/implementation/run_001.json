@@ -1,0 +1,11 @@
+{
+  "task_type": "implementation",
+  "state": {
+    "number": 1,
+    "step": "replace-web-prints-with-result"
+  },
+  "action": "Reworked the Web MLPL output boundary, updated its shell runner and output contract test, verified zero print calls with rg, ran just lefts-page-example and just check.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T17:28:23"
+}

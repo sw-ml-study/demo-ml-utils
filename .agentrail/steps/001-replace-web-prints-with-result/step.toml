@@ -1,9 +1,10 @@
 number = 1
 slug = "replace-web-prints-with-result"
-status = "in-progress"
+status = "completed"
 description = "Refactor demos/experiments/lefts_page_web.mlpl so Web UI explanation lives in..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T17:24:24"
+completed_at = "2026-08-09T17:28:23"
 task_type = "implementation"
-commits = []
+commits = ["74ea9d2a1789542bf5f9f9c6413dd94988cfd13f"]
