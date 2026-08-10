@@ -1,8 +1,55 @@
-# Standalone Web UI demo inspired by https://nsmat.github.io/lefts/
-# No include, fixture, filesystem, Python, sklearn, or network access is used.
+# LEFTS-inspired rolling-retrain lesson for the sw-MLPL Web UI
+#
+# WHAT IS COMING
+# This one file builds and runs a small, inspectable forecasting experiment.
+# We will generate thirteen monthly demand observations, fit twelve independent
+# Ridge-like models, route each month to the model trained only on earlier
+# months, and coalesce those predictions into one out-of-time forecast series.
+# The printed workflow, learned weights, predictions, targets, and MSE explain
+# both what ran and what each output means.
+#
+# DOMAIN AND PRACTICAL PROBLEM
+# Imagine planning capacity for a service whose demand depends on temperature,
+# humidity, and time-of-day activity. Demand relationships can drift during a
+# year. A single model trained using the whole year would leak future evidence
+# into earlier forecasts, producing a backtest that could not have been run at
+# the time. We need a faithful simulation of the decision available each month:
+# learn from the past, predict the present, then advance the clock.
+#
+# PRACTICAL SOLUTION
+# Expanding-window retraining creates one model per forecast month. Model m sees
+# only rows with month < m and predicts only month m. Because test partitions do
+# not overlap, their results can be coalesced in calendar order. This makes the
+# time-causality rule explicit and lets us inspect every intermediate model.
+#
+# THEORY AND TERMINOLOGY
+# LEFTS motivates treating fit/predict computations as values that can be
+# transformed and composed. Here, Leaf means one ordinary Ridge-like learner;
+# Lift means repeating that learner over twelve train/test contexts. Lift is a
+# computation transformation: it changes one learner-shaped description into a
+# structured family of independently fitted computations.
+#
+# A functor is more specific than "something that transforms a value": it maps
+# objects AND morphisms between categories while preserving identity and
+# composition. An endofunctor is a functor whose source and target are the same
+# category. An M -> M-shaped transformation alone proves neither. This example
+# therefore calls Lift endofunctor-like, not a formal endofunctor: sw-MLPL has no
+# category or generic Functor protocol here, and this file does not define the
+# required morphism mapping or prove the laws.
+#
+# This is inspired by https://nsmat.github.io/lefts/. It is a conceptual MLPL
+# equivalent, not a port of the LEFTS Python API. No include, fixture,
+# filesystem, Python, sklearn, or network access is used.
 
 def u:page_require(condition,message) { "Stop with a named error when one demo invariant fails."; if condition { ok(1) } else { err(message) } }
+
+# LEAF: the smallest reusable computation in this lesson. Its learned value is
+# a four-number parameter vector: bias, temperature, humidity, and activity.
 def u:page_dot4(w,a,b,c) { "Predict from bias plus three normalized tabular features."; take(w,0,0)+take(w,0,1)*a+take(w,0,2)*b+take(w,0,3)*c }
+
+# FIT CONTRACT: cutoff is the forecast month. The strict month < cutoff filter
+# is the central anti-leakage rule; changing it to <= would train on the answer.
+# The work budget also keeps this browser-safe teaching optimizer bounded.
 def u:page_fit_ridge(cutoff,months,temp,humidity,hour,demand,steps,learning_rate,lambda,max_work) { "Fit one independent teaching Ridge model using rows strictly before cutoff.";
   rows=0; i=0; while lt(i,tally(months)) { if lt(take(months,0,i),cutoff) { rows=rows+1 } else { 0 }; i=i+1 };
   if lt(rows,1)+gt(rows*steps,max_work) { err("rolling Ridge fit has no history or exceeds work budget") } else {
@@ -11,20 +58,38 @@ def u:page_fit_ridge(cutoff,months,temp,humidity,hour,demand,steps,learning_rate
     ok({weights: w,training_rows: rows,cutoff_month: cutoff})
   }
 }
+
+# LIFT, ROUTE, AND COALESCE
+# Lift repeats page_fit_ridge for model months 1..12. Each fitted model owns its
+# parameters; no later model mutates an earlier one. The matching month is then
+# routed to that model alone. Finally, concat coalesces the disjoint scalar
+# outputs into a single calendar-ordered prediction vector.
 def u:page_rolling_lift(months,temp,humidity,hour,demand,b) { "Lift the Ridge leaf over months 1 through 12 and route each row to its matching model.";
   weights=[]; training_rows=[]; predictions=[]; model_month=1;
   while lt(model_month,13) { fitted=u:page_fit_ridge(model_month,months,temp,humidity,hour,demand,b.steps,b.learning_rate,b.lambda,b.max_fit_work)?; weights=concat(weights,fitted.weights); training_rows=concat(training_rows,fitted.training_rows); row=model_month; prediction=u:page_dot4(fitted.weights,take(temp,0,row),take(humidity,0,row),take(hour,0,row)); predictions=concat(predictions,prediction); model_month=model_month+1 };
   targets=[]; i=1; while lt(i,13) { targets=concat(targets,take(demand,0,i)); i=i+1 }; errors=predictions-targets; ok({model_months: iota(12)+1,training_rows: training_rows,weights: reshape(weights,[12,4]),predictions: predictions,targets: targets,mse: reduce_add(errors*errors)/12,routing:"prediction cell m uses only model m, trained on rows whose month is less than m",aggregation:"coalesce in month order; exactly one model supplies each cell"})
 }
 
-# Month 0 is prior history, so even the January model has one earlier row.
+# INPUT STORY
+# Month 0 is prior history, so even the first forecast model has one earlier
+# observation. The deterministic formula makes expected relationships visible;
+# this demo teaches experimental structure rather than benchmark performance.
 months=iota(13);
 temp=[0.10,0.18,0.25,0.34,0.45,0.58,0.72,0.80,0.75,0.62,0.47,0.31,0.20];
 humidity=[0.82,0.78,0.72,0.65,0.58,0.50,0.43,0.39,0.42,0.51,0.62,0.72,0.79];
 hour=[0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,0.75,0.60,0.45,0.35,0.25];
 demand=5+3*temp-2*humidity+1.5*hour;
 budgets={steps:240,learning_rate:0.04,lambda:0.05,max_fit_work:40000,max_models:12,max_rows:13};
+
+# EXECUTION
+# This is the entire transformed computation: expanding train filters, twelve
+# independent fits, matching-month test routing, and ordered coalescing.
 result=u:page_rolling_lift(months,temp,humidity,hour,demand,budgets)?;
+
+# EVIDENCE, NOT JUST PASS/FAIL
+# These invariants guard the story before we interpret the rich output below.
+# They establish model identity, expanding history, parameter shape, routed
+# result shape, and a finite metric; the subsequent prints explain the values.
 u:page_require(equal(result.model_months,iota(12)+1),"expected twelve monthly model identities")?;
 u:page_require(equal(result.training_rows,iota(12)+1),"each monthly model must use all and only earlier rows")?;
 u:page_require(equal(shape(result.weights),[12,4]),"expected one four-parameter Ridge fit per month")?;
@@ -70,4 +135,17 @@ print("3. Train and test filters encode the time-causal experiment: past trains,
 print("4. Coalescing reconstructs one useful forecast series from twelve disjoint model outputs.");
 print("5. The printed tree, fitted weights, row counts, predictions, targets, and MSE make the transformed workflow inspectable rather than opaque.");
 print("Takeaway: the interesting LEFTS idea is closure and composition around fit/predict computations. This standalone MLPL version shows that useful structure directly, without adding LEFTS-specific syntax or hiding the experiment in a library call.");
+
+# WHAT WE SHOWED
+# The practical result is a leakage-safe rolling forecast whose provenance is
+# visible month by month. The conceptual result is that useful LEFTS-inspired
+# composition—Leaf, Lift, filtered contexts, routing, and coalescing—can be
+# expressed with ordinary sw-MLPL functions, arrays, records, and loops.
+#
+# WHAT WE DID NOT SHOW
+# This tiny deterministic Ridge analogue is not a production forecaster, does
+# not reproduce sklearn numerics, and does not establish a formal Functor or
+# Endofunctor abstraction. Those limitations are deliberate: the example keeps
+# the causal experiment and computation structure small enough to read, run,
+# inspect, and modify directly in the browser.
 ok(1)

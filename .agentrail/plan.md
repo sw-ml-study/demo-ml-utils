@@ -1,1 +1,1 @@
-Capture a self-contained sw-mlpl agent handoff for integrating the standalone LEFTS-inspired rolling retrain lesson into the existing Web UI demo registry.
+Enhance the standalone LEFTS Web example itself with source-level prologue, theory annotations, practical problem/solution commentary, and an epilogue while preserving its executable self-description.

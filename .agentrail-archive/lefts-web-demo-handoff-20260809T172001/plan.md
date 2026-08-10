@@ -1,0 +1,1 @@
+Capture a self-contained sw-mlpl agent handoff for integrating the standalone LEFTS-inspired rolling retrain lesson into the existing Web UI demo registry.
