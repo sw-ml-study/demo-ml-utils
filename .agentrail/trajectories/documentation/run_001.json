@@ -1,0 +1,11 @@
+{
+  "task_type": "documentation",
+  "state": {
+    "number": 1,
+    "step": "enhance-commented-lefts-web-example"
+  },
+  "action": "Inspected the existing standalone source and prior handoff commit; patched MLPL comments around the prologue, learner, causal fit boundary, Lift/routing/coalescing, execution, evidence, and epilogue; ran the focused demo and full repository gate.",
+  "result": "success",
+  "reward": 1,
+  "timestamp": "2026-08-09T17:21:22"
+}

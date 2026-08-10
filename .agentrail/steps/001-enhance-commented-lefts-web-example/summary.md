@@ -1,0 +1,1 @@
+Enhanced demos/experiments/lefts_page_web.mlpl itself with source-level WHAT IS COMING and WHAT WE SHOWED bookends, domain and practical problem/solution commentary, implementation-local Leaf/Lift/routing/coalescing annotations, and a precise functor-versus-endofunctor explanation. Preserved rich runtime narration and verified just lefts-page-example plus just check.

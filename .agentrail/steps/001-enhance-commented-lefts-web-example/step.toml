@@ -1,9 +1,10 @@
 number = 1
 slug = "enhance-commented-lefts-web-example"
-status = "in-progress"
+status = "completed"
 description = "Add clear source-level comments to demos/experiments/lefts_page_web.mlpl: a p..."
 role = "production"
 context_files = []
 created_at = "2026-08-09T17:20:11"
+completed_at = "2026-08-09T17:21:22"
 task_type = "documentation"
-commits = []
+commits = ["854d501f6e1b5462398f87d3d563ba4a6b15af17"]
