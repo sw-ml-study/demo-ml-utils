@@ -6,6 +6,7 @@ ensemble-feed	demos/experiments/ensemble_feed.mlpl	experiment-run	ensemble-and-f
 tune	demos/experiments/tune.mlpl	experiment-run	leakage-safe-configuration-selection	mlpl	not-applicable	yes	records,reduce,split-provenance	runnable
 rolling-experiment	demos/experiments/rolling_experiment.mlpl	experiment-ir	rolling-split-lift-feed-ensemble	mlpl	not-applicable	yes	records,to-json,parse-json,split-provenance	runnable
 lefts-acceptance	demos/experiments/lefts_acceptance.mlpl	experiment-report	deterministic-adversarial-lefts-acceptance	mlpl	not-applicable	yes	callable-records,split-provenance,to-json,parse-json	runnable
+lefts-page-web	demos/experiments/lefts_page_web.mlpl	experiment-run	standalone-monthly-ridge-lift	mlpl	not-applicable	yes	arrays,records,reduce,reshape	runnable
 adaptation-contract	demos/adaptation/contract.mlpl	adaptation-run	fine-tuning-icl-icrl-contract	mlpl-native	not-applicable	yes	dot,matmul,softmax,seeded-random,to_json,parse_json	runnable
 linear-fine-tune	demos/adaptation/linear_fine_tune.mlpl	adaptation-run	manual-gradient-linear-fine-tuning	mlpl-native	not-applicable	yes	dot,matmul,to_json,parse_json	runnable
 low-rank-adapter	demos/adaptation/low_rank_adapter.mlpl	adaptation-run	frozen-base-low-rank-fine-tuning	mlpl-native	not-applicable	yes	matmul,to_json,parse_json	runnable

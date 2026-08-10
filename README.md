@@ -170,6 +170,7 @@ capabilities, and status.
 - [Leakage-safe Tune](docs/tune.md)
 - [Composed rolling experiment](docs/rolling-experiment.md)
 - [LEFTS-inspired acceptance and promotion report](docs/lefts-acceptance.md)
+- Standalone Web UI file: [`demos/experiments/lefts_page_web.mlpl`](demos/experiments/lefts_page_web.mlpl)
 
 ## Copyright and license
 

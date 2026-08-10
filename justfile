@@ -48,6 +48,10 @@ rolling-experiment:
 lefts-acceptance:
     ./scripts/run-lefts-acceptance
 
+# Run the single-file Web UI equivalent of the official LEFTS page example.
+lefts-page-example:
+    ./scripts/run-lefts-page-example
+
 # Regenerate committed tiny Safetensors and GGUF fixtures.
 generate-fixtures:
     ./scripts/generate-safetensors-fixtures --write

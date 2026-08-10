@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd); mlpl=$("$repo_root/scripts/select-mlpl")
+output=$($mlpl --source-dir "$repo_root" "$repo_root/demos/experiments/lefts_page_web.mlpl")
+printf '%s\n' "$output"
+for marker in \
+  "EQUIVALENCE structure=leaf+lift+expanding-train-filter+monthly-test-filter+coalesce" \
+  "MODELS fitted=12" \
+  "LEAKAGE current_or_future_rows_in_fit=0" \
+  "COMPATIBILITY python_lefts_api=no"
+do
+  printf '%s\n' "$output" | grep -Fqx "$marker"
+done
