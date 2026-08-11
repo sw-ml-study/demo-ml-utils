@@ -1,8 +1,9 @@
 number = 5
 slug = "agentrail-training-corpus"
-status = "in-progress"
+status = "completed"
 description = "Create and validate a frozen, licensed Agentrail workflow corpus with valid t..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T11:50:27"
-commits = []
+completed_at = "2026-08-10T17:51:14"
+commits = ["df33efdb062e1efcde4c05b70028f8e326bec48f"]
