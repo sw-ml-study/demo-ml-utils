@@ -32,6 +32,14 @@ agentrail-small-model:
 agentrail-small-model-eval:
     ./scripts/run-agentrail-small-model --reuse-adapter
 
+# Opt-in 7B QLoRA training on the frozen Agentrail workflow corpus.
+agentrail-coding-model:
+    ./scripts/run-agentrail-coding-model
+
+# Re-evaluate an already trained 7B Agentrail adapter.
+agentrail-coding-model-eval:
+    ./scripts/run-agentrail-coding-model --reuse-adapter
+
 # Demonstrate grounded browser help and explicit progressive escalation.
 help-escalation:
     ./scripts/run-help-escalation

@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+data="$repo_root/fixtures/training/agentrail-workflow"
+adapter="$repo_root/tmp/agentrail-coding-adapter"
+model="$repo_root/models/Qwen2.5-Coder-7B-Instruct-4bit"
+log="$repo_root/tmp/agentrail-coding-training.log"
+mkdir -p "$adapter"
+if [ "${1:-}" != "--reuse-adapter" ]; then
+  "$repo_root/.venv-mlx/bin/mlx_lm.lora" --model "$model" --train --data "$data" \
+    --fine-tune-type lora --optimizer adam --mask-prompt --num-layers 4 \
+    --batch-size 1 --iters 80 --val-batches -1 --learning-rate 0.00005 \
+    --steps-per-report 10 --steps-per-eval 20 --grad-checkpoint \
+    --adapter-path "$adapter" --save-every 80 --test --test-batches -1 \
+    --max-seq-length 256 --seed 23 | tee "$log"
+fi
+[ -s "$adapter/adapters.safetensors" ] || { echo "missing trained adapter: $adapter" >&2; exit 1; }
+report=$("$repo_root/.venv-mlx/bin/python" "$repo_root/scripts/evaluate-agentrail-coding.py" --model "$model" --adapter "$adapter" --test-data "$data/test.jsonl" --training-log "$log")
+printf '%s\n' "$report" > "$repo_root/tmp/agentrail-coding-evaluation.json"
+printf '%s\n' "DEMO: Qwen2.5-Coder 7B learns the frozen Agentrail workflow"
+printf '%s\n' "Scenario: propose and explain valid transitions, reject premature completion, and stop after completed metadata."
+printf '%s\n' "Native boundary: MLPL generated and validates the licensed frozen corpus; MLX-LM owns chat templating, 4-bit QLoRA, adapter persistence/loading, and generation."
+printf '%s\n' "Budgets: 12/3/3 examples, batch 1, 80 iterations, 4 trainable layers, rank 8, sequence length 256, 12.288 GB peak limit."
+printf '%s\n' "$report"
+printf '%s\n' "Interpretation: held-out exact actions and rejection classification must improve over base; outputs remain proposals and live help was excluded from training."

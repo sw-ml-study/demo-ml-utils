@@ -254,10 +254,13 @@ owns tokenizer/causal-model operations.
 2. `small-model-pipeline` — Stage 1 Qwen2.5-Coder-1.5B before/after pipeline.
    Accepted locally: validation loss 5.865 to 0.002, held-out exact actions
    0/3 to 3/3, 1.319M trainable parameters, and 1.104 GB MLX training peak.
-3. `agentrail-training-corpus` — frozen 6/3/3 MIT-provenance workflow corpus
+3. `agentrail-training-corpus` — frozen 12/3/3 MIT-provenance workflow corpus
    with valid, invalid, recovery, held-out, byte-reproducibility, and explicit
    live-help exclusion evidence.
 4. `coding-model-agentrail-qlora` — Stage 2 Qwen2.5-Coder-7B adaptation.
+   Accepted locally: validation loss 4.297 to 0.798, held-out exact actions
+   0/3 to 3/3, rejection classification 2/3 to 3/3, 2.884M trainable
+   parameters, and 4.781 GB MLX training peak.
 5. `live-help-drift-evaluation` — deterministic live-interface comparison.
 6. `acceptance-and-documentation` — consolidated evidence and CUDA handoff.
 

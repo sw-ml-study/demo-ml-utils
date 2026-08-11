@@ -1,8 +1,8 @@
 include "../src/training/agentrail_workflow_corpus.mlpl";
 def u:cwreq(c,m) { if c { ok(1) } else { err(m) } }
 r=u:write_agentrail_workflow_corpus("tmp/agentrail-workflow-corpus")?;
-u:cwreq(equal(r.counts,[6,3,3]),"workflow corpus split counts")?;
-u:cwreq(equal(r.family_counts,[4,4,3,1]),"workflow corpus family coverage")?;
+u:cwreq(equal(r.counts,[12,3,3]),"workflow corpus split counts")?;
+u:cwreq(equal(r.family_counts,[5,6,7,3]),"workflow corpus family coverage")?;
 u:cwreq(eq(r.provenance.live_help_examples,0)*eq(r.provenance.private_examples,0),"workflow corpus provenance exclusion")?;
 u:cwreq(equal(r.manifest.commands,{begin_command:"begin",complete_command:"complete",next_command:"next"}),"frozen command manifest")?;
 u:cwreq(eq(r.leakage.duplicate_ids,0)*eq(r.leakage.shared_scenarios,0),"workflow corpus leakage")?;

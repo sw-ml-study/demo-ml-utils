@@ -7,7 +7,7 @@ files under `fixtures/training/agentrail-workflow/` from
 
 ## Contents
 
-The 6/3/3 train, validation, and held-out splits contain MLX-LM
+The 12/3/3 train, validation, and held-out splits contain MLX-LM
 prompt/completion records from three scenario families:
 
 - valid transitions among `next`, `begin`, and `complete`;
