@@ -170,6 +170,10 @@ The [live-help drift demo](docs/agentrail-help-drift.md) confirms the three
 trained commands remain present in Agentrail 0.1.0 and reports 19 additional
 commands as evaluation-only, out-of-scope additions rather than learned skills.
 
+The [final Agentrail training acceptance report](docs/agentrail-training-acceptance.md)
+consolidates the two Qwen stages, Engram, provenance, rejected trials, memory,
+safety boundaries, reproducibility, limitations, and CUDA handoff.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -203,7 +207,8 @@ capabilities, and status.
 - [Frozen Agentrail workflow corpus](docs/agentrail-workflow-corpus.md)
 - [Qwen2.5-Coder 7B Agentrail QLoRA](docs/agentrail-coding-model.md)
 - [Agentrail live-help drift evaluation](docs/agentrail-help-drift.md)
-- [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
+- [Agentrail training final acceptance](docs/agentrail-training-acceptance.md)
+- [MLX prerequisite and remaining distillation status](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)
 - [LEFTS-inspired composable experiment plan](docs/plan-lefts.md)

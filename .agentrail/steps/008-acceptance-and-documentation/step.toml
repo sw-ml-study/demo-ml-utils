@@ -1,6 +1,6 @@
 number = 8
 slug = "acceptance-and-documentation"
-status = "pending"
+status = "in-progress"
 description = "Consolidate two-stage outputs, reproducibility, memory evidence, failure mode..."
 role = "production"
 context_files = []

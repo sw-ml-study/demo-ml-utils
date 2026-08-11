@@ -192,25 +192,18 @@ Initialize this saga only after Saga 11 is completed and archived:
 
 See the detailed [distillation plan](plan-agentrail-distillation.md).
 
-## Current blockers and unblocked work
+## Current status and remaining blocker
 
-Unblocked now:
+The two-stage MLX track is accepted on this host. The ignored `.venv-mlx`
+environment, both local MLX Qwen checkpoints, Metal device, 1.5B pipeline,
+12/3/3 frozen corpus, 7B adapter, memory evidence, and live-help comparison are
+ready. See the [final acceptance report](agentrail-training-acceptance.md).
 
-- canonical MLPL schemas, generators, validators, split logic, fixtures, and
-  preflight tests;
-- frozen Agentrail command/transition manifest;
-- synthetic gold, invalid, repair, self-supervised, and ablation datasets;
-- headless scoring and report IR.
-
-Opt-in execution prerequisites currently absent on this host:
-
-- MLX-LM Python environment;
-- MLX Qwen2.5-Coder 1.5B and 7B 4-bit checkpoints;
-- configured GLM-5.x endpoint, credentials, provider terms, and budget for
-  distillation only.
-
-These prerequisites must be supplied explicitly. No default gate downloads,
-installs, or contacts a provider.
+Only the optional GLM-5.x distillation track remains externally blocked: it
+needs a configured endpoint, credentials, reviewed provider/generated-output
+terms, and explicit token/cost budgets. CUDA remains a planned backend handoff,
+not a blocker for the accepted Apple MLX demonstration. No default gate
+downloads, installs, trains, contacts a provider, or requires GPU artifacts.
 
 ## Primary references
 

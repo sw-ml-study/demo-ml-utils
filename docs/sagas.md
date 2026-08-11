@@ -266,18 +266,11 @@ owns tokenizer/causal-model operations.
    22 live commands are explicitly reported as additive and out of scope.
 6. `acceptance-and-documentation` — consolidated evidence and CUDA handoff.
 
-Current status: step 1 is runnable with a read-only preflight. This host has an
-Ollama Qwen2.5-Coder 7B GGUF for inference, but neither required MLX Qwen
-checkpoint nor MLX-LM is installed. See the
-[two-stage demo contract](agentrail-mlx-finetuning.md).
-
-The Qwen execution steps are temporarily queued behind two bounded CPU steps.
-`progressive-help-escalation-demo` implements the model-independent typed
-routing, privacy, and context-bundle mechanics. `trained-help-engram` then
-trains an actual six-class route proposer with Engram and Adam, checks held-out
-phrase variants, and keeps the learned result subordinate to the deterministic
-evidence and consent boundary. Missing MLX prerequisites are recorded in
-[mlx-traiing-todo.md](mlx-traiing-todo.md).
+Current status: CPU Engram help routing, both MLX Qwen stages, the frozen
+workflow corpus, and live-help drift evaluation are accepted. The preflight is
+ready, the full default gate passes, and the final evidence is consolidated in
+[the Agentrail training acceptance report](agentrail-training-acceptance.md).
+GLM distillation and CUDA remain separate follow-on work.
 
 ## Saga 12 — `agentrail-glm-qwen-distillation` (planned)
 
