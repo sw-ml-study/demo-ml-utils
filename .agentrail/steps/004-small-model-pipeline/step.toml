@@ -1,8 +1,9 @@
 number = 4
 slug = "small-model-pipeline"
-status = "in-progress"
+status = "completed"
 description = "Implement the opt-in Stage 1 Qwen2.5-Coder-1.5B MLX QLoRA demo for an exact, ..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T11:50:27"
-commits = []
+completed_at = "2026-08-10T17:37:07"
+commits = ["86e0bb83040bac42e68779370da5174bd5b7c35b"]
