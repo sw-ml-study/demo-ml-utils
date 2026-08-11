@@ -1,8 +1,9 @@
 number = 1
 slug = "coverage-and-leakage-contract"
-status = "in-progress"
+status = "completed"
 description = "Create a deterministic expanded evaluation schema and corpus coverage matrix;..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T18:22:15"
-commits = []
+completed_at = "2026-08-10T18:24:31"
+commits = ["0cc7a97d0f05a851392c74a5a0924eb055a25003"]
