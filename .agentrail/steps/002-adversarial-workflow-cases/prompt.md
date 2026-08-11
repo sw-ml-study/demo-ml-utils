@@ -1,0 +1,1 @@
+Generate and validate held-out invalid-transition, conflicting-evidence, prompt-injection, malformed-output, dirty-worktree, and long-trajectory cases without contaminating training.

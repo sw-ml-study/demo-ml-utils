@@ -1,0 +1,1 @@
+Run base and accepted 7B adapter over the expanded frozen held-out suite across multiple deterministic seeds or decoding controls; report exact action, rejection, format, safety, and variance evidence under the memory limit.

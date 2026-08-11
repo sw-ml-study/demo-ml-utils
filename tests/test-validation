@@ -66,5 +66,6 @@ for name in train.jsonl valid.jsonl test.jsonl manifest.json provenance.json; do
 done
 drift_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-help-drift.mlpl")
 printf '%s\n' "$drift_output" | grep -Fqx 'PASS Agentrail live-help drift comparison'
+"$repo_root/tests/test-agentrail-leakage" >/dev/null
 
 echo "PASS validation tests"

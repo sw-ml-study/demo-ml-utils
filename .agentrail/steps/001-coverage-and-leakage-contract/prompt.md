@@ -1,0 +1,1 @@
+Create a deterministic expanded evaluation schema and corpus coverage matrix; add normalized lexical/n-gram near-duplicate leakage analysis across train, validation, and held-out splits; define budgets and adversarial family IDs; document promotion thresholds.

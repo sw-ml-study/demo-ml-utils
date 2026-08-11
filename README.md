@@ -174,6 +174,10 @@ The [final Agentrail training acceptance report](docs/agentrail-training-accepta
 consolidates the two Qwen stages, Engram, provenance, rejected trials, memory,
 safety boundaries, reproducibility, limitations, and CUDA handoff.
 
+The follow-on [expanded adversarial evaluation plan](docs/agentrail-adversarial-evaluation-plan.md)
+starts by enforcing cross-split lexical leakage and scenario-family coverage
+thresholds before adding broader held-out cases.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -208,6 +212,7 @@ capabilities, and status.
 - [Qwen2.5-Coder 7B Agentrail QLoRA](docs/agentrail-coding-model.md)
 - [Agentrail live-help drift evaluation](docs/agentrail-help-drift.md)
 - [Agentrail training final acceptance](docs/agentrail-training-acceptance.md)
+- [Agentrail expanded adversarial evaluation plan](docs/agentrail-adversarial-evaluation-plan.md)
 - [MLX prerequisite and remaining distillation status](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

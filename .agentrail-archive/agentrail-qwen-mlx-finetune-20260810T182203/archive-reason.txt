@@ -1,0 +1,1 @@
+Completed and accepted Qwen MLX Agentrail fine-tuning saga; beginning expanded adversarial evaluation follow-on.

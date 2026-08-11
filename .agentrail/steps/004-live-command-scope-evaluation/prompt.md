@@ -1,0 +1,1 @@
+Expand live Agentrail manifest comparison to command option signatures and explicitly measure which of 22 commands are trained, rejected as out of scope, or unsupported; never train on live help.
