@@ -262,6 +262,8 @@ owns tokenizer/causal-model operations.
    0/3 to 3/3, rejection classification 2/3 to 3/3, 2.884M trainable
    parameters, and 4.781 GB MLX training peak.
 5. `live-help-drift-evaluation` — deterministic live-interface comparison.
+   Agentrail 0.1.0 build `2f06132` retains all three trained commands; 19 of
+   22 live commands are explicitly reported as additive and out of scope.
 6. `acceptance-and-documentation` — consolidated evidence and CUDA handoff.
 
 Current status: step 1 is runnable with a read-only preflight. This host has an

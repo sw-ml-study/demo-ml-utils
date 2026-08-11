@@ -1,0 +1,9 @@
+include "../src/training/agentrail_help_drift.mlpl";
+def u:dhreq(c,m) { if c { ok(1) } else { err(m) } }
+r=u:agentrail_help_drift("fixtures/training/agentrail-help/live-commands.txt",22,4096)?;
+u:dhreq(equal(r.required_present,[1,1,1]),"frozen commands present")?;
+u:dhreq(eq(r.missing_required,0)*eq(r.live_command_count,22)*eq(r.added_out_of_scope,19),"live addition accounting")?;
+u:dhreq(eq(r.training_contamination,0)*equal(r.authority,"deterministic manifest comparison"),"drift authority boundary")?;
+missing=u:agentrail_help_drift("fixtures/training/agentrail-help/missing-complete.txt",22,4096)?;
+u:dhreq(eq(missing.missing_required,1)*equal(missing.required_present,[1,1,0]),"breaking missing-command detection")?;
+print("PASS Agentrail live-help drift comparison"); ok(1)

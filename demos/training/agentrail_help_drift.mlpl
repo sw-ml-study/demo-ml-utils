@@ -1,0 +1,8 @@
+include "../../src/training/agentrail_help_drift.mlpl";
+r=u:agentrail_help_drift("tmp/agentrail-live-help/commands.txt",64,16384)?;
+print("DEMO: compare live Agentrail help with the frozen training interface");
+print("Scenario: Agentrail may evolve after an adapter is trained. Capture its current interface only at evaluation time and distinguish missing trained commands from additional out-of-scope commands.");
+print("Native boundary: the shell captures bounded process output and extracts command lines; MLPL enforces byte/count budgets and deterministically compares next, begin, and complete with the frozen teaching slice. No model decides drift.");
+print("Budgets: 16384 captured help bytes, 1024 version bytes, at most 64 live commands, three frozen required commands, zero training writes.");
+print("Deterministic comparison:"); print(r);
+print("Interpretation: all three trained commands remain present, so the slice has no breaking drift. Additional live commands are reported as out-of-scope additions, not capabilities the adapter has learned. Live help remains evaluation evidence only."); ok(1)

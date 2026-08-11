@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+out="$repo_root/tmp/agentrail-live-help"
+mkdir -p "$out"
+agentrail_bin=${AGENTRAIL_BIN:-$(command -v agentrail || true)}
+[ -n "$agentrail_bin" ] && [ -x "$agentrail_bin" ] || { echo "agentrail executable not found" >&2; exit 1; }
+"$agentrail_bin" --version > "$out/version.txt"
+"$agentrail_bin" --help > "$out/help.txt"
+[ "$(wc -c < "$out/version.txt")" -le 1024 ] || { echo "agentrail version output exceeds budget" >&2; exit 1; }
+[ "$(wc -c < "$out/help.txt")" -le 16384 ] || { echo "agentrail help output exceeds budget" >&2; exit 1; }
+awk 'BEGIN { print "" } /^Commands:/ { inside=1; next } /^Options:/ { inside=0 } inside && /^  [a-z]/ { name=$1; print name }' "$out/help.txt" > "$out/commands.txt"
+mlpl=$("$repo_root/scripts/select-mlpl")
+test_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-help-drift.mlpl")
+printf '%s\n' "$test_output" | grep -Fqx 'PASS Agentrail live-help drift comparison'
+printf '%s\n' "Live Agentrail version:"; sed -n '1p' "$out/version.txt"
+printf '%s\n' "Live commands (evaluation-only; not training data):"; sed -n '2,$p' "$out/commands.txt"
+"$mlpl" --source-dir "$repo_root" "$repo_root/demos/training/agentrail_help_drift.mlpl"
+if [ "${1:-}" = "--with-model" ]; then
+  printf '%s\n' "MODEL EVALUATION (advisory; does not affect the drift verdict):"
+  "$repo_root/scripts/run-agentrail-coding-model" --reuse-adapter
+fi

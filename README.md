@@ -166,6 +166,10 @@ The opt-in [Qwen2.5-Coder 7B Agentrail QLoRA demo](docs/agentrail-coding-model.m
 improves frozen held-out exact actions from 0/3 to 3/3, including rejection and
 mandatory stop behavior, at a measured 4.781 GB MLX training peak.
 
+The [live-help drift demo](docs/agentrail-help-drift.md) confirms the three
+trained commands remain present in Agentrail 0.1.0 and reports 19 additional
+commands as evaluation-only, out-of-scope additions rather than learned skills.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -198,6 +202,7 @@ capabilities, and status.
 - [Stage 1 Agentrail small-model QLoRA](docs/agentrail-small-model.md)
 - [Frozen Agentrail workflow corpus](docs/agentrail-workflow-corpus.md)
 - [Qwen2.5-Coder 7B Agentrail QLoRA](docs/agentrail-coding-model.md)
+- [Agentrail live-help drift evaluation](docs/agentrail-help-drift.md)
 - [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

@@ -1,6 +1,6 @@
 number = 7
 slug = "live-help-drift-evaluation"
-status = "pending"
+status = "in-progress"
 description = "Probe agentrail from PATH at runtime, capture and bound --version/--help, det..."
 role = "production"
 context_files = []

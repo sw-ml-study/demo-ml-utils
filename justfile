@@ -40,6 +40,14 @@ agentrail-coding-model:
 agentrail-coding-model-eval:
     ./scripts/run-agentrail-coding-model --reuse-adapter
 
+# Compare bounded live Agentrail help with the frozen training interface.
+agentrail-help-drift:
+    ./scripts/run-agentrail-help-drift
+
+# Recheck live drift, then separately evaluate the saved advisory 7B adapter.
+agentrail-help-drift-with-model:
+    ./scripts/run-agentrail-help-drift --with-model
+
 # Demonstrate grounded browser help and explicit progressive escalation.
 help-escalation:
     ./scripts/run-help-escalation

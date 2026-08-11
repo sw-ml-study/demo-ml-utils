@@ -64,5 +64,7 @@ printf '%s\n' "$workflow_output" | grep -Fqx 'PASS frozen Agentrail workflow cor
 for name in train.jsonl valid.jsonl test.jsonl manifest.json provenance.json; do
   cmp "$repo_root/tmp/agentrail-workflow-corpus/$name" "$repo_root/fixtures/training/agentrail-workflow/$name"
 done
+drift_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-help-drift.mlpl")
+printf '%s\n' "$drift_output" | grep -Fqx 'PASS Agentrail live-help drift comparison'
 
 echo "PASS validation tests"
