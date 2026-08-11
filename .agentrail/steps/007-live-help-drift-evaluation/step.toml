@@ -1,8 +1,9 @@
 number = 7
 slug = "live-help-drift-evaluation"
-status = "in-progress"
+status = "completed"
 description = "Probe agentrail from PATH at runtime, capture and bound --version/--help, det..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T11:50:27"
-commits = []
+completed_at = "2026-08-10T18:05:32"
+commits = ["c45883a8e9eb62ad246438cee15b84e54a37dcb1"]
