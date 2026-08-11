@@ -158,6 +158,10 @@ The opt-in [Stage 1 Agentrail QLoRA demo](docs/agentrail-small-model.md) trains
 Qwen2.5-Coder 1.5B on a narrow exact next-action task, improving held-out exact
 commands from 0/3 to 3/3 at a measured 1.104 GB MLX training peak.
 
+The [frozen Agentrail workflow corpus](docs/agentrail-workflow-corpus.md) adds
+MIT-provenance valid, invalid, and recovery examples for Stage 2 while keeping
+installed `agentrail --help` strictly outside training for later drift checks.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -188,6 +192,7 @@ capabilities, and status.
 - [Progressive built-in help escalation](docs/help-escalation.md)
 - [CPU-trained help router with Engram](docs/trained-help-engram.md)
 - [Stage 1 Agentrail small-model QLoRA](docs/agentrail-small-model.md)
+- [Frozen Agentrail workflow corpus](docs/agentrail-workflow-corpus.md)
 - [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

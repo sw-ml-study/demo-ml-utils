@@ -1,0 +1,3 @@
+include "../src/training/agentrail_workflow_corpus.mlpl";
+r=u:write_agentrail_workflow_corpus("fixtures/training/agentrail-workflow")?;
+print("GENERATED frozen Agentrail workflow corpus",r.counts); ok(1)

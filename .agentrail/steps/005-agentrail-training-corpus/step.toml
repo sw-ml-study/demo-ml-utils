@@ -1,6 +1,6 @@
 number = 5
 slug = "agentrail-training-corpus"
-status = "pending"
+status = "in-progress"
 description = "Create and validate a frozen, licensed Agentrail workflow corpus with valid t..."
 role = "production"
 context_files = []

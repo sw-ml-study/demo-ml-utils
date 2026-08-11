@@ -58,5 +58,11 @@ mkdir -p "$repo_root/tmp/agentrail-small-data"
 mlpl=$("$repo_root/scripts/select-mlpl")
 small_data_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-small-data.mlpl")
 printf '%s\n' "$small_data_output" | grep -Fqx 'PASS Agentrail small-model dataset'
+mkdir -p "$repo_root/tmp/agentrail-workflow-corpus"
+workflow_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-workflow-corpus.mlpl")
+printf '%s\n' "$workflow_output" | grep -Fqx 'PASS frozen Agentrail workflow corpus'
+for name in train.jsonl valid.jsonl test.jsonl manifest.json provenance.json; do
+  cmp "$repo_root/tmp/agentrail-workflow-corpus/$name" "$repo_root/fixtures/training/agentrail-workflow/$name"
+done
 
 echo "PASS validation tests"
