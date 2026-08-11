@@ -1,6 +1,6 @@
 number = 4
 slug = "small-model-pipeline"
-status = "pending"
+status = "in-progress"
 description = "Implement the opt-in Stage 1 Qwen2.5-Coder-1.5B MLX QLoRA demo for an exact, ..."
 role = "production"
 context_files = []

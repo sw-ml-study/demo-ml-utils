@@ -23,3 +23,6 @@ tmp/
 # Tiny deterministic test fixtures under fixtures/ remain trackable.
 artifacts/
 models/
+.venv-mlx/
+.uv-cache/
+.hf-cache/

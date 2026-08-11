@@ -7,6 +7,7 @@ set -eu
 
 memory_limit_mib=${AGENTRAIL_MLX_MEMORY_LIMIT_MIB:-12288}
 hf_home=${HF_HOME:-${HOME}/.cache/huggingface}
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 find_snapshot() {
   repo_dir=$1
@@ -41,8 +42,14 @@ model_status() {
 
 small_default="$hf_home/hub/models--mlx-community--Qwen2.5-Coder-1.5B-Instruct-4bit"
 coding_default="$hf_home/hub/models--mlx-community--Qwen2.5-Coder-7B-Instruct-4bit"
-small_model=${AGENTRAIL_SMALL_MODEL:-$(find_snapshot "$small_default")}
-coding_model=${AGENTRAIL_CODING_MODEL:-$(find_snapshot "$coding_default")}
+small_local="$repo_root/models/Qwen2.5-Coder-1.5B-Instruct-4bit"
+coding_local="$repo_root/models/Qwen2.5-Coder-7B-Instruct-4bit"
+small_fallback=$(find_snapshot "$small_default")
+coding_fallback=$(find_snapshot "$coding_default")
+if [ -d "$small_local" ]; then small_fallback=$small_local; fi
+if [ -d "$coding_local" ]; then coding_fallback=$coding_local; fi
+small_model=${AGENTRAIL_SMALL_MODEL:-$small_fallback}
+coding_model=${AGENTRAIL_CODING_MODEL:-$coding_fallback}
 small_status=$(model_status "$small_model")
 coding_status=$(model_status "$coding_model")
 
@@ -59,7 +66,10 @@ if [ -n "$agentrail_bin" ] && [ -x "$agentrail_bin" ]; then
   fi
 fi
 
-python_bin=${MLX_LM_PYTHON:-$(command -v python3 || true)}
+local_python="$repo_root/.venv-mlx/bin/python"
+python_fallback=$(command -v python3 || true)
+if [ -x "$local_python" ]; then python_fallback=$local_python; fi
+python_bin=${MLX_LM_PYTHON:-$python_fallback}
 mlx_lm_status=missing
 if [ -n "$python_bin" ] && [ -x "$python_bin" ] && \
    "$python_bin" -c 'import mlx, mlx_lm' >/dev/null 2>&1; then
@@ -81,4 +91,3 @@ printf '%s\n' \
   "small_model_path=$small_model" \
   "coding_model=$coding_status" \
   "coding_model_path=$coding_model"
-

@@ -1,7 +1,7 @@
 # Two-Stage Agentrail Coding-Model Fine-Tuning with MLX
 
-Status: preflight and experiment contract defined; training is opt-in and not
-part of `just check`.
+Status: repository-local uv environment and both MLX checkpoints are ready;
+Stage 1 training remains opt-in and is not part of `just check`.
 
 ## Demonstration story
 
@@ -29,9 +29,9 @@ does not redistribute either checkpoint or a trained adapter.
 | Ollama `qwen2.5-coder:7b` | Present, 4,683,074,048-byte GGUF layer | Same desired model family, but inference-only for this demo; MLX-LM does not train the Ollama/GGUF artifact |
 | Ollama `qwen2.5vl:7b` | Present, 5,969,233,408-byte GGUF layer | Vision-language scope is unnecessary and adds memory/complexity |
 | Ollama `gemma4:31b-mlx` | Present as Ollama tensor layers | Far outside a conservative 12 GiB fine-tuning target |
-| MLX Qwen2.5-Coder 1.5B 4-bit | Missing | Required Stage 1 checkpoint |
-| MLX Qwen2.5-Coder 7B 4-bit | Missing | Required Stage 2 checkpoint |
-| MLX-LM Python package | Missing from the selected system Python | Required opt-in training dependency |
+| MLX Qwen2.5-Coder 1.5B 4-bit | Present under ignored `models/` (about 839 MiB) | Stage 1 checkpoint |
+| MLX Qwen2.5-Coder 7B 4-bit | Present under ignored `models/` (about 4.0 GiB) | Stage 2 checkpoint |
+| MLX-LM Python package | `.venv-mlx`: MLX 0.32.0, MLX-LM 0.31.3 | Ready; Metal device probe succeeded |
 
 Two `mlx-community/Ornith` cache directories contain only refs and no model
 snapshot. They are incomplete downloads and are not candidates. A cached 1B
@@ -107,9 +107,9 @@ checkpoints. It never installs, downloads, imports remote model code, trains, or
 changes Agentrail state. Override local paths with `AGENTRAIL_SMALL_MODEL`,
 `AGENTRAIL_CODING_MODEL`, and `MLX_LM_PYTHON`.
 
-Expected current result on this host: Agentrail is present, while MLX-LM and
-the two MLX Qwen checkpoints are not yet installed/downloaded. Those are opt-in
-prerequisites rather than failures of the default repository gate.
+Current result on this host: `overall=ready`. The preflight automatically finds
+the ignored `.venv-mlx` environment and `models/Qwen2.5-Coder-*` directories;
+the environment variables remain available as explicit overrides.
 
 ## Sources
 
