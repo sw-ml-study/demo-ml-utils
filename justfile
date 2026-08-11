@@ -24,6 +24,14 @@ mlpl-path:
 agentrail-mlx-preflight:
     ./scripts/check-agentrail-mlx-preflight
 
+# Opt-in GPU training/evaluation for the Stage 1 Agentrail QLoRA proof.
+agentrail-small-model:
+    ./scripts/run-agentrail-small-model
+
+# Re-evaluate an already trained Stage 1 adapter without retraining it.
+agentrail-small-model-eval:
+    ./scripts/run-agentrail-small-model --reuse-adapter
+
 # Demonstrate grounded browser help and explicit progressive escalation.
 help-escalation:
     ./scripts/run-help-escalation

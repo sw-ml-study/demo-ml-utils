@@ -45,6 +45,7 @@ for model in small coding; do
   printf 'weights\n' > "$model_dir/model.safetensors"
 done
 preflight=$(PATH="$fake_bin:/usr/bin:/bin" \
+  MLX_LM_PYTHON="$fake_bin/python3" \
   AGENTRAIL_SMALL_MODEL="$test_root/small-model" \
   AGENTRAIL_CODING_MODEL="$test_root/coding-model" \
   "$repo_root/scripts/check-agentrail-mlx-preflight")
@@ -52,5 +53,10 @@ printf '%s\n' "$preflight" | grep -Fqx 'overall=ready'
 printf '%s\n' "$preflight" | grep -Fqx 'memory_limit_mib=12288'
 printf '%s\n' "$preflight" | grep -Fqx 'small_model=ready'
 printf '%s\n' "$preflight" | grep -Fqx 'coding_model=ready'
+
+mkdir -p "$repo_root/tmp/agentrail-small-data"
+mlpl=$("$repo_root/scripts/select-mlpl")
+small_data_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-small-data.mlpl")
+printf '%s\n' "$small_data_output" | grep -Fqx 'PASS Agentrail small-model dataset'
 
 echo "PASS validation tests"

@@ -154,6 +154,10 @@ trains a real six-class route proposer with Adam, verifies held-out predictions
 and written phrase-memory rows, and then hands proposals to that deterministic
 evidence and consent boundary. It is a small classifier, not a generative agent.
 
+The opt-in [Stage 1 Agentrail QLoRA demo](docs/agentrail-small-model.md) trains
+Qwen2.5-Coder 1.5B on a narrow exact next-action task, improving held-out exact
+commands from 0/3 to 3/3 at a measured 1.104 GB MLX training peak.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -183,6 +187,7 @@ capabilities, and status.
 - [Coding-model training plan: Agentrail with sw-MLPL and MLX](docs/training-plan.md)
 - [Progressive built-in help escalation](docs/help-escalation.md)
 - [CPU-trained help router with Engram](docs/trained-help-engram.md)
+- [Stage 1 Agentrail small-model QLoRA](docs/agentrail-small-model.md)
 - [Deferred MLX training blockers](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

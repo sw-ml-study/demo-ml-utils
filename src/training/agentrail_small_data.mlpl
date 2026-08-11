@@ -1,0 +1,24 @@
+def u:small_text(a,b) { decode_bytes(concat(tokenize_bytes(a),tokenize_bytes(b))) }
+def u:small_line(id,state,action) { ok(u:small_text(to_json({id: id,prompt: u:small_text("Return only the exact next Agentrail command. Repository state: ",state),completion: action},{tagged: 1})?,"\n")) }
+def u:write_agentrail_small_data(dir) { "Generate bounded supervised JSONL for the Stage 1 exact next-action pipeline.";
+  training_json=u:small_line("tr-001","plan has a pending step; no step is active; inspect what comes next.","agentrail next")?;
+  training_json=u:small_text(training_json,u:small_line("tr-002","plan exists and the current step is pending; start its work.","agentrail begin")?);
+  training_json=u:small_text(training_json,u:small_line("tr-003","current step is active; implementation, tests, and commit are done; record completion.","agentrail complete")?);
+  training_json=u:small_text(training_json,u:small_line("tr-004","no work is active and the operator needs the next prompt.","agentrail next")?);
+  training_json=u:small_text(training_json,u:small_line("tr-005","the selected production step is pending and ready to enter.","agentrail begin")?);
+  training_json=u:small_text(training_json,u:small_line("tr-006","active step acceptance passed and its implementation commit exists.","agentrail complete")?);
+  training_json=u:small_text(training_json,u:small_line("tr-007","the saga is idle; determine the current step without changing state.","agentrail next")?);
+  training_json=u:small_text(training_json,u:small_line("tr-008","the next step is pending after review; transition it to active.","agentrail begin")?);
+  training_json=u:small_text(training_json,u:small_line("tr-009","the in-progress step has met its done conditions and is committed.","agentrail complete")?);
+  training_json=u:small_text(training_json,u:small_line("tr-010","inspect the saga queue before starting any work.","agentrail next")?);
+  training_json=u:small_text(training_json,u:small_line("tr-011","a pending step was selected and prerequisites are ready.","agentrail begin")?);
+  training_json=u:small_text(training_json,u:small_line("tr-012","tests pass for the active step and the detailed commit is present.","agentrail complete")?);
+  validation_json=u:small_line("va-001","nothing is active; report the queued step and instructions.","agentrail next")?;
+  validation_json=u:small_text(validation_json,u:small_line("va-002","the current queued step is pending; mark it in progress.","agentrail begin")?);
+  validation_json=u:small_text(validation_json,u:small_line("va-003","work for the active step is accepted, tested, and committed.","agentrail complete")?);
+  test_json=u:small_line("te-001","the saga has no active work; show the next required action without mutation.","agentrail next")?;
+  test_json=u:small_text(test_json,u:small_line("te-002","a reviewed pending step is ready for implementation now.","agentrail begin")?);
+  test_json=u:small_text(test_json,u:small_line("te-003","all acceptance evidence for the in-progress step is green and committed.","agentrail complete")?);
+  write_atomic(u:small_text(dir,"/train.jsonl"),training_json)?; write_atomic(u:small_text(dir,"/valid.jsonl"),validation_json)?; write_atomic(u:small_text(dir,"/test.jsonl"),test_json)?;
+  ok({schema: "sw-ml-study.agentrail-small-data",version: 1,counts: [12,3,3],ids: {training: [1,2,3,4,5,6,7,8,9,10,11,12],validation: [101,102,103],test_ids: [201,202,203]},leakage: 0,max_prompt_bytes: 384,max_completion_bytes: 32,method: "deterministic supervised exact-action generation"})
+}
