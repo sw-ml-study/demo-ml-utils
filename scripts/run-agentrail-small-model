@@ -1,27 +1,5 @@
 #!/bin/sh
 set -eu
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-data="$repo_root/tmp/agentrail-small-data"
-adapter="$repo_root/tmp/agentrail-small-adapter"
-model="$repo_root/models/Qwen2.5-Coder-1.5B-Instruct-4bit"
-python="$repo_root/.venv-mlx/bin/python"
-mkdir -p "$data" "$adapter"
-mlpl=$("$repo_root/scripts/select-mlpl")
-"$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-small-data.mlpl" >/dev/null
-if [ "${1:-}" != "--reuse-adapter" ]; then
-  "$repo_root/.venv-mlx/bin/mlx_lm.lora" --model "$model" --train --data "$data" \
-    --fine-tune-type lora --optimizer adam --mask-prompt --num-layers 4 \
-    --batch-size 1 --iters 60 --val-batches -1 --learning-rate 0.0001 \
-    --steps-per-report 10 --steps-per-eval 20 --grad-checkpoint \
-    --adapter-path "$adapter" --save-every 60 --test --test-batches -1 \
-    --max-seq-length 192 --seed 17 | tee "$repo_root/tmp/agentrail-small-training.log"
-fi
-[ -s "$adapter/adapters.safetensors" ] || { echo "missing trained adapter: $adapter" >&2; exit 1; }
-report=$($python "$repo_root/scripts/evaluate-agentrail-small.py" --model "$model" --adapter "$adapter" --training-log "$repo_root/tmp/agentrail-small-training.log")
-printf '%s\n' "$report" > "$repo_root/tmp/agentrail-small-evaluation.json"
-printf '%s\n' "DEMO: Stage 1 Qwen2.5-Coder 1.5B Agentrail QLoRA"
-printf '%s\n' "Scenario: learn the exact next command—agentrail next, begin, or complete—from a bounded repository-state description."
-printf '%s\n' "Native boundary: MLPL generates deterministic supervised splits; MLX-LM owns tokenizer, 4-bit model, LoRA optimization, adapter loading, and generation."
-printf '%s\n' "Budgets: 12/3/3 examples, batch 1, 60 iterations, 4 trainable layers, rank 8, sequence length 192, 12,288 MiB peak limit."
-printf '%s\n' "$report"
-printf '%s\n' "Interpretation: exact held-out generation—not training loss alone—decides whether the adapter learned the narrow task; automatic_execute remains zero."
+echo "SKIP: Stage 1 training needs the planned Rust-native sw-MLPL causal-LM provider." >&2
+echo "Missing: tokenizer, Qwen loader, LoRA optimizer, adapter persistence, and generation APIs." >&2
+exit 77

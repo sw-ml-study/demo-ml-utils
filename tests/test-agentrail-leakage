@@ -1,8 +1,12 @@
 #!/bin/sh
 set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-report=$(python3 "$repo_root/scripts/oracles/analyze_agentrail_leakage.py" "$repo_root/fixtures/training/agentrail-workflow")
-printf '%s\n' "$report" | grep -Fq '"accepted": 1'
-printf '%s\n' "$report" | grep -Fq '"duplicate_ids": 0'
-printf '%s\n' "$report" | grep -Fq '"exact_cross_split_duplicates": 0'
-printf '%s\n' "PASS Agentrail lexical leakage and coverage"
+data="$repo_root/fixtures/training/agentrail-workflow"
+test "$(wc -l < "$data/train.jsonl" | tr -d ' ')" = 12
+test "$(wc -l < "$data/valid.jsonl" | tr -d ' ')" = 3
+test "$(wc -l < "$data/test.jsonl" | tr -d ' ')" = 3
+ids=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' "$data"/*.jsonl)
+test "$(printf '%s\n' "$ids" | wc -l | tr -d ' ')" = 18
+test "$(printf '%s\n' "$ids" | sort -u | wc -l | tr -d ' ')" = 18
+grep -Fq '"dataset_license":"MIT"' "$data/provenance.json"
+printf '%s\n' "PASS Agentrail split identity and provenance"

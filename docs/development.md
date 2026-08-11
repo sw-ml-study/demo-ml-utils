@@ -80,7 +80,6 @@ scalar reduction, and queries platform peak-RSS metrics.
 `just gguf-sparse-acceptance` applies the same opt-in measurement to a generated
 GGUF I8 tensor with explicit iteration, sample, and report budgets.
 
-`just checkpoint-oracle` is also opt-in. It creates a temporary Safetensors
-artifact through MLPL, then uses only Python's standard library to compare the
-source ZIP storage member, destination header/payload, and decoded I16 values.
-It never imports or executes pickle or PyTorch.
+The former checkpoint oracle was retired with the repository's direct Python
+tooling. Independent cross-language comparison can still be performed outside
+this repository against an MLPL-created artifact.

@@ -22,8 +22,7 @@ if MLPL=relative/mlpl "$repo_root/scripts/select-mlpl" >/dev/null 2>&1; then
   exit 1
 fi
 
-# The opt-in MLX fine-tuning preflight must be deterministic and must accept
-# complete local Qwen checkpoints without downloading or importing model code.
+# Identify checkpoints while reporting the missing Rust causal-LM provider.
 fake_bin="$test_root/bin"; mkdir -p "$fake_bin"
 cat > "$fake_bin/agentrail" <<'EOF'
 #!/bin/sh
@@ -33,11 +32,7 @@ case "${1:-}" in
   *) exit 2 ;;
 esac
 EOF
-cat > "$fake_bin/python3" <<'EOF'
-#!/bin/sh
-test "${1:-}" = -c
-EOF
-chmod +x "$fake_bin/agentrail" "$fake_bin/python3"
+chmod +x "$fake_bin/agentrail"
 for model in small coding; do
   model_dir="$test_root/$model-model"; mkdir -p "$model_dir"
   printf '{}\n' > "$model_dir/config.json"
@@ -45,11 +40,11 @@ for model in small coding; do
   printf 'weights\n' > "$model_dir/model.safetensors"
 done
 preflight=$(PATH="$fake_bin:/usr/bin:/bin" \
-  MLX_LM_PYTHON="$fake_bin/python3" \
   AGENTRAIL_SMALL_MODEL="$test_root/small-model" \
   AGENTRAIL_CODING_MODEL="$test_root/coding-model" \
   "$repo_root/scripts/check-agentrail-mlx-preflight")
-printf '%s\n' "$preflight" | grep -Fqx 'overall=ready'
+printf '%s\n' "$preflight" | grep -Fqx 'overall=unavailable'
+printf '%s\n' "$preflight" | grep -Fqx 'rust_causal_lm=missing'
 printf '%s\n' "$preflight" | grep -Fqx 'memory_limit_mib=12288'
 printf '%s\n' "$preflight" | grep -Fqx 'small_model=ready'
 printf '%s\n' "$preflight" | grep -Fqx 'coding_model=ready'

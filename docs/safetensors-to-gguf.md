@@ -33,8 +33,6 @@ the demonstration caps them at 4096 header bytes, 64 payload bytes, and 512
 output bytes. This is a bounded teaching writer, not a streaming large-model
 converter yet.
 
-For independent evidence, `just external-oracle` opts into a pinned
-standard-library [Python adapter](../scripts/oracles/inspect_single_gguf.py).
-It compares the complete deterministic file hash plus header, metadata, tensor
-descriptor, shape, offset, and decoded values. Python is openly labeled as the
-external oracle and is never used by the default writer or validation gate.
+Independent cross-language evidence now belongs outside this repository. The
+MLPL demo itself compares its deterministic file hash plus header, metadata,
+tensor descriptor, shape, offset, and decoded values.

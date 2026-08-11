@@ -137,12 +137,11 @@ reward-context adaptation, frozen fingerprints, regret, and ablations.
 The [ICRL acceptance report](docs/icrl-acceptance.md) closes the adaptation
 roadmap with renderer-neutral histories, adversarial checks, and atomic evidence.
 
-The next opt-in adaptation slice is a
-[two-stage Agentrail coding-model fine-tune](docs/agentrail-mlx-finetuning.md):
-first prove the MLX QLoRA pipeline with Qwen2.5-Coder 1.5B, then train and
-evaluate Qwen2.5-Coder 7B against a frozen Agentrail workflow contract and a
-separately captured live-help drift check. Foundation-model downloads and
-training remain outside `just check`.
+The planned adaptation slice is a two-stage Agentrail coding-model fine-tune.
+Its corpus and evaluation contracts are present, but execution is gated until
+sw-MLPL exposes the required [Rust-native causal-LM training
+surface](docs/rust-native-model-training.md). Model downloads and training
+remain outside `just check`.
 
 The [progressive help escalation demo](docs/help-escalation.md) is runnable
 without those model prerequisites. It shows how grounded browser help returns
@@ -154,17 +153,17 @@ trains a real six-class route proposer with Adam, verifies held-out predictions
 and written phrase-memory rows, and then hands proposals to that deterministic
 evidence and consent boundary. It is a small classifier, not a generative agent.
 
-The opt-in [Stage 1 Agentrail QLoRA demo](docs/agentrail-small-model.md) trains
-Qwen2.5-Coder 1.5B on a narrow exact next-action task, improving held-out exact
-commands from 0/3 to 3/3 at a measured 1.104 GB MLX training peak.
+The [Stage 1 Agentrail QLoRA report](docs/agentrail-small-model.md) records an
+earlier Qwen2.5-Coder 1.5B experiment (0/3 to 3/3, 1.104 GB peak). It is
+historical evidence while the Rust-native implementation is pending.
 
 The [frozen Agentrail workflow corpus](docs/agentrail-workflow-corpus.md) adds
 MIT-provenance valid, invalid, and recovery examples for Stage 2 while keeping
 installed `agentrail --help` strictly outside training for later drift checks.
 
-The opt-in [Qwen2.5-Coder 7B Agentrail QLoRA demo](docs/agentrail-coding-model.md)
-improves frozen held-out exact actions from 0/3 to 3/3, including rejection and
-mandatory stop behavior, at a measured 4.781 GB MLX training peak.
+The [Qwen2.5-Coder 7B Agentrail QLoRA report](docs/agentrail-coding-model.md)
+records the earlier 0/3 to 3/3 result, including rejection and mandatory stop
+behavior, at a measured 4.781 GB peak. It is not a current runnable recipe.
 
 The [live-help drift demo](docs/agentrail-help-drift.md) confirms the three
 trained commands remain present in Agentrail 0.1.0 and reports 19 additional

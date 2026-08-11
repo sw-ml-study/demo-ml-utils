@@ -48,6 +48,10 @@ agentrail-help-drift:
 agentrail-help-drift-with-model:
     ./scripts/run-agentrail-help-drift --with-model
 
+# Opt-in multi-seed base/adapter scoring on the evaluation-only adversarial suite.
+agentrail-adversarial-eval:
+    ./scripts/run-agentrail-adversarial-eval
+
 # Demonstrate grounded browser help and explicit progressive escalation.
 help-escalation:
     ./scripts/run-help-escalation
@@ -230,14 +234,6 @@ checkpoint-to-safetensors:
 # Demonstrate consolidated restricted-checkpoint security acceptance.
 checkpoint-security-acceptance:
     ./scripts/run-checkpoint-security-acceptance
-
-# Opt-in: independently compare checkpoint storage with extracted Safetensors.
-checkpoint-oracle:
-    ./scripts/run-checkpoint-oracle
-
-# Opt-in: compare a generated GGUF with an explicit external Python oracle.
-external-oracle:
-    ./scripts/run-external-oracle
 
 # Demonstrate bounded GGUF v3 metadata and mixed-type tensor cataloging.
 gguf-catalog:

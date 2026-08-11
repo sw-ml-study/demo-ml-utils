@@ -102,14 +102,13 @@ just agentrail-mlx-preflight
 ```
 
 It checks Agentrail on `PATH`, the stable `next`/`begin`/`complete` help surface,
-an environment containing both `mlx` and `mlx_lm`, and complete local MLX
-checkpoints. It never installs, downloads, imports remote model code, trains, or
+the Rust-native causal-LM provider, and complete local MLX checkpoints. It never
+installs, downloads, loads remote model code, trains, or
 changes Agentrail state. Override local paths with `AGENTRAIL_SMALL_MODEL`,
-`AGENTRAIL_CODING_MODEL`, and `MLX_LM_PYTHON`.
+and `AGENTRAIL_CODING_MODEL`.
 
-Current result on this host: `overall=ready`. The preflight automatically finds
-the ignored `.venv-mlx` environment and `models/Qwen2.5-Coder-*` directories;
-the environment variables remain available as explicit overrides.
+Current result: `overall=unavailable` and `rust_causal_lm=missing`. See
+[the Rust-native boundary](rust-native-model-training.md).
 
 ## Sources
 

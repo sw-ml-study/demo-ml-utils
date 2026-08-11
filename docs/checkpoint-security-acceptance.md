@@ -3,8 +3,8 @@
 The restricted checkpoint saga is accepted for its deliberately narrow
 teaching schema. `just checkpoint-security-acceptance` runs all four internal
 test suites and then narrates one accepted fixture beside ten independently
-named rejection classes. `just checkpoint-oracle` is an opt-in external
-cross-format check.
+named rejection classes. The former external cross-format oracle was retired
+when this repository removed direct Python tooling.
 
 ## Accepted path
 

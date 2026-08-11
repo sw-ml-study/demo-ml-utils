@@ -9,9 +9,9 @@ Safetensors-to-GGUF writer with catalog and decoded-value read-back.
 
 ## Reproducible external evidence
 
-`just external-oracle` is opt-in and requires Python 3 through `$PYTHON` or
-`PATH`. MLPL writes and self-validates the tiny I16 artifact first. A committed
-standard-library-only Python adapter then independently parses its header,
+The former external oracle was retired when direct Python tooling was removed.
+MLPL still writes and self-validates the tiny I16 artifact. An independent
+consumer can parse its header,
 metadata, tensor descriptor, alignment, and payload and compares a canonical
 JSON record. The expected file is 166 bytes with SHA-256
 `884f3fcbef283b2848da263b3bfe5da375f3843fad66ec7afc1ea25ee081062f`,

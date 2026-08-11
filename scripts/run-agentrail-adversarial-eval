@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+echo "SKIP: multi-seed generation needs the planned Rust-native sw-MLPL causal-LM provider." >&2
+echo "The frozen adversarial corpus remains locally validated and evaluation-only." >&2
+exit 77

@@ -1,8 +1,14 @@
 #!/bin/sh
 set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-report=$(python3 "$repo_root/scripts/oracles/validate_agentrail_adversarial.py" "$repo_root/fixtures/evaluation/agentrail-adversarial" "$repo_root/fixtures/training/agentrail-workflow")
-printf '%s\n' "$report" | grep -Fq '"accepted": 1'
-printf '%s\n' "$report" | grep -Fq '"training_examples": 0'
-printf '%s\n' "$report" | grep -Fq '"unsafe_flags": 0'
+cases="$repo_root/fixtures/evaluation/agentrail-adversarial/cases.jsonl"
+test "$(wc -l < "$cases" | tr -d ' ')" = 12
+test "$(grep -c '"automatic_execute":0' "$cases")" = 12
+test "$(grep -c '"automatic_send":0' "$cases")" = 12
+test "$(grep -o '"family":"[^"]*"' "$cases" | sort -u | wc -l | tr -d ' ')" = 6
+test "$(grep -o '"id":"[^"]*"' "$cases" | sort -u | wc -l | tr -d ' ')" = 12
+if grep -R -Fq 'adv-' "$repo_root/fixtures/training/agentrail-workflow"/*.jsonl; then
+  echo "adversarial evaluation case leaked into training data" >&2
+  exit 1
+fi
 printf '%s\n' "PASS Agentrail adversarial fixtures"

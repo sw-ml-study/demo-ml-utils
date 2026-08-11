@@ -3,6 +3,21 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
+tracked_python=$(git -C "$repo_root" ls-files '*.py' | while IFS= read -r path; do
+  [ ! -f "$repo_root/$path" ] || printf '%s\n' "$path"
+done)
+if [ -n "$tracked_python" ]; then
+  echo "tracked Python source is forbidden:" >&2
+  printf '%s\n' "$tracked_python" >&2
+  exit 1
+fi
+
+if grep -RIlE '(^|[/[:space:]])python3?([/[:space:]]|$)|mlx[_]lm' \
+  "$repo_root/scripts" "$repo_root/tests" --exclude='check-sources' | grep -q .; then
+  echo "runnable scripts/tests must not invoke Python tooling" >&2
+  exit 1
+fi
+
 sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 
 for script in "$repo_root"/scripts/* "$repo_root"/tests/test-*; do

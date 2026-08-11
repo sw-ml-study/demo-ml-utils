@@ -68,7 +68,7 @@ renderer-neutral training curves.
 Shell runners only:
 
 - locate `agentrail` and capture bounded `--version`/`--help` output;
-- locate configured local model paths and Python environment;
+- locate configured local model paths and the Rust-native sw-MLPL provider;
 - call the configured GLM teacher endpoint in opt-in distillation recipes;
 - invoke MLX-LM for tokenization, QLoRA training, adapter loading, and
   generation;

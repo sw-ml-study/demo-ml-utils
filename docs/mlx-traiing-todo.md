@@ -3,18 +3,23 @@
 The spelling of this filename follows the requested handoff name. The canonical
 training design remains in [training-plan.md](training-plan.md).
 
+> Update (2026-08-11): direct Python tooling has been removed. The local
+> artifacts below document an earlier experiment, not current prerequisites.
+> Qwen execution is gated on
+> [rust-native-model-training.md](rust-native-model-training.md).
+
 The two-stage Agentrail Qwen training saga is intentionally deferred while the
 progressive built-in-help mechanics are developed.
 
-## Prerequisite status (resolved 2026-08-10)
+## Historical prerequisite status (2026-08-10)
 
 - `.venv-mlx` contains Python 3.12.13, MLX 0.32.0, and MLX-LM 0.31.3.
 - `models/Qwen2.5-Coder-1.5B-Instruct-4bit` is present (about 839 MiB).
 - `models/Qwen2.5-Coder-7B-Instruct-4bit` is present (about 4.0 GiB).
 - Both public checkpoints downloaded anonymously; no HF token was required.
 - An unsandboxed device probe reports `Device(gpu, 0)`.
-- `just agentrail-mlx-preflight` reports every prerequisite `ready` and now
-  discovers the ignored repository-local environment and model directories.
+- The earlier preflight found the ignored local environment and models. The
+  current preflight reports `rust_causal_lm=missing`.
 
 These local artifacts are intentionally ignored and are not redistributed.
 

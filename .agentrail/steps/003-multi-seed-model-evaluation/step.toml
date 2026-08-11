@@ -1,6 +1,6 @@
 number = 3
 slug = "multi-seed-model-evaluation"
-status = "pending"
+status = "in-progress"
 description = "Run base and accepted 7B adapter over the expanded frozen held-out suite acro..."
 role = "validation"
 context_files = []

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Read-only preflight for the opt-in two-stage Agentrail MLX demo. It never
+# Read-only preflight for the planned Rust-native Agentrail MLX demo. It never
 # installs packages, downloads weights, changes Agentrail state, or loads
 # remote model code.
 
@@ -66,18 +66,10 @@ if [ -n "$agentrail_bin" ] && [ -x "$agentrail_bin" ]; then
   fi
 fi
 
-local_python="$repo_root/.venv-mlx/bin/python"
-python_fallback=$(command -v python3 || true)
-if [ -x "$local_python" ]; then python_fallback=$local_python; fi
-python_bin=${MLX_LM_PYTHON:-$python_fallback}
-mlx_lm_status=missing
-if [ -n "$python_bin" ] && [ -x "$python_bin" ] && \
-   "$python_bin" -c 'import mlx, mlx_lm' >/dev/null 2>&1; then
-  mlx_lm_status=ready
-fi
+rust_causal_lm_status=missing
 
 overall=unavailable
-if [ "$agentrail_status" = ready ] && [ "$mlx_lm_status" = ready ] && \
+if [ "$agentrail_status" = ready ] && [ "$rust_causal_lm_status" = ready ] && \
    [ "$small_status" = ready ] && [ "$coding_status" = ready ]; then
   overall=ready
 fi
@@ -86,7 +78,8 @@ printf '%s\n' \
   "overall=$overall" \
   "memory_limit_mib=$memory_limit_mib" \
   "agentrail=$agentrail_status" \
-  "mlx_lm=$mlx_lm_status" \
+  "rust_causal_lm=$rust_causal_lm_status" \
+  "blocker=sw-mlpl lacks Rust-native tokenizer, causal-LM loading, LoRA training, and generation APIs" \
   "small_model=$small_status" \
   "small_model_path=$small_model" \
   "coding_model=$coding_status" \
