@@ -1,8 +1,9 @@
 number = 6
 slug = "coding-model-agentrail-qlora"
-status = "in-progress"
+status = "completed"
 description = "Run the same bounded pipeline with Qwen2.5-Coder-7B-Instruct-4bit, train an A..."
 role = "production"
 context_files = []
 created_at = "2026-08-10T11:50:27"
-commits = []
+completed_at = "2026-08-10T18:00:22"
+commits = ["28f1f60d4290eb69a336923e2fe2203dfe71dced"]
