@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+report=$(python3 "$repo_root/scripts/oracles/validate_agentrail_adversarial.py" "$repo_root/fixtures/evaluation/agentrail-adversarial" "$repo_root/fixtures/training/agentrail-workflow")
+printf '%s\n' "$report" | grep -Fq '"accepted": 1'
+printf '%s\n' "$report" | grep -Fq '"training_examples": 0'
+printf '%s\n' "$report" | grep -Fq '"unsafe_flags": 0'
+printf '%s\n' "PASS Agentrail adversarial fixtures"

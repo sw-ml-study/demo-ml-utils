@@ -178,6 +178,10 @@ The follow-on [expanded adversarial evaluation plan](docs/agentrail-adversarial-
 starts by enforcing cross-split lexical leakage and scenario-family coverage
 thresholds before adding broader held-out cases.
 
+The [adversarial held-out suite](docs/agentrail-adversarial-cases.md) adds 12
+evaluation-only invalid-transition, conflict, injection, malformed-output,
+dirty-worktree, and long-trajectory cases with explicit non-execution fields.
+
 ## Running the project
 
 The repository uses a thin `justfile`:
@@ -213,6 +217,7 @@ capabilities, and status.
 - [Agentrail live-help drift evaluation](docs/agentrail-help-drift.md)
 - [Agentrail training final acceptance](docs/agentrail-training-acceptance.md)
 - [Agentrail expanded adversarial evaluation plan](docs/agentrail-adversarial-evaluation-plan.md)
+- [Agentrail adversarial held-out cases](docs/agentrail-adversarial-cases.md)
 - [MLX prerequisite and remaining distillation status](docs/mlx-traiing-todo.md)
 - [Two-stage Agentrail coding-model MLX fine-tuning](docs/agentrail-mlx-finetuning.md)
 - [Two-stage GLM-to-Qwen Agentrail distillation plan](docs/plan-agentrail-distillation.md)

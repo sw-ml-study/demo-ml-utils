@@ -67,5 +67,6 @@ done
 drift_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-help-drift.mlpl")
 printf '%s\n' "$drift_output" | grep -Fqx 'PASS Agentrail live-help drift comparison'
 "$repo_root/tests/test-agentrail-leakage" >/dev/null
+"$repo_root/tests/test-agentrail-adversarial" >/dev/null
 
 echo "PASS validation tests"

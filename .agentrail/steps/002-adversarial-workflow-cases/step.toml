@@ -1,6 +1,6 @@
 number = 2
 slug = "adversarial-workflow-cases"
-status = "pending"
+status = "in-progress"
 description = "Generate and validate held-out invalid-transition, conflicting-evidence, prom..."
 role = "production"
 context_files = []
