@@ -1,8 +1,9 @@
 number = 3
 slug = "gguf-metadata-arrays"
-status = "in-progress"
+status = "completed"
 description = "Add bounded GGUF v3 metadata-array parsing sufficient for real llama.cpp file..."
 role = "production"
 context_files = []
 created_at = "2026-08-17T15:42:22"
-commits = []
+completed_at = "2026-08-17T15:52:53"
+commits = ["31b038f9e55bde4f16d6770a1658b881c017209d"]

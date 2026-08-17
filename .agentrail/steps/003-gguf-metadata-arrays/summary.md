@@ -1,0 +1,1 @@
+Added bounded GGUF v3 metadata-array parsing for tokenizer STRING tokens, F32 scores, and I32 token types; consumed F32/I64/F64 scalars; exposed aligned per-key array descriptors; added budget, nested, and truncation tests; passed just check and a real SmolLM2 Q8_0 catalog probe with 272 trustworthy tensor descriptors.
