@@ -35,6 +35,8 @@ The catalog additionally passes the real SmolLM2 Q8_0 tokenizer-array probe
 documented in [the GGUF catalog report](gguf-catalog.md#real-llamacpp-acceptance),
 so downstream tensor offsets no longer depend on rejecting or guessing across
 STRING token, F32 score, or I32 token-type arrays.
+The opt-in real-file acceptance additionally enforces constant-depth traversal
+under a 16 MiB stack plus explicit latency and peak-RSS ceilings.
 
 For catalog bytes K, tensors T, decoded parameters P, sample count S, and
 configured payload chunk C, the pass is O(K + T log T + P) time and O(K + T +

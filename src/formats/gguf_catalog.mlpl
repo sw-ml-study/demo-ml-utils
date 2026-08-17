@@ -2,8 +2,9 @@ def u:gguf_le(bytes, index, width, multiplier, total, maximum) { "Decode a bound
   if eq(index, width) { ok(total) } else { byte = take(bytes, 0, index); allowed = floor((maximum - total) / multiplier); if gt(byte, allowed) { err("GGUF integer exceeds configured exact budget") } else { u:gguf_le(bytes, index + 1, width, multiplier * 256, total + byte * multiplier, maximum) } }
 }
 
-def u:gguf_le_at(bytes, index, end, multiplier, total, maximum) { "Decode an unsigned integer directly from a bounded buffer window.";
-  if eq(index,end) { ok(total) } else { byte=take(bytes,0,index); allowed=floor((maximum-total)/multiplier); if gt(byte,allowed) { err("GGUF integer exceeds configured exact budget") } else { u:gguf_le_at(bytes,index+1,end,multiplier*256,total+byte*multiplier,maximum) } }
+def u:gguf_le8_at(bytes, index, maximum) { "Decode one buffered u64 with constant stack depth and an exact configured ceiling.";
+  value=take(bytes,0,index)+take(bytes,0,index+1)*256+take(bytes,0,index+2)*65536+take(bytes,0,index+3)*16777216+take(bytes,0,index+4)*4294967296+take(bytes,0,index+5)*1099511627776+take(bytes,0,index+6)*281474976710656+take(bytes,0,index+7)*72057594037927936;
+  if gt(value,maximum) { err("GGUF integer exceeds configured exact budget") } else { ok(value) }
 }
 
 def u:gguf_read(state, length) { "Read one exact bounded field and advance the catalog cursor.";
@@ -48,7 +49,7 @@ def u:gguf_scalar_value(state, type_id, max_string_bytes, maximum_scalar) { "Con
 }
 
 def u:gguf_skip_chunks(state, remaining) { "Advance over bounded metadata payload in fixed-size reads.";
-  while gt(remaining,0) { amount=if gt(remaining,4096) { 4096 } else { remaining }; next=u:gguf_read(state,amount)?; state={path: next.path,file_size: next.file_size,cursor: next.cursor,max_catalog_bytes: next.max_catalog_bytes}; remaining=remaining-amount };
+  while gt(remaining,0) { amount=if gt(remaining,65536) { 65536 } else { remaining }; next=u:gguf_read(state,amount)?; state={path: next.path,file_size: next.file_size,cursor: next.cursor,max_catalog_bytes: next.max_catalog_bytes}; remaining=remaining-amount };
   ok(state)
 }
 
@@ -57,7 +58,8 @@ def u:gguf_skip_string_array(state, count, max_string_bytes) { "Validate string-
   while lt(index,count) {
     offset=cursor-buffer_start;
     if lt(tally(buffer)-offset,8) { available=state.max_catalog_bytes-cursor; file_available=state.file_size-cursor; if gt(available,file_available) { available=file_available } else { 0 }; amount=if gt(available,4096) { 4096 } else { available }; if lt(amount,8) { return err("GGUF string array is truncated") } else { buffer=read_bytes(state.path,cursor,amount)?; buffer_start=cursor; offset=0 } } else { 0 };
-    length=u:gguf_le_at(buffer,offset,offset+8,1,0,max_string_bytes)?; cursor=cursor+8;
+    length=take(buffer,0,offset)+take(buffer,0,offset+1)*256+take(buffer,0,offset+2)*65536+take(buffer,0,offset+3)*16777216+take(buffer,0,offset+4)*4294967296+take(buffer,0,offset+5)*1099511627776+take(buffer,0,offset+6)*281474976710656+take(buffer,0,offset+7)*72057594037927936;
+    if gt(length,max_string_bytes) { return err("GGUF integer exceeds configured exact budget") } else { cursor=cursor+8 };
     if gt(cursor+length,state.max_catalog_bytes) { return err("GGUF catalog byte budget exceeded") } else { if gt(cursor+length,state.file_size) { return err("GGUF structure is truncated") } else { cursor=cursor+length } };
     index=index+1
   };

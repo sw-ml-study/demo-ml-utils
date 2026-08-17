@@ -84,6 +84,31 @@ version strings.
 
 ## Remaining needs, not regressions
 
+### Bounded length-prefixed stream traversal
+
+Real GGUF tokenizer metadata demonstrates a missing native streaming contract.
+MLPL can correctly traverse u64-length-prefixed strings with bounded reads, but
+147,209 array elements still create per-iteration interpreter values. The
+constant-frame implementation completes under a 16 MiB stack in 5.14 seconds,
+yet reaches 505,102,336 bytes maximum RSS on the local SmolLM2 Q8_0 file.
+
+A general primitive—not a GGUF-specific parser—is needed:
+
+```text
+scan_length_prefixed(path, offset, count,
+                     length_width, max_item_bytes,
+                     max_total_bytes, chunk_bytes)
+  -> ok({next_offset, item_count, payload_bytes, bytes_read, max_item_seen})
+  | err(message)
+```
+
+It must use constant native stack and O(chunk_bytes) retained memory, retain no
+payloads, return the exact logical offset despite lookahead, enforce sandbox
+and arithmetic checks, and provide interpreter/server/compiler parity. A Rust
+native extension may provide the same scalar-record contract if this stays out
+of core. Until one route exists, the 128 MiB real-file acceptance intentionally
+fails; raising stack or memory ceilings is not acceptance.
+
 - First-class typed byte arrays and zero-copy reinterpretation would reduce
   f64 storage overhead but are not required for bounded correctness.
 - A general stream/fold abstraction would improve repeated tensor-region

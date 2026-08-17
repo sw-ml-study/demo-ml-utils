@@ -1,0 +1,1 @@
+Replace slow or stack-growing GGUF metadata-array traversal with stack-safe bounded streaming that skips unretained values. Preserve exact tensor-directory offsets and validation budgets, add focused adversarial tests, and record real SmolLM2 Q8_0 latency and peak-memory evidence without modifying adjacent repositories.

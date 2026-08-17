@@ -22,7 +22,7 @@ with every metadata key; scalar keys use `[-1,0,0]`. This lets a consumer
 associate tokenizer keys with their bounded array framing and proves the
 cursor reaches the tensor directory exactly. The catalog does not retain token
 strings or decode F32 scores: it validates their framing and skips numeric
-payloads in chunks of at most 4096 bytes. String framing uses a 4096-byte
+payloads in chunks of at most 65,536 bytes. String framing uses a 4096-byte
 lookahead buffer. Its final read may include up to 4095 bytes beyond the
 logical array cursor, but those bytes are neither interpreted nor used to
 advance the cursor.
@@ -83,3 +83,12 @@ This probe interprets metadata only, subject to the bounded lookahead above,
 and takes materially longer than the tiny demo because token-string framing is
 validated in MLPL. It is deterministic and
 requires the model path to be inside the selected sw-MLPL filesystem sandbox.
+
+The follow-up constant-frame decoder removed eight recursive interpreter calls
+per token length. On 2026-08-17, host-level `/usr/bin/time -l` completed the
+same model under a 16 MiB stack in 5.14 seconds, but measured 505,102,336 bytes
+maximum RSS. Latency and stack use are fixed; retained memory is not. The
+opt-in recipe keeps a 131,072 KiB ceiling and intentionally fails until the
+generic bounded stream contract in
+[upstream-contract.md](upstream-contract.md#bounded-length-prefixed-stream-traversal)
+exists. Raising that ceiling is not acceptance.

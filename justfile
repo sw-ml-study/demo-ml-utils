@@ -239,6 +239,10 @@ checkpoint-security-acceptance:
 gguf-catalog:
     ./scripts/run-gguf-catalog
 
+# Opt-in real SmolLM2 proof for stack-safe bounded GGUF metadata arrays.
+gguf-real-array-acceptance:
+    ./scripts/run-gguf-real-array-acceptance
+
 # Demonstrate an exact-name, bounded GGUF I8/I16 tensor payload read.
 gguf-slice:
     ./scripts/run-gguf-slice

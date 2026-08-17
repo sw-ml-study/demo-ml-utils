@@ -1,4 +1,4 @@
-number = 6
+number = 7
 slug = "adversarial-acceptance-report"
 status = "pending"
 description = "Consolidate expanded adversarial, leakage, multi-seed, live-scope, provenance..."

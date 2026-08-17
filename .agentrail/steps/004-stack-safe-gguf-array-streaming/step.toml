@@ -1,0 +1,8 @@
+number = 4
+slug = "stack-safe-gguf-array-streaming"
+status = "in-progress"
+description = "Replace slow or stack-growing GGUF metadata-array traversal with stack-safe b..."
+role = "production"
+context_files = []
+created_at = "2026-08-17T16:02:16"
+commits = []
