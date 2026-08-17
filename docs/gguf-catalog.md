@@ -10,9 +10,26 @@ claiming full GGUF compatibility.
 `demos/gguf/catalog.mlpl` accepts little-endian v3, requires
 `general.architecture`, supports optional `general.alignment` u32 (default 32),
 and consumes arbitrary unique metadata keys whose scalar tags are U8/I8,
-U16/I16, U32/I32, BOOL, STRING, or budgeted U64. Architecture and alignment
-values are retained; other values contribute to a deterministic type
-histogram in this catalog-oriented slice.
+U16/I16, U32/I32, BOOL, STRING, or budgeted U64. It also consumes non-nested
+arrays of every GGUF scalar element type. This includes the STRING
+`tokenizer.ggml.tokens`, F32 `tokenizer.ggml.scores`, and I32
+`tokenizer.ggml.token_type` arrays used by llama.cpp models. Architecture and
+alignment values are retained; other values contribute to deterministic type
+and array histograms in this catalog-oriented slice.
+
+`metadata_array_rows` aligns one `[element_type, elements, payload_bytes]` row
+with every metadata key; scalar keys use `[-1,0,0]`. This lets a consumer
+associate tokenizer keys with their bounded array framing and proves the
+cursor reaches the tensor directory exactly. The catalog does not retain token
+strings or decode F32 scores: it validates their framing and skips numeric
+payloads in chunks of at most 4096 bytes. String framing uses a 4096-byte
+lookahead buffer. Its final read may include up to 4095 bytes beyond the
+logical array cursor, but those bytes are neither interpreted nor used to
+advance the cursor.
+
+F32, I64, and F64 top-level scalar fields are also consumed at their exact
+fixed widths so ordinary llama.cpp metadata cannot desynchronize the tensor
+directory. Their values are not decoded or retained by this catalog API.
 
 Multiple unique tensor descriptors are retained as name-byte tables and rows
 of `[relative_offset, parameters, ggml_type_id, known_bytes]`. Active type IDs
@@ -20,28 +37,49 @@ from the pinned specification remain catalog-visible. `known_bytes` is `-1`
 when this project has not established the type's block-size rule, explicitly
 meaning “cataloged, extent unknown.” Simple F32/F16/BF16, signed integer, and
 complete Q8_0 block extents are computed, sorted by offset for layout validation, and rejected if they
-overlap or exceed the data buffer. Tensor payload bytes are never requested.
+overlap or exceed the data buffer. Tensor payloads are never decoded; only the
+explicitly bounded string-array lookahead can request bytes beyond its logical
+metadata cursor.
 
 Native code supplies generic sandboxed `file_size` and exact bounded
 `read_bytes`. MLPL owns little-endian decoding, cursor movement, format/type
 policy, metadata parsing, alignment, shape arithmetic, descriptor validation,
 and catalog construction. No external GGUF parser is used.
 
-For M metadata items, T tensors, R total dimensions, S maximum string width,
-and K catalog bytes, parsing is O(K + R), exact padded-name duplicate checks
+For M metadata items, A total array elements, T tensors, R total dimensions,
+S maximum string width, and K catalog bytes, parsing is O(K + A + R), exact padded-name duplicate checks
 are O(M²S + T²S), and tensor ordering is O(T log T). Retained memory is O(MS +
 TS + T + R + largest field read). Current teaching budgets cap catalog reads
 at 4096 bytes, metadata at 8, tensors at 4, strings at 256 bytes, rank at 4,
-and parameters at one million. Because byte values are f64-backed, u64 fields
+and the shared parameter/array-element ceiling at one million. Because byte values are f64-backed, u64 fields
 outside configured exact bounds fail closed.
 
-Big-endian v3, metadata arrays, floating and signed-64 metadata, decoded scalar
-metadata values beyond architecture/alignment, and exact extent rules for
+Big-endian v3, nested arrays, decoded array values, floating and signed-64
+scalar metadata, decoded scalar metadata values beyond architecture/alignment, and exact extent rules for
 other quantized types remain later work. Separate selective decoders read
 catalog-validated [I8/I16 payloads](gguf-slice.md) and [Q8_0 blocks](gguf-q8-0.md);
 floating and other quantization-block decode remain unsupported.
 Exact name tables avoid hash collisions but intentionally trade quadratic
 comparison work for simple fail-closed behavior under small count budgets.
 The completed [GGUF acceptance report](gguf-acceptance-report.md) adds
-chunk-bounded sampled statistics without changing this catalog's no-payload
-contract.
+chunk-bounded sampled statistics.
+
+## Real llama.cpp acceptance
+
+`probes/gguf-real-array-probe.mlpl` was run against the locally downloaded,
+SHA-256-verified `SmolLM2-135M-Instruct-Q8_0.gguf`. With explicit ceilings of
+64 MiB catalog bytes, 256 metadata entries, 2,048 tensors, 4,096 bytes per
+string, rank 8, and one billion parameters/array elements, it recovered:
+
+- architecture `llama`;
+- 40 metadata entries and 5 arrays;
+- 147,209 array elements occupying 1,767,758 framed payload bytes;
+- 272 tensor descriptors;
+- an aligned tensor-data boundary at byte 1,786,144;
+- the first tensor at relative offset zero with shape product 576 and 2,304
+  known F32 bytes.
+
+This probe interprets metadata only, subject to the bounded lookahead above,
+and takes materially longer than the tiny demo because token-string framing is
+validated in MLPL. It is deterministic and
+requires the model path to be inside the selected sw-MLPL filesystem sandbox.

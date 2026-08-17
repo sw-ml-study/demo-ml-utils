@@ -1,0 +1,1 @@
+Add bounded GGUF v3 metadata-array parsing sufficient for real llama.cpp files, especially tokenizer string tokens, F32 scores, and I32 token types. Preserve exact tensor-directory offsets, enforce element/string/catalog budgets, reject nested/unsupported/truncated arrays, add deterministic fixtures and tests, update catalog/docs, and make no changes outside demo-ml-utils.

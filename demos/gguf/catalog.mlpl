@@ -1,15 +1,17 @@
 include "../../src/formats/gguf_catalog.mlpl";
 path = unwrap_or(list_get(args(), 0), "fixtures/gguf/valid-catalog.gguf");
 catalog = u:catalog_gguf(path, 4096, 8, 4, 256, 4, 1000000)?;
+tokenizer = u:catalog_gguf("fixtures/gguf/valid-metadata-arrays.gguf",4096,8,4,256,4,1000000)?;
 print("DEMO: bounded GGUF v3 metadata and tensor-directory catalog");
-print("Scenario: inventory mixed F32, Q8_0, I16, and I8 descriptors without loading any tensor payload.");
-print("Native boundary: file_size and exact bounded read_bytes calls. MLPL work: little-endian fields, metadata types, duplicate names, shape products, alignment, and known extents.");
-print("Budgets: 4096 catalog bytes, 8 metadata entries, 4 tensors, 256-byte strings, rank 4, and 1,000,000 parameters.");
-print("Only header fields and aligned padding are read; tensor payload bytes remain untouched.");
+print("Scenario: inventory mixed tensor descriptors and llama.cpp-style tokenizer token, score, and token-type metadata arrays without loading tensor payloads.");
+print("Native boundary: file_size and exact bounded read_bytes calls. MLPL work: buffered string-array framing, fixed-width scalar/array consumption, little-endian fields, duplicate names, shape products, alignment, and known extents.");
+print("Budgets: 4096 catalog bytes, 8 metadata entries, 4 tensors, 256-byte strings, rank 4, and a shared 1,000,000 parameter/array-element ceiling.");
+print("Numeric arrays use exact chunked reads. String arrays use 4096-byte bounded lookahead, so the last buffer may include but never interpret bytes after the logical array cursor.");
 print("metadata_type_counts indexes the official scalar type IDs; tensor_rows are [relative_offset, parameters, ggml_type_id, known_bytes], where -1 means its extent is not yet established.");
 print("Model-level summary:"); print({version: catalog.version, architecture: catalog.architecture, alignment: catalog.alignment, metadata_count: catalog.metadata_count, tensor_count: catalog.tensor_count, catalog_bytes: catalog.catalog_bytes, data_bytes: catalog.data_bytes});
 print("Metadata type histogram (IDs 0 through 12):"); print(catalog.metadata_type_counts);
 print("Tensor name lengths (matching descriptor order):"); print(catalog.tensor_name_lengths);
 print("Tensor descriptor rows:"); print(catalog.tensor_rows);
-print("Interpretation: alpha is F32 with 16 known bytes; quant is one exact 34-byte Q8_0 block; ints is I16 with 8 known bytes; bytes is I8 with 4 known bytes.");
+print("Tokenizer metadata-array evidence (each row matches its metadata key and is [element_type, elements, payload_bytes]; -1 marks a scalar):"); print({metadata_key_lengths: tokenizer.metadata_name_lengths,array_rows: tokenizer.metadata_array_rows,array_count: tokenizer.array_count,array_elements: tokenizer.array_elements,array_payload_bytes: tokenizer.array_payload_bytes,tensor_rows_after_arrays: tokenizer.tensor_rows});
+print("Interpretation: the tokenizer arrays are consumed under catalog, element, and per-string budgets, leaving the cursor at the exact tensor directory; alpha is F32, quant is Q8_0, ints is I16, and bytes is I8.");
 ok(1)

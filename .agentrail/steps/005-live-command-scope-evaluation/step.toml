@@ -1,4 +1,4 @@
-number = 4
+number = 5
 slug = "live-command-scope-evaluation"
 status = "pending"
 description = "Expand live Agentrail manifest comparison to command option signatures and ex..."

@@ -10,6 +10,7 @@ trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
 u32() { value=$1; file=$2; i=0; while [ "$i" -lt 4 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
 u64() { value=$1; file=$2; i=0; while [ "$i" -lt 8 ]; do byte=$((value % 256)); printf "\\$(printf '%03o' "$byte")" >> "$file"; value=$((value / 256)); i=$((i + 1)); done; }
 string() { text_value=$1; file=$2; text_length=${#text_value}; u64 "$text_length" "$file"; printf '%s' "$text_value" >> "$file"; }
+array_header() { element_type=$1; length=$2; file=$3; u32 9 "$file"; u32 "$element_type" "$file"; u64 "$length" "$file"; }
 
 write_valid() {
   file=$1; offset=${2:-0}; type=${3:-0}; alignment=${4:-32}
@@ -26,6 +27,21 @@ write_valid "$work_dir/valid-small.gguf"
 write_valid "$work_dir/misaligned-offset.gguf" 1
 write_valid "$work_dir/unsupported-tensor-type.gguf" 0 4
 write_valid "$work_dir/invalid-alignment.gguf" 0 0 7
+
+# llama.cpp-style tokenizer metadata arrays followed by one tensor descriptor.
+file="$work_dir/valid-metadata-arrays.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 1 "$file"; u64 7 "$file"
+string general.architecture "$file"; u32 8 "$file"; string llama "$file"
+string tokenizer.ggml.tokens "$file"; array_header 8 3 "$file"; string '<s>' "$file"; string hello "$file"; string ' world' "$file"
+string tokenizer.ggml.scores "$file"; array_header 6 3 "$file"; printf '\000\000\200\077\000\000\000\077\000\000\200\277' >> "$file"
+string tokenizer.ggml.token_type "$file"; array_header 5 3 "$file"; u32 1 "$file"; u32 2 "$file"; u32 4294967295 "$file"
+string custom.f32 "$file"; u32 6 "$file"; printf '\000\000\200\077' >> "$file"
+string custom.i64 "$file"; u32 11 "$file"; printf '\377\377\377\377\377\377\377\377' >> "$file"
+string custom.f64 "$file"; u32 12 "$file"; printf '\000\000\000\000\000\000\360\077' >> "$file"
+string weight "$file"; u32 1 "$file"; u64 4 "$file"; u32 0 "$file"; u64 0 "$file"
+bytes=$(wc -c < "$file" | tr -d ' '); pad=$(((32 - (bytes % 32)) % 32)); i=0; while [ "$i" -lt "$pad" ]; do printf '\000' >> "$file"; i=$((i + 1)); done; i=0; while [ "$i" -lt 16 ]; do printf '\000' >> "$file"; i=$((i + 1)); done
+
+file="$work_dir/nested-metadata-array.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 0 "$file"; u64 1 "$file"; string general.architecture "$file"; array_header 9 0 "$file"
+file="$work_dir/truncated-metadata-array.gguf"; : > "$file"; printf 'GGUF' >> "$file"; u32 3 "$file"; u64 0 "$file"; u64 1 "$file"; string general.architecture "$file"; array_header 8 1 "$file"
 cp "$work_dir/valid-small.gguf" "$work_dir/bad-magic.gguf"; printf 'BAD!' | dd of="$work_dir/bad-magic.gguf" bs=1 count=4 conv=notrunc 2>/dev/null
 dd if="$work_dir/valid-small.gguf" of="$work_dir/truncated.gguf" bs=1 count=20 2>/dev/null
 : > "$work_dir/unsupported-version.gguf"; printf 'GGUF' >> "$work_dir/unsupported-version.gguf"; u32 2 "$work_dir/unsupported-version.gguf"; u64 0 "$work_dir/unsupported-version.gguf"; u64 0 "$work_dir/unsupported-version.gguf"

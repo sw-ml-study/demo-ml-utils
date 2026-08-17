@@ -24,11 +24,17 @@ insufficient iteration, sample, or output budgets fail before payload work.
 ## Attribution and bounds
 
 Native code supplies generic sandboxed `file_size` and bounded `read_bytes`.
-MLPL owns GGUF validation, exact name lookup, signed and Q8_0 decode,
+MLPL owns GGUF validation, bounded tokenizer STRING/F32/I32 metadata-array
+framing, exact name lookup, signed and Q8_0 decode,
 deterministic sampling, Welford updates, state merging, and report creation.
 The format and Q8_0 rules remain pinned to the official
 [GGUF specification](https://github.com/ggml-org/ggml/blob/master/docs/gguf.md)
 and [ggml quantization source](https://github.com/ggml-org/ggml/blob/master/src/ggml-quants.c).
+
+The catalog additionally passes the real SmolLM2 Q8_0 tokenizer-array probe
+documented in [the GGUF catalog report](gguf-catalog.md#real-llamacpp-acceptance),
+so downstream tensor offsets no longer depend on rejecting or guessing across
+STRING token, F32 score, or I32 token-type arrays.
 
 For catalog bytes K, tensors T, decoded parameters P, sample count S, and
 configured payload chunk C, the pass is O(K + T log T + P) time and O(K + T +

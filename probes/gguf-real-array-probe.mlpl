@@ -1,0 +1,5 @@
+include "../src/formats/gguf_catalog.mlpl";
+path=unwrap_or(list_get(args(),0),"fixtures/gguf/valid-metadata-arrays.gguf");
+r=u:catalog_gguf(path,67108864,256,2048,4096,8,1000000000)?;
+print({architecture: r.architecture,metadata: r.metadata_count,arrays: r.array_count,array_elements: r.array_elements,array_payload_bytes: r.array_payload_bytes,tensors: r.tensor_count,catalog_bytes: r.catalog_bytes,first_tensor: take(r.tensor_rows,0,0)});
+ok(1)
