@@ -1,2 +1,10 @@
 include "../src/conversion/safetensors_to_gguf.mlpl";
-path=unwrap_or(list_get(args(),0),""); b={max_header_bytes:4096,max_json_elements:256,max_parameters:1000000,max_payload_bytes:64,max_output_bytes:512,max_string_bytes:64,max_rank:4,max_tensors:1,max_metadata:2,max_iterations:1}; result=u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",path,b)?; if equal(result.values,[-32768,-2,32767])*eq(result.file_bytes,166) { print("PASS oracle artifact generated and self-validated"); ok(1) } else { err("oracle artifact generation mismatch") }
+path=unwrap_or(list_get(args(),0),"");
+b={max_header_bytes:4096,max_json_elements:256,max_parameters:1000000,max_payload_bytes:64,max_output_bytes:512,max_string_bytes:64,max_rank:4,max_tensors:1,max_metadata:2,max_iterations:1};
+result=u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",path,b)?;
+if equal(result.values,[-32768,-2,32767])*eq(result.file_bytes,166) {
+  print("PASS oracle artifact generated and self-validated");
+  ok(1)
+} else {
+  err("oracle artifact generation mismatch")
+}

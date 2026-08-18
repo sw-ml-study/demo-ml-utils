@@ -1,13 +1,17 @@
 include "../../src/formats/safetensors_header.mlpl";
 
-budget = 4096; path = "fixtures/safetensors/valid-small.safetensors";
+budget = 4096;
+path = "fixtures/safetensors/valid-small.safetensors";
 header = u:read_safetensors_header(path, budget)?;
 print("DEMO: bounded Safetensors header inspection");
 print("Scenario: inspect tensor metadata without loading the tensor payload.");
 print("Native boundary: file_size plus two bounded read_bytes calls. MLPL work: safe little-endian length decoding and truncation/budget decisions.");
 print("Budgets: 8-byte prefix, then at most 4096 header bytes; total model size does not control header memory.");
-print("Representative input:"); print({path: path, file_size: header.file_size, declared_header_bytes: header.header_length});
-print("Decoded JSON header text:"); print(decode_bytes(header.header_bytes));
-print("Fail-closed examples (1 means rejected as intended):"); print({truncated: is_err(u:read_safetensors_header("fixtures/safetensors/truncated-header.safetensors", budget)), oversized: is_err(u:read_safetensors_header("fixtures/safetensors/oversized-header.safetensors", budget)), hostile_u64: is_err(u:read_safetensors_header("fixtures/safetensors/overflow-length.safetensors", budget))});
+print("Representative input:");
+print({path: path, file_size: header.file_size, declared_header_bytes: header.header_length});
+print("Decoded JSON header text:");
+print(decode_bytes(header.header_bytes));
+print("Fail-closed examples (1 means rejected as intended):");
+print({truncated: is_err(u:read_safetensors_header("fixtures/safetensors/truncated-header.safetensors", budget)), oversized: is_err(u:read_safetensors_header("fixtures/safetensors/oversized-header.safetensors", budget)), hostile_u64: is_err(u:read_safetensors_header("fixtures/safetensors/overflow-length.safetensors", budget))});
 print("Interpretation: metadata is available after bounded reads, while malformed length claims are rejected before a payload allocation.");
 ok(1)

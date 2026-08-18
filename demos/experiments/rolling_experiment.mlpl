@@ -1,6 +1,27 @@
-include "../../src/experiments/split_lift.mlpl"; include "../../src/experiments/rolling_experiment.mlpl";
-d1={train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[13,19]}}; d2={train:{ids:[111,112,211,212],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[3,5,9,11]},evaluation:{ids:[113,213],groups:[1,2],inputs:[20,20],targets:[25,31]}}; b={max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64,max_nodes:8,max_edges:8,max_output_bytes:8192}; r=u:rolling_report(d1,d2,b)?;
-print("DEMO: inspectable two-window composed experiment"); print("Scenario: retrain two regional offsets in each rolling window, feed a visible window signal into predictions, and ensemble symmetric members before held-out scoring."); print("Native boundary: generic records, arrays, JSON, loops, and reductions come from sw-MLPL. MLPL owns Split validation, grouped fitting, Feed, Ensemble, parity, graph construction, and validation."); print("Budgets: two windows, four training and two evaluation rows each, two groups, seven graph nodes, six edges, and at most 8192 encoded output bytes.");
-print("Window 1 evidence:"); print(r.windows.window_1); print("Window 2 evidence:"); print(r.windows.window_2); print("Inspectable computation IR:"); print(r.ir); print("Independent validation:"); print(r.independent_validation);
-print("Output explanation:"); print({window_1:"group offsets 2/8 + input 10 + fed signal 1 -> 13/19",window_2:"refitted offsets 3/9 + input 20 + fed signal 2 -> 25/31",ensemble:"members are one below/above each fed prediction, so their mean preserves it"});
-print("COMPOSITION Split+Lift+Feed+Ensemble=demonstrated"); print("IR schema=sw-ml-study.composable-experiment version=1"); print("PARITY explicit_equals_composed=yes"); print("VALIDATION independent_round_trip=yes"); print("CLASSIFICATION cross_repo_blockers=none"); print("Interpretation: the second window visibly refits changed regional offsets rather than reusing stale state. Stable graph nodes explain the path from split provenance through fitted artifacts and fed signals to ensemble metrics, while explicit arithmetic matches the composed outputs exactly."); ok(1)
+include "../../src/experiments/split_lift.mlpl";
+include "../../src/experiments/rolling_experiment.mlpl";
+d1={train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[13,19]}};
+d2={train:{ids:[111,112,211,212],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[3,5,9,11]},evaluation:{ids:[113,213],groups:[1,2],inputs:[20,20],targets:[25,31]}};
+b={max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64,max_nodes:8,max_edges:8,max_output_bytes:8192};
+r=u:rolling_report(d1,d2,b)?;
+print("DEMO: inspectable two-window composed experiment");
+print("Scenario: retrain two regional offsets in each rolling window, feed a visible window signal into predictions, and ensemble symmetric members before held-out scoring.");
+print("Native boundary: generic records, arrays, JSON, loops, and reductions come from sw-MLPL. MLPL owns Split validation, grouped fitting, Feed, Ensemble, parity, graph construction, and validation.");
+print("Budgets: two windows, four training and two evaluation rows each, two groups, seven graph nodes, six edges, and at most 8192 encoded output bytes.");
+print("Window 1 evidence:");
+print(r.windows.window_1);
+print("Window 2 evidence:");
+print(r.windows.window_2);
+print("Inspectable computation IR:");
+print(r.ir);
+print("Independent validation:");
+print(r.independent_validation);
+print("Output explanation:");
+print({window_1:"group offsets 2/8 + input 10 + fed signal 1 -> 13/19",window_2:"refitted offsets 3/9 + input 20 + fed signal 2 -> 25/31",ensemble:"members are one below/above each fed prediction, so their mean preserves it"});
+print("COMPOSITION Split+Lift+Feed+Ensemble=demonstrated");
+print("IR schema=sw-ml-study.composable-experiment version=1");
+print("PARITY explicit_equals_composed=yes");
+print("VALIDATION independent_round_trip=yes");
+print("CLASSIFICATION cross_repo_blockers=none");
+print("Interpretation: the second window visibly refits changed regional offsets rather than reusing stale state. Stable graph nodes explain the path from split provenance through fitted artifacts and fed signals to ensemble metrics, while explicit arithmetic matches the composed outputs exactly.");
+ok(1)

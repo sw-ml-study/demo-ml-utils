@@ -11,6 +11,7 @@ print("Sorted header keys (__metadata__ is provenance, not a tensor):");
 print(catalog.header_keys);
 print("Aggregate result:");
 print({tensor_count: catalog.tensor_count, parameter_count: catalog.parameter_count, tensor_bytes: catalog.tensor_bytes, data_bytes: catalog.data_bytes, metadata_present: catalog.metadata_present});
-print("Name-ordered rows are [start_byte, end_byte, parameters, dtype_bytes]:"); print(catalog.rows_by_name);
+print("Name-ordered rows are [start_byte, end_byte, parameters, dtype_bytes]:");
+print(catalog.rows_by_name);
 print("Interpretation: three tensors contain four parameters in six contiguous payload bytes; the zero-length F32 tensor is valid and visible.");
 ok(1)

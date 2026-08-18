@@ -1,7 +1,17 @@
 include "../src/formats/safetensors_slice.mlpl";
 
-def u:require_slice(condition, message) { "Return Ok for a true slice invariant."; if condition { ok(1) } else { err(message) } }
-def u:read_fixture(name, budget) { "Read a named tensor from the decoder fixture."; u:read_safetensors_tensor("fixtures/safetensors/valid-decode.safetensors", name, 4096, 256, 1000000, budget) }
+def u:require_slice(condition, message) {
+  "Return Ok for a true slice invariant.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:read_fixture(name, budget) {
+  "Read a named tensor from the decoder fixture.";
+  u:read_safetensors_tensor("fixtures/safetensors/valid-decode.safetensors", name, 4096, 256, 1000000, budget)
+}
 
 u8 = u:read_fixture("u8_values", 3)?;
 u:require_slice(equal(u8.values, [0,127,255]), "U8 golden decode")?;

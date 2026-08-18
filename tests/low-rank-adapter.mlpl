@@ -1,17 +1,35 @@
 include "../src/adaptation/low_rank_adapter.mlpl";
-def u:lareq(v,m) { "Require one low-rank adapter invariant."; if v { ok(1) } else { err(m) } }
-def u:lab(rank,steps,iterations,rate,parameter,curve,output) { "Return bounded low-rank adapter limits."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:32,max_fingerprint_elements:32,max_fingerprint_bytes:512,max_dataset_bytes:2048,max_json_depth:8,max_json_elements:4096,max_output_bytes: output,max_adapter_elements:128,max_adapter_rank: rank,max_base_parameters:32,max_adapter_parameters:32,min_learning_rate:0.000001,max_learning_rate: rate,max_steps: steps,max_tolerance:1,max_iterations: iterations,max_gradient_norm:1000,max_abs_parameter: parameter,max_loss:10000,max_parity_error:0.0000000001,max_curve_points: curve} }
-b=u:lab(2,300,300,1,100,301,65536); base=reshape(fill([6],0),[2,3]); initial_b=reshape([0.1,-0.1],[2,1]); initial_a=reshape([0.5,0.5,0.5],[1,3]); config={learning_rate:0.05,max_steps:200,tolerance:0.00001}; trained=u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,b)?; r=trained.report;
+def u:lareq(v,m) {
+  "Require one low-rank adapter invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:lab(rank,steps,iterations,rate,parameter,curve,output) {
+  "Return bounded low-rank adapter limits.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:32,max_fingerprint_elements:32,max_fingerprint_bytes:512,max_dataset_bytes:2048,max_json_depth:8,max_json_elements:4096,max_output_bytes: output,max_adapter_elements:128,max_adapter_rank: rank,max_base_parameters:32,max_adapter_parameters:32,min_learning_rate:0.000001,max_learning_rate: rate,max_steps: steps,max_tolerance:1,max_iterations: iterations,max_gradient_norm:1000,max_abs_parameter: parameter,max_loss:10000,max_parity_error:0.0000000001,max_curve_points: curve}
+}
+b=u:lab(2,300,300,1,100,301,65536);
+base=reshape(fill([6],0),[2,3]);
+initial_b=reshape([0.1,-0.1],[2,1]);
+initial_a=reshape([0.5,0.5,0.5],[1,3]);
+config={learning_rate:0.05,max_steps:200,tolerance:0.00001};
+trained=u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,b)?;
+r=trained.report;
 u:lareq(eq(r.rank,1)*equal([r.base_parameters,r.trainable_parameters,r.total_stored_parameters,r.parameter_reduction],[6,5,11,1]),"rank-one parameter counts golden")?;
 u:lareq(equal(r.base_fingerprint,r.final_base_fingerprint)*1-equal(r.initial_adapter_fingerprint,r.final_adapter_fingerprint),"frozen base and trained adapter fingerprints")?;
 u:lareq(lt(r.train.final_loss,0.001)*lt(r.evaluation.loss,0.01)*lt(r.train.merged_factorized_max_error,0.0000000001)*lt(r.evaluation.merged_factorized_max_error,0.0000000001),"adapter loss and parity golden")?;
 u:lareq(lt(reduce(:max,abs(r.merged-reshape([1,2,3,-1,-2,-3],[2,3]))),0.1),"adapter target matrix recovery")?;
 u:lareq(eq(tally(r.train.losses),r.updates+1)*eq(tally(r.train.gradient_norms),r.updates),"adapter trajectory evidence")?;
-rank2=u:adapter_delta(reshape([1,0,0,1],[2,2]),reshape([1,0,0,0,1,0],[2,3]),b)?; u:lareq(eq(rank2.rank,2)*equal(rank2.delta,reshape([1,0,0,0,1,0],[2,3]))*eq(rank2.trainable_parameters,10),"rank-two factor support golden")?;
+rank2=u:adapter_delta(reshape([1,0,0,1],[2,2]),reshape([1,0,0,0,1,0],[2,3]),b)?;
+u:lareq(eq(rank2.rank,2)*equal(rank2.delta,reshape([1,0,0,0,1,0],[2,3]))*eq(rank2.trainable_parameters,10),"rank-two factor support golden")?;
 u:lareq(is_err(u:adapter_delta(reshape([1,0,0,1],[2,2]),reshape([1,0,0,0,1,0],[2,3]),u:lab(1,300,300,1,100,301,65536))),"adapter rank budget rejection")?;
 u:lareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,{learning_rate:5,max_steps:10,tolerance:0},b)),"adapter excessive learning-rate rejection")?;
 u:lareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,u:lab(2,199,300,1,100,301,65536))),"adapter step budget rejection")?;
 u:lareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,u:lab(2,300,100,1,100,301,65536))),"adapter iteration budget rejection")?;
 u:lareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,u:lab(2,300,300,1,0.5,301,65536))),"adapter parameter magnitude rejection")?;
 u:lareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",base,initial_b,initial_a,config,u:lab(2,300,300,1,100,50,65536))),"adapter curve budget rejection")?;
-print("PASS frozen-base low-rank adapter"); ok(1)
+print("PASS frozen-base low-rank adapter");
+ok(1)

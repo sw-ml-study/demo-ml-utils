@@ -1,13 +1,27 @@
 include "../../src/experiments/split_lift.mlpl";
-dataset={train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[12,18]}}; b={max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64}; r=u:split_lift_report(dataset,[1,2],b)?;
+dataset={train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[12,18]}};
+b={max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64};
+r=u:split_lift_report(dataset,[1,2],b)?;
 print("DEMO: explicit Split and Lift-inspired regional learning");
 print("Scenario: two regions share the same input pattern but have offsets 2 and 8. Compare one global mean-offset model with one fitted model per region on held-out rows.");
 print("Native boundary: sw-MLPL supplies arrays, records, loops, reductions, and callable functions. MLPL owns split validation, fitting, prediction, metrics, and explicit-versus-factored comparison.");
 print("Budgets: at most eight training rows, four evaluation rows, four groups, eight rows per group, and 64 identity comparisons; this fixture uses four train rows, two held-out rows, and two groups.");
-print("Split provenance (held-out IDs never enter fit):"); print(r.provenance);
-print("Global baseline:"); print(r.global);
-print("Lift-inspired per-group fitted computations:"); print(r.factored);
-print("Prediction explanation:"); print({region_1: "input 10 + fitted offset 2 = 12",region_2: "input 10 + fitted offset 8 = 18",global_failure: "one offset 5 predicts 15 for both regions",global_mse: r.global.mse,grouped_mse: r.factored.mse});
-print("Explicit two-group parameters:"); print(r.explicit.parameters); print("Factored grouped-fit parameters:"); print(r.factored.parameters);
-print("CONCEPT Split=train-and-evaluation-membership-is-explicit"); print("CONCEPT Lift=one-fitted-parameter-per-group"); print("PARITY explicit_equals_factored=yes"); print("DECISION named_experiment_lift=no"); print("CLASSIFICATION cross_repo_blockers=none");
-print("Interpretation: grouping recovers the two real regional offsets and reduces held-out MSE from 9 to 0. The reusable operation is concretely named grouped fit; a generic experiment.lift wrapper would hide rather than clarify the array/loop behavior at this stage."); ok(1)
+print("Split provenance (held-out IDs never enter fit):");
+print(r.provenance);
+print("Global baseline:");
+print(r.global);
+print("Lift-inspired per-group fitted computations:");
+print(r.factored);
+print("Prediction explanation:");
+print({region_1: "input 10 + fitted offset 2 = 12",region_2: "input 10 + fitted offset 8 = 18",global_failure: "one offset 5 predicts 15 for both regions",global_mse: r.global.mse,grouped_mse: r.factored.mse});
+print("Explicit two-group parameters:");
+print(r.explicit.parameters);
+print("Factored grouped-fit parameters:");
+print(r.factored.parameters);
+print("CONCEPT Split=train-and-evaluation-membership-is-explicit");
+print("CONCEPT Lift=one-fitted-parameter-per-group");
+print("PARITY explicit_equals_factored=yes");
+print("DECISION named_experiment_lift=no");
+print("CLASSIFICATION cross_repo_blockers=none");
+print("Interpretation: grouping recovers the two real regional offsets and reduces held-out MSE from 9 to 0. The reusable operation is concretely named grouped fit; a generic experiment.lift wrapper would hide rather than clarify the array/loop behavior at this stage.");
+ok(1)

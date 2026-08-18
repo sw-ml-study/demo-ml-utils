@@ -1,16 +1,30 @@
 include "../src/quantization/symmetric_roundtrip.mlpl";
-def u:sreq(v,m) { "Require a symmetric quantization invariant."; if v { ok(1) } else { err(m) } }
-def u:sb(value_limit,iterations,outputs,bytes,blocks,scale_iterations) { "Return symmetric quantization budgets."; {max_values: value_limit,max_iterations: iterations,max_output_values: outputs,max_abs_input:1000,max_output_bytes: bytes,max_decode_bytes:4096,max_json_depth:8,max_json_elements:256,max_report_fields:8,max_blocks: blocks,max_scale_iterations: scale_iterations} }
-b=u:sb(64,64,64,128,2,32); source=range(32)-16;
-i8=u:symmetric_i8_encode(source,b)?; i8_round=u:symmetric_i8_decode(i8.bytes,i8.scale,b)?;
+def u:sreq(v,m) {
+  "Require a symmetric quantization invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:sb(value_limit,iterations,outputs,bytes,blocks,scale_iterations) {
+  "Return symmetric quantization budgets.";
+  {max_values: value_limit,max_iterations: iterations,max_output_values: outputs,max_abs_input:1000,max_output_bytes: bytes,max_decode_bytes:4096,max_json_depth:8,max_json_elements:256,max_report_fields:8,max_blocks: blocks,max_scale_iterations: scale_iterations}
+}
+b=u:sb(64,64,64,128,2,32);
+source=range(32)-16;
+i8=u:symmetric_i8_encode(source,b)?;
+i8_round=u:symmetric_i8_decode(i8.bytes,i8.scale,b)?;
 u:sreq(equal(i8.quants,i8_round.quants)*equal(i8.reconstructed,i8_round.values),"symmetric i8 encode/decode round trip")?;
 u:sreq(equal([take(i8.quants,0,0),take(i8.quants,0,16),take(i8.quants,0,31)],[-127,0,119]),"symmetric i8 quant golden")?;
-q8=u:q8_0_encode(source,b)?; independently=u:gguf_decode_q8_0(q8.bytes,1,32)?;
+q8=u:q8_0_encode(source,b)?;
+independently=u:gguf_decode_q8_0(q8.bytes,1,32)?;
 u:sreq(equal(q8.reconstructed,independently.values)*eq(q8.blocks,1)*eq(tally(q8.bytes),34),"Q8_0 independent decoder round trip")?;
 u:sreq(equal(q8.bytes,[8,48,129,137,145,153,161,169,177,185,192,200,208,216,224,232,240,248,0,8,16,24,32,40,48,56,64,71,79,87,95,103,111,119]),"Q8_0 deterministic byte golden")?;
 u:sreq(equal(u:fp16_encode_finite(0.5,32)?,[0,56])*equal(u:fp16_encode_finite(1,32)?,[0,60]),"binary16 byte goldens")?;
 u:sreq(lt(q8.metrics.rmse,0.05)*lt(q8.metrics.max_error,0.07)*gt(q8.metrics.cosine,0.99999),"Q8_0 reconstruction metric bounds")?;
-zeros=u:q8_0_encode(fill([32],0),b)?; u:sreq(equal(zeros.bytes,fill([34],0))*equal(zeros.reconstructed,fill([32],0)),"Q8_0 zero block golden")?;
+zeros=u:q8_0_encode(fill([32],0),b)?;
+u:sreq(equal(zeros.bytes,fill([34],0))*equal(zeros.reconstructed,fill([32],0)),"Q8_0 zero block golden")?;
 u:sreq(is_err(u:q8_0_encode(range(31),b)),"Q8_0 partial block rejection")?;
 u:sreq(is_err(u:q8_0_encode(source,u:sb(31,64,64,128,2,32))),"Q8_0 value budget rejection")?;
 u:sreq(is_err(u:q8_0_encode(source,u:sb(64,31,64,128,2,32))),"Q8_0 iteration budget rejection")?;
@@ -19,4 +33,5 @@ u:sreq(is_err(u:q8_0_encode(source,u:sb(64,64,64,33,2,32))),"Q8_0 byte budget re
 u:sreq(is_err(u:q8_0_encode(source,u:sb(64,64,64,128,0,32))),"Q8_0 block budget rejection")?;
 u:sreq(is_err(u:fp16_encode_finite(1,0))*is_err(u:fp16_encode_finite(pow(10,400),32)),"binary16 invalid input rejection")?;
 u:sreq(is_err(u:symmetric_i8_decode([256],1,b))*is_err(u:symmetric_i8_decode([1],-1,b)),"symmetric i8 decode rejection")?;
-print("PASS symmetric INT8 and Q8_0 round trips"); ok(1)
+print("PASS symmetric INT8 and Q8_0 round trips");
+ok(1)

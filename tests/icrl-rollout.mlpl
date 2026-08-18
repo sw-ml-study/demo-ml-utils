@@ -1,8 +1,25 @@
 include "../src/adaptation/icrl_rollout.mlpl";
-def u:irreq(v,m) { "Require one held-out ICRL invariant."; if v { ok(1) } else { err(m) } }
-def u:irb(rounds,output) { "Return held-out ICRL budgets."; {max_arms:4,max_horizon:8,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons:8,min_reward:0,max_reward:1,max_history_records:8,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_generated_tasks:4,max_generated_records:16,max_training_examples:8,max_parameters:8,max_fingerprint_elements:8,max_fingerprint_bytes:256,max_abs_value:100,min_probability:0.000000001,min_learning_rate:0.000001,max_learning_rate:1,max_steps:100,max_abs_parameter:100,max_curve_points:101,max_deployment_rounds: rounds} }
-b=u:irb(8,32768); built=u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",b)?; r=built.report;
+def u:irreq(v,m) {
+  "Require one held-out ICRL invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:irb(rounds,output) {
+  "Return held-out ICRL budgets.";
+  {max_arms:4,max_horizon:8,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons:8,min_reward:0,max_reward:1,max_history_records:8,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_generated_tasks:4,max_generated_records:16,max_training_examples:8,max_parameters:8,max_fingerprint_elements:8,max_fingerprint_bytes:256,max_abs_value:100,min_probability:0.000000001,min_learning_rate:0.000001,max_learning_rate:1,max_steps:100,max_abs_parameter:100,max_curve_points:101,max_deployment_rounds: rounds}
+}
+b=u:irb(8,32768);
+built=u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",b)?;
+r=built.report;
 u:irreq(equal(r.rollouts.canonical.actions,[0,1,1,1])*equal(r.rollouts.canonical.rewards,[0,1,1,1])*equal(r.rollouts.canonical.features,[0,0,1,2])*eq(r.rollouts.canonical.total_reward,3)*eq(r.rollouts.canonical.total_regret,1),"canonical held-out golden")?;
-u:irreq(equal(r.rollouts.empty_context.actions,[0,1,0,0])*equal(r.rollouts.reward_ablated.actions,[0,1,0,0])*eq(r.rollouts.empty_context.total_reward,1)*eq(r.rollouts.reward_ablated.total_regret,3),"empty and reward ablation golden")?; u:irreq(equal(r.rollouts.shuffled_context.actions,r.rollouts.canonical.actions),"shuffled cumulative-feature invariant")?;
-u:irreq(equal(r.deployment.fingerprint_before,r.deployment.fingerprint_after)*eq(r.deployment.parameter_updates,0)*eq(r.deployment.icrl_claim,1)*eq(r.offline_training.held_out_records_used,0),"frozen deployment and separation")?; u:irreq(equal(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic rollout")?; u:irreq(is_err(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",u:irb(3,32768))),"deployment round budget rejection")?; u:irreq(is_err(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",u:irb(8,100))),"output budget rejection")?;
-print("PASS held-out frozen-policy ICRL rollout"); ok(1)
+u:irreq(equal(r.rollouts.empty_context.actions,[0,1,0,0])*equal(r.rollouts.reward_ablated.actions,[0,1,0,0])*eq(r.rollouts.empty_context.total_reward,1)*eq(r.rollouts.reward_ablated.total_regret,3),"empty and reward ablation golden")?;
+u:irreq(equal(r.rollouts.shuffled_context.actions,r.rollouts.canonical.actions),"shuffled cumulative-feature invariant")?;
+u:irreq(equal(r.deployment.fingerprint_before,r.deployment.fingerprint_after)*eq(r.deployment.parameter_updates,0)*eq(r.deployment.icrl_claim,1)*eq(r.offline_training.held_out_records_used,0),"frozen deployment and separation")?;
+u:irreq(equal(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic rollout")?;
+u:irreq(is_err(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",u:irb(3,32768))),"deployment round budget rejection")?;
+u:irreq(is_err(u:held_out_icrl_report("fixtures/adaptation/tiny-bandits.json",u:irb(8,100))),"output budget rejection")?;
+print("PASS held-out frozen-policy ICRL rollout");
+ok(1)

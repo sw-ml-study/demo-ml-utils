@@ -1,5 +1,100 @@
-def u:tune_check_values(values,b) { "Reject non-finite or excessive numeric cells."; if gt(tally(values),b.max_elements) { err("Tune element budget exceeded") } else { i=0; while lt(i,tally(values)) { v=take(values,0,i); if 1-eq(v,v)+gt(abs(v),b.max_abs_value) { return err("Tune value is non-finite or over magnitude budget") } else { 0 }; i=i+1 }; ok(tally(values)) } }
-def u:tune_check_ids(train_ids,validation_ids,test_ids,b) { "Prove three-way identity separation under a comparison budget."; all_ids=concat(concat(train_ids,validation_ids),test_ids); comparisons=0; i=0; while lt(i,tally(all_ids)) { j=0; while lt(j,i) { comparisons=comparisons+1; if gt(comparisons,b.max_id_comparisons) { return err("Tune identity comparison budget exceeded") } else { 0 }; if eq(take(all_ids,0,i),take(all_ids,0,j)) { return err("Tune split identity leakage or duplicate") } else { 0 }; j=j+1 }; i=i+1 }; ok(comparisons) }
-def u:tune_mse(slope,offset,x,y) { "Score one affine configuration on aligned non-empty data."; if lt(tally(x),1)+1-eq(tally(x),tally(y)) { err("Tune score vectors are empty or misaligned") } else { p=slope*x+offset; e=p-y; ok(reduce_add(e*e)/tally(e)) } }
-def u:tune_select(slope,candidates,x,y,b) { "Score every candidate and choose the first minimum for deterministic ties."; if lt(tally(candidates),1)+gt(tally(candidates),b.max_candidates) { err("Tune candidate set is empty or over budget") } else { scores=[]; best_index=0; best_score=0; i=0; while lt(i,tally(candidates)) { score=u:tune_mse(slope,take(candidates,0,i),x,y)?; scores=concat(scores,score); if eq(i,0)+lt(score,best_score) { best_index=i; best_score=score } else { 0 }; i=i+1 }; ok({candidates: candidates,scores: scores,selected_index: best_index,selected_offset: take(candidates,0,best_index),selected_validation_mse: best_score,tie_break:"lowest candidate index because only strictly smaller scores replace the incumbent"}) } }
-def u:tune_report(dataset,candidates,b) { "Fit a teaching slope, tune an offset on validation, then evaluate held-out data once."; if 1-eq(tally(dataset.train.ids),2)+1-eq(tally(dataset.train.x),2)+1-eq(tally(dataset.train.y),2)+1-eq(tally(dataset.validation.ids),tally(dataset.validation.x))+1-eq(tally(dataset.validation.x),tally(dataset.validation.y))+1-eq(tally(dataset.test.ids),tally(dataset.test.x))+1-eq(tally(dataset.test.x),tally(dataset.test.y)) { err("Tune teaching split shapes are invalid") } else { total=tally(dataset.train.ids)+tally(dataset.validation.ids)+tally(dataset.test.ids); if gt(total,b.max_examples) { err("Tune example budget exceeded") } else { comparisons=u:tune_check_ids(dataset.train.ids,dataset.validation.ids,dataset.test.ids,b)?; u:tune_check_values(concat(concat(concat(dataset.train.x,dataset.train.y),concat(dataset.validation.x,dataset.validation.y)),concat(concat(dataset.test.x,dataset.test.y),candidates)),b)?; dx=take(dataset.train.x,0,1)-take(dataset.train.x,0,0); if eq(dx,0) { err("Tune slope fit requires distinct training inputs") } else { slope=(take(dataset.train.y,0,1)-take(dataset.train.y,0,0))/dx; selection=u:tune_select(slope,candidates,dataset.validation.x,dataset.validation.y,b)?; test_predictions=slope*dataset.test.x+selection.selected_offset; test_mse=u:tune_mse(slope,selection.selected_offset,dataset.test.x,dataset.test.y)?; ok({provenance:{train_ids: dataset.train.ids,validation_ids: dataset.validation.ids,test_ids: dataset.test.ids,id_comparisons: comparisons,leakage_detected:0},fitted:{slope: slope,training_rows:2},selection: selection,held_out:{predictions: test_predictions,targets: dataset.test.y,mse: test_mse,reads_before_selection:0,evaluations:1},budgets:{max_examples: b.max_examples,max_candidates: b.max_candidates,max_elements: b.max_elements,max_id_comparisons: b.max_id_comparisons,max_abs_value: b.max_abs_value},non_goal:"bounded teaching configuration selection, not production hyperparameter optimization",blockers:[]}) } } } }
+def u:tune_check_values(values,b) {
+  "Reject non-finite or excessive numeric cells.";
+  if gt(tally(values),b.max_elements) {
+    err("Tune element budget exceeded")
+  } else {
+    i=0;
+    while lt(i,tally(values)) {
+      v=take(values,0,i);
+      if 1-eq(v,v)+gt(abs(v),b.max_abs_value) {
+        return err("Tune value is non-finite or over magnitude budget")
+      } else {
+        0
+      };
+      i=i+1
+    };
+    ok(tally(values))
+  }
+}
+def u:tune_check_ids(train_ids,validation_ids,test_ids,b) {
+  "Prove three-way identity separation under a comparison budget.";
+  all_ids=concat(concat(train_ids,validation_ids),test_ids);
+  comparisons=0;
+  i=0;
+  while lt(i,tally(all_ids)) {
+    j=0;
+    while lt(j,i) {
+      comparisons=comparisons+1;
+      if gt(comparisons,b.max_id_comparisons) {
+        return err("Tune identity comparison budget exceeded")
+      } else {
+        0
+      };
+      if eq(take(all_ids,0,i),take(all_ids,0,j)) {
+        return err("Tune split identity leakage or duplicate")
+      } else {
+        0
+      };
+      j=j+1
+    };
+    i=i+1
+  };
+  ok(comparisons)
+}
+def u:tune_mse(slope,offset,x,y) {
+  "Score one affine configuration on aligned non-empty data.";
+  if lt(tally(x),1)+1-eq(tally(x),tally(y)) {
+    err("Tune score vectors are empty or misaligned")
+  } else {
+    p=slope*x+offset;
+    e=p-y;
+    ok(reduce_add(e*e)/tally(e))
+  }
+}
+def u:tune_select(slope,candidates,x,y,b) {
+  "Score every candidate and choose the first minimum for deterministic ties.";
+  if lt(tally(candidates),1)+gt(tally(candidates),b.max_candidates) {
+    err("Tune candidate set is empty or over budget")
+  } else {
+    scores=[];
+    best_index=0;
+    best_score=0;
+    i=0;
+    while lt(i,tally(candidates)) {
+      score=u:tune_mse(slope,take(candidates,0,i),x,y)?;
+      scores=concat(scores,score);
+      if eq(i,0)+lt(score,best_score) {
+        best_index=i;
+        best_score=score
+      } else {
+        0
+      };
+      i=i+1
+    };
+    ok({candidates: candidates,scores: scores,selected_index: best_index,selected_offset: take(candidates,0,best_index),selected_validation_mse: best_score,tie_break:"lowest candidate index because only strictly smaller scores replace the incumbent"})
+  }
+}
+def u:tune_report(dataset,candidates,b) {
+  "Fit a teaching slope, tune an offset on validation, then evaluate held-out data once.";
+  if 1-eq(tally(dataset.train.ids),2)+1-eq(tally(dataset.train.x),2)+1-eq(tally(dataset.train.y),2)+1-eq(tally(dataset.validation.ids),tally(dataset.validation.x))+1-eq(tally(dataset.validation.x),tally(dataset.validation.y))+1-eq(tally(dataset.test.ids),tally(dataset.test.x))+1-eq(tally(dataset.test.x),tally(dataset.test.y)) {
+    err("Tune teaching split shapes are invalid")
+  } else {
+    total=tally(dataset.train.ids)+tally(dataset.validation.ids)+tally(dataset.test.ids);
+    if gt(total,b.max_examples) {
+      err("Tune example budget exceeded")
+    } else {
+      comparisons=u:tune_check_ids(dataset.train.ids,dataset.validation.ids,dataset.test.ids,b)?;
+      u:tune_check_values(concat(concat(concat(dataset.train.x,dataset.train.y),concat(dataset.validation.x,dataset.validation.y)),concat(concat(dataset.test.x,dataset.test.y),candidates)),b)?;
+      dx=take(dataset.train.x,0,1)-take(dataset.train.x,0,0);
+      if eq(dx,0) {
+        err("Tune slope fit requires distinct training inputs")
+      } else {
+        slope=(take(dataset.train.y,0,1)-take(dataset.train.y,0,0))/dx;
+        selection=u:tune_select(slope,candidates,dataset.validation.x,dataset.validation.y,b)?;
+        test_predictions=slope*dataset.test.x+selection.selected_offset;
+        test_mse=u:tune_mse(slope,selection.selected_offset,dataset.test.x,dataset.test.y)?;
+        ok({provenance:{train_ids: dataset.train.ids,validation_ids: dataset.validation.ids,test_ids: dataset.test.ids,id_comparisons: comparisons,leakage_detected:0},fitted:{slope: slope,training_rows:2},selection: selection,held_out:{predictions: test_predictions,targets: dataset.test.y,mse: test_mse,reads_before_selection:0,evaluations:1},budgets:{max_examples: b.max_examples,max_candidates: b.max_candidates,max_elements: b.max_elements,max_id_comparisons: b.max_id_comparisons,max_abs_value: b.max_abs_value},non_goal:"bounded teaching configuration selection, not production hyperparameter optimization",blockers:[]})
+      }
+    }
+  }
+}

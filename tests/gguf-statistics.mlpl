@@ -1,8 +1,19 @@
 include "../src/formats/gguf_statistics.mlpl";
-def u:require_gguf_statistics(value,message) { "Require a GGUF statistics invariant."; if value { ok(1) } else { err(message) } }
-def u:fixture_stats(name,chunk,stride,samples,iterations) { "Analyze the mixed GGUF fixture under explicit budgets."; u:gguf_tensor_statistics("fixtures/gguf/valid-catalog.gguf",name,4096,8,4,256,4,1000000,chunk,1,stride,samples,iterations,9) }
+def u:require_gguf_statistics(value,message) {
+  "Require a GGUF statistics invariant.";
+  if value {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:fixture_stats(name,chunk,stride,samples,iterations) {
+  "Analyze the mixed GGUF fixture under explicit budgets.";
+  u:gguf_tensor_statistics("fixtures/gguf/valid-catalog.gguf",name,4096,8,4,256,4,1000000,chunk,1,stride,samples,iterations,9)
+}
 
-i16_one = u:fixture_stats("ints",8,1,4,1)?; i16_chunks = u:fixture_stats("ints",2,1,4,4)?;
+i16_one = u:fixture_stats("ints",8,1,4,1)?;
+i16_chunks = u:fixture_stats("ints",2,1,4,4)?;
 expected_i16 = {count: 4, minimum: -32768, maximum: 32767, sum: 39, mean: 9.75, variance: 536854875.1875};
 u:require_gguf_statistics(equal(i16_one.statistics,expected_i16),"GGUF direct I16 statistics")?;
 u:require_gguf_statistics(equal(i16_chunks.statistics,expected_i16),"GGUF chunk merge parity")?;
@@ -10,10 +21,12 @@ q8 = u:fixture_stats("quant",34,1,32,1)?;
 u:require_gguf_statistics(equal(q8.statistics,{count: 32, minimum: -8, maximum: 7.5, sum: -8, mean: -0.25, variance: 21.3125}),"GGUF Q8_0 statistics")?;
 sampled = u:fixture_stats("quant",34,8,4,1)?;
 u:require_gguf_statistics(equal(sampled.statistics,{count: 4, minimum: -8, maximum: 4, sum: -8, mean: -2, variance: 20}),"GGUF deterministic stride sample")?;
-left = u:gguf_statistics_sample([-8,-4],0,1,u:gguf_statistics_empty()); right = u:gguf_statistics_sample([0,4],0,1,u:gguf_statistics_empty());
+left = u:gguf_statistics_sample([-8,-4],0,1,u:gguf_statistics_empty());
+right = u:gguf_statistics_sample([0,4],0,1,u:gguf_statistics_empty());
 u:require_gguf_statistics(equal(u:gguf_statistics_result(u:gguf_statistics_merge(left,right)),sampled.statistics),"GGUF independent partition merge parity")?;
 u:require_gguf_statistics(is_err(u:fixture_stats("quant",33,1,32,1)),"GGUF sub-block chunk rejection")?;
 u:require_gguf_statistics(is_err(u:fixture_stats("quant",34,1,31,1)),"GGUF sample budget rejection")?;
 u:require_gguf_statistics(is_err(u:fixture_stats("ints",2,1,4,3)),"GGUF iteration budget rejection")?;
 u:require_gguf_statistics(is_err(u:gguf_tensor_statistics("fixtures/gguf/valid-catalog.gguf","ints",4096,8,4,256,4,1000000,2,0,1,4,4,8)),"GGUF output budget rejection")?;
-print("PASS GGUF bounded mergeable statistics"); ok(1)
+print("PASS GGUF bounded mergeable statistics");
+ok(1)

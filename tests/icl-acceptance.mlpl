@@ -1,11 +1,42 @@
 include "../src/adaptation/icl_acceptance.mlpl";
-def u:iclareq(v,m) { "Require one final ICL acceptance invariant."; if v { ok(1) } else { err(m) } }
-def u:iclab(work,context,comparisons,evidence,output,atomic) { "Return final ICL acceptance budgets."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples: context,max_query_examples:4,max_query_elements:32,max_context_query_comparisons: comparisons,max_abs_prediction:1000,max_association_work: work,max_abs_similarity:10,max_abs_contribution:100,max_evidence_elements: evidence,max_atomic_bytes: atomic} }
-def u:icla_path() { "Return the required temporary report path."; unwrap_or(list_get(args(),0),"") }
-path=u:icla_path(); b=u:iclab(64,4,32,64,32768,32768); first=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?; second=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?; controls=u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?;
-u:iclareq(equal(first.json,second.json)*equal(first.ir.variants.few_shot.predictions,[5,7,11])*eq(first.ir.variants.few_shot.mse,0),"reproducible ICL golden")?; u:iclareq(equal(first.ir.deployment.fingerprint_before,first.ir.deployment.fingerprint_after)*eq(first.ir.deployment.updates,0)*equal(controls.report.deployment.fingerprint_before,controls.report.deployment.fingerprint_after),"all accepted paths frozen")?;
-malformed={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{extra:1,ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}}; nonfinite={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{ids:[1],x:[pow(10,400),0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}}; u:iclareq(is_err(u:adaptation_dataset(malformed,b))*is_err(u:adaptation_dataset(nonfinite,b)),"malformed and non-finite data rejection")?;
-base=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?.report.record; duplicate=u:icl_control_record(base,[201,201],base.context.x,base.context.labels); leaked=u:icl_control_record(base,[301,202],base.context.x,base.context.labels); u:iclareq(is_err(u:icl_record_validate(duplicate,b))*is_err(u:icl_record_validate(leaked,b)),"duplicate and query leakage rejection")?;
-u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(11,4,32,64,32768,32768))),"work exhaustion")?; u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,1,32,64,32768,32768))),"context exhaustion")?; u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,4,32,5,32768,32768))),"evidence exhaustion")?; u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,4,32,64,100,32768))),"output exhaustion")?;
-written=u:write_icl_report(path,first,b)?; u:iclareq(eq(written.atomic_write,1)*eq(written.self_validated,1)*equal(read_bytes(path)?,tokenize_bytes(first.json)),"atomic exact and semantic read-back")?; write_atomic(path,[9,8,7])?; u:iclareq(is_err(u:write_icl_report(path,first,u:iclab(64,4,32,64,32768,100)))*equal(read_bytes(path)?,[9,8,7]),"atomic pre-write preservation")?; remove_path(path)?;
-print("PASS final ICL acceptance"); ok(1)
+def u:iclareq(v,m) {
+  "Require one final ICL acceptance invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:iclab(work,context,comparisons,evidence,output,atomic) {
+  "Return final ICL acceptance budgets.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples: context,max_query_examples:4,max_query_elements:32,max_context_query_comparisons: comparisons,max_abs_prediction:1000,max_association_work: work,max_abs_similarity:10,max_abs_contribution:100,max_evidence_elements: evidence,max_atomic_bytes: atomic}
+}
+def u:icla_path() {
+  "Return the required temporary report path.";
+  unwrap_or(list_get(args(),0),"")
+}
+path=u:icla_path();
+b=u:iclab(64,4,32,64,32768,32768);
+first=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?;
+second=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?;
+controls=u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?;
+u:iclareq(equal(first.json,second.json)*equal(first.ir.variants.few_shot.predictions,[5,7,11])*eq(first.ir.variants.few_shot.mse,0),"reproducible ICL golden")?;
+u:iclareq(equal(first.ir.deployment.fingerprint_before,first.ir.deployment.fingerprint_after)*eq(first.ir.deployment.updates,0)*equal(controls.report.deployment.fingerprint_before,controls.report.deployment.fingerprint_after),"all accepted paths frozen")?;
+malformed={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{extra:1,ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}};
+nonfinite={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{ids:[1],x:[pow(10,400),0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}};
+u:iclareq(is_err(u:adaptation_dataset(malformed,b))*is_err(u:adaptation_dataset(nonfinite,b)),"malformed and non-finite data rejection")?;
+base=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?.report.record;
+duplicate=u:icl_control_record(base,[201,201],base.context.x,base.context.labels);
+leaked=u:icl_control_record(base,[301,202],base.context.x,base.context.labels);
+u:iclareq(is_err(u:icl_record_validate(duplicate,b))*is_err(u:icl_record_validate(leaked,b)),"duplicate and query leakage rejection")?;
+u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(11,4,32,64,32768,32768))),"work exhaustion")?;
+u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,1,32,64,32768,32768))),"context exhaustion")?;
+u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,4,32,5,32768,32768))),"evidence exhaustion")?;
+u:iclareq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:iclab(64,4,32,64,100,32768))),"output exhaustion")?;
+written=u:write_icl_report(path,first,b)?;
+u:iclareq(eq(written.atomic_write,1)*eq(written.self_validated,1)*equal(read_bytes(path)?,tokenize_bytes(first.json)),"atomic exact and semantic read-back")?;
+write_atomic(path,[9,8,7])?;
+u:iclareq(is_err(u:write_icl_report(path,first,u:iclab(64,4,32,64,32768,100)))*equal(read_bytes(path)?,[9,8,7]),"atomic pre-write preservation")?;
+remove_path(path)?;
+print("PASS final ICL acceptance");
+ok(1)

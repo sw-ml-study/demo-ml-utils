@@ -1,9 +1,66 @@
-def u:ef_member_low(x) { "Predict with the low ensemble member: 2x."; 2*x }
-def u:ef_member_high(x) { "Predict with the high ensemble member: 2x+2."; 2*x+2 }
-def u:ef_ensemble_predict(x) { "Mean the two ordered member predictions."; (u:ef_member_low(x)+u:ef_member_high(x))/2 }
-def u:ef_stage_one(x) { "Produce a nonlinear upstream feature x squared."; x*x }
-def u:ef_feed_predict(x) { "Feed the upstream square into downstream addition x+square(x)."; x+u:ef_stage_one(x) }
-def u:ef_feed_ablation(x) { "Remove the fed feature so downstream sees only x."; x }
-def u:ef_computations() { "Return inspectable transformed computations sharing one predict interface."; {ensemble: {kind:"predict-computation",name:"mean-of-low-and-high",predict: :u:ef_ensemble_predict},feed: {kind:"predict-computation",name:"square-fed-to-addition",predict: :u:ef_feed_predict},feed_ablation: {kind:"predict-computation",name:"downstream-without-fed-feature",predict: :u:ef_feed_ablation}} }
-def u:ef_evaluate(computation,inputs,targets,b) { "Evaluate any scalar predict computation with aligned bounded vectors."; if lt(tally(inputs),1)+1-eq(tally(inputs),tally(targets))+gt(tally(inputs),b.max_examples) { err("evaluation vectors are empty, misaligned, or over budget") } else { predictions=[]; i=0; while lt(i,tally(inputs)) { value=call(computation.predict,take(inputs,0,i)); if 1-eq(value,value)+gt(abs(value),b.max_abs_value) { return err("prediction is non-finite or over budget") } else { predictions=concat(predictions,value) }; i=i+1 }; errors=predictions-targets; ok({predictions: predictions,mse: reduce_add(errors*errors)/tally(errors)}) } }
-def u:ensemble_feed_report(inputs,ensemble_targets,feed_targets,b) { "Build visible Ensemble disagreement and Feed boundary/ablation evidence."; computations=u:ef_computations(); ensemble=u:ef_evaluate(computations.ensemble,inputs,ensemble_targets,b)?; low=u:ef_evaluate({predict: :u:ef_member_low},inputs,ensemble_targets,b)?; high=u:ef_evaluate({predict: :u:ef_member_high},inputs,ensemble_targets,b)?; feed=u:ef_evaluate(computations.feed,inputs,feed_targets,b)?; ablation=u:ef_evaluate(computations.feed_ablation,inputs,feed_targets,b)?; stage_one=[]; i=0; while lt(i,tally(inputs)) { stage_one=concat(stage_one,u:ef_stage_one(take(inputs,0,i))); i=i+1 }; ensemble_record={member_order:["low: 2x","high: 2x+2"],low_predictions: low.predictions,high_predictions: high.predictions,disagreement: high.predictions-low.predictions,aggregate_predictions: ensemble.predictions,targets: ensemble_targets,low_mse: low.mse,high_mse: high.mse,aggregate_mse: ensemble.mse,aggregation:"ordered arithmetic mean; empty ensembles are not accepted"}; feed_record={stage_one_name:"square",stage_one_output: stage_one,stage_two_input:{original: inputs,fed_feature: stage_one},predictions: feed.predictions,targets: feed_targets,mse: feed.mse,ablation_predictions: ablation.predictions,ablation_mse: ablation.mse}; ok({inputs: inputs,computations: computations,ensemble: ensemble_record,feed: feed_record,closure:{common_evaluator:1,interface:"record with named predict callable"},budgets:{max_examples: b.max_examples,max_abs_value: b.max_abs_value},blockers:[]}) }
+def u:ef_member_low(x) {
+  "Predict with the low ensemble member: 2x.";
+  2*x
+}
+def u:ef_member_high(x) {
+  "Predict with the high ensemble member: 2x+2.";
+  2*x+2
+}
+def u:ef_ensemble_predict(x) {
+  "Mean the two ordered member predictions.";
+  (u:ef_member_low(x)+u:ef_member_high(x))/2
+}
+def u:ef_stage_one(x) {
+  "Produce a nonlinear upstream feature x squared.";
+  x*x
+}
+def u:ef_feed_predict(x) {
+  "Feed the upstream square into downstream addition x+square(x).";
+  x+u:ef_stage_one(x)
+}
+def u:ef_feed_ablation(x) {
+  "Remove the fed feature so downstream sees only x.";
+  x
+}
+def u:ef_computations() {
+  "Return inspectable transformed computations sharing one predict interface.";
+  {ensemble: {kind:"predict-computation",name:"mean-of-low-and-high",predict: :u:ef_ensemble_predict},feed: {kind:"predict-computation",name:"square-fed-to-addition",predict: :u:ef_feed_predict},feed_ablation: {kind:"predict-computation",name:"downstream-without-fed-feature",predict: :u:ef_feed_ablation}}
+}
+def u:ef_evaluate(computation,inputs,targets,b) {
+  "Evaluate any scalar predict computation with aligned bounded vectors.";
+  if lt(tally(inputs),1)+1-eq(tally(inputs),tally(targets))+gt(tally(inputs),b.max_examples) {
+    err("evaluation vectors are empty, misaligned, or over budget")
+  } else {
+    predictions=[];
+    i=0;
+    while lt(i,tally(inputs)) {
+      value=call(computation.predict,take(inputs,0,i));
+      if 1-eq(value,value)+gt(abs(value),b.max_abs_value) {
+        return err("prediction is non-finite or over budget")
+      } else {
+        predictions=concat(predictions,value)
+      };
+      i=i+1
+    };
+    errors=predictions-targets;
+    ok({predictions: predictions,mse: reduce_add(errors*errors)/tally(errors)})
+  }
+}
+def u:ensemble_feed_report(inputs,ensemble_targets,feed_targets,b) {
+  "Build visible Ensemble disagreement and Feed boundary/ablation evidence.";
+  computations=u:ef_computations();
+  ensemble=u:ef_evaluate(computations.ensemble,inputs,ensemble_targets,b)?;
+  low=u:ef_evaluate({predict: :u:ef_member_low},inputs,ensemble_targets,b)?;
+  high=u:ef_evaluate({predict: :u:ef_member_high},inputs,ensemble_targets,b)?;
+  feed=u:ef_evaluate(computations.feed,inputs,feed_targets,b)?;
+  ablation=u:ef_evaluate(computations.feed_ablation,inputs,feed_targets,b)?;
+  stage_one=[];
+  i=0;
+  while lt(i,tally(inputs)) {
+    stage_one=concat(stage_one,u:ef_stage_one(take(inputs,0,i)));
+    i=i+1
+  };
+  ensemble_record={member_order:["low: 2x","high: 2x+2"],low_predictions: low.predictions,high_predictions: high.predictions,disagreement: high.predictions-low.predictions,aggregate_predictions: ensemble.predictions,targets: ensemble_targets,low_mse: low.mse,high_mse: high.mse,aggregate_mse: ensemble.mse,aggregation:"ordered arithmetic mean; empty ensembles are not accepted"};
+  feed_record={stage_one_name:"square",stage_one_output: stage_one,stage_two_input:{original: inputs,fed_feature: stage_one},predictions: feed.predictions,targets: feed_targets,mse: feed.mse,ablation_predictions: ablation.predictions,ablation_mse: ablation.mse};
+  ok({inputs: inputs,computations: computations,ensemble: ensemble_record,feed: feed_record,closure:{common_evaluator:1,interface:"record with named predict callable"},budgets:{max_examples: b.max_examples,max_abs_value: b.max_abs_value},blockers:[]})
+}

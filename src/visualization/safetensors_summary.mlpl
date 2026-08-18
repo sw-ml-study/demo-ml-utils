@@ -1,35 +1,85 @@
 include "../formats/safetensors_statistics.mlpl";
 
-def u:summary_join(left, separator, right) { "Join stable identifier components without native format-specific help."; decode_bytes(concat(tokenize_bytes(left), concat(tokenize_bytes(separator), tokenize_bytes(right)))) }
-
-def u:summary_budget(value, minimum, label) { "Validate an exact scalar budget before analysis or construction.";
-  if (1 - eq(rank(value), 0)) + (1 - eq(value, floor(value))) + lt(value, minimum) + gt(value, 9007199254740991) { err(u:summary_join("invalid ", "", label)) } else { ok(value) }
+def u:summary_join(left, separator, right) {
+  "Join stable identifier components without native format-specific help.";
+  decode_bytes(concat(tokenize_bytes(left), concat(tokenize_bytes(separator), tokenize_bytes(right))))
 }
 
-def u:summary_validate(ir, max_objects) { "Headlessly validate the versioned four-object summary schema.";
+def u:summary_budget(value, minimum, label) {
+  "Validate an exact scalar budget before analysis or construction.";
+  if (1 - eq(rank(value), 0)) + (1 - eq(value, floor(value))) + lt(value, minimum) + gt(value, 9007199254740991) {
+    err(u:summary_join("invalid ", "", label))
+  } else {
+    ok(value)
+  }
+}
+
+def u:summary_validate(ir, max_objects) {
+  "Headlessly validate the versioned four-object summary schema.";
   u:summary_budget(max_objects, 4, "summary object budget")?;
-  if 1 - equal(record_keys(ir), ["provenance","schema","tensor","version"]) { err("summary root schema mismatch") } else {
-  if (1 - equal(ir.schema, "sw-ml-study.safetensors-summary")) + (1 - eq(ir.version, 1)) { err("summary schema version mismatch") } else {
-  if 1 - equal(record_keys(ir.provenance), ["analyzer","artifact_id","format","source"]) { err("summary provenance schema mismatch") } else {
-  if (1 - equal(ir.provenance.format, "safetensors")) + (1 - equal(ir.provenance.analyzer, "mlpl-bounded-integer-statistics")) + (1 - equal(type_of(ir.provenance.artifact_id), "string")) + (1 - equal(type_of(ir.provenance.source), "string")) { err("summary provenance values mismatch") } else {
-  if 1 - equal(record_keys(ir.tensor), ["byte_count","dtype","id","name","shape","statistics"]) { err("summary tensor schema mismatch") } else {
-  if (1 - equal(type_of(ir.tensor.id), "string")) + (1 - equal(type_of(ir.tensor.name), "string")) + (1 - equal(type_of(ir.tensor.dtype), "string")) + (1 - eq(rank(ir.tensor.shape), 1)) + (1 - eq(rank(ir.tensor.byte_count), 0)) { err("summary tensor values mismatch") } else {
-  if 1 - equal(record_keys(ir.tensor.statistics), ["count","maximum","mean","minimum","sum","variance"]) { err("summary statistics schema mismatch") } else {
-  if 1 - equal(ir.tensor.id, u:summary_join(ir.provenance.artifact_id, ":tensor:", ir.tensor.name)) { err("summary tensor stable ID mismatch") } else { ok(1) }
-  } } } } } } }
+  if 1 - equal(record_keys(ir), ["provenance","schema","tensor","version"]) {
+    err("summary root schema mismatch")
+  } else {
+    if (1 - equal(ir.schema, "sw-ml-study.safetensors-summary")) + (1 - eq(ir.version, 1)) {
+      err("summary schema version mismatch")
+    } else {
+      if 1 - equal(record_keys(ir.provenance), ["analyzer","artifact_id","format","source"]) {
+        err("summary provenance schema mismatch")
+      } else {
+        if (1 - equal(ir.provenance.format, "safetensors")) + (1 - equal(ir.provenance.analyzer, "mlpl-bounded-integer-statistics")) + (1 - equal(type_of(ir.provenance.artifact_id), "string")) + (1 - equal(type_of(ir.provenance.source), "string")) {
+          err("summary provenance values mismatch")
+        } else {
+          if 1 - equal(record_keys(ir.tensor), ["byte_count","dtype","id","name","shape","statistics"]) {
+            err("summary tensor schema mismatch")
+          } else {
+            if (1 - equal(type_of(ir.tensor.id), "string")) + (1 - equal(type_of(ir.tensor.name), "string")) + (1 - equal(type_of(ir.tensor.dtype), "string")) + (1 - eq(rank(ir.tensor.shape), 1)) + (1 - eq(rank(ir.tensor.byte_count), 0)) {
+              err("summary tensor values mismatch")
+            } else {
+              if 1 - equal(record_keys(ir.tensor.statistics), ["count","maximum","mean","minimum","sum","variance"]) {
+                err("summary statistics schema mismatch")
+              } else {
+                if 1 - equal(ir.tensor.id, u:summary_join(ir.provenance.artifact_id, ":tensor:", ir.tensor.name)) {
+                  err("summary tensor stable ID mismatch")
+                } else {
+                  ok(1)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-def u:safetensors_summary_json(path, artifact_id, tensor_name, max_header_bytes, max_elements, max_parameters, chunk_bytes, max_objects, max_output_bytes) { "Build, validate, and encode one bounded renderer-neutral tensor summary.";
-  u:summary_budget(max_objects, 4, "summary object budget")?; u:summary_budget(max_output_bytes, 1, "summary output-byte budget")?;
-  if (1 - equal(type_of(path), "string")) + (1 - equal(type_of(artifact_id), "string")) + (1 - equal(type_of(tensor_name), "string")) { err("summary identifiers and source must be strings") } else {
-  descriptor = u:safetensors_tensor_descriptor(path, tensor_name, max_header_bytes, max_elements, max_parameters)?;
-  statistics = u:safetensors_tensor_statistics(path, tensor_name, max_header_bytes, max_elements, max_parameters, chunk_bytes, 6)?;
-  conservative_bytes = 512 + tally(tokenize_bytes(path)) + 2 * tally(tokenize_bytes(artifact_id)) + 2 * tally(tokenize_bytes(tensor_name)) + tally(tokenize_bytes(descriptor.dtype)) + 24 * (tally(descriptor.shape) + 6);
-  if gt(conservative_bytes, max_output_bytes) { err("summary conservative output bound exceeds the configured byte budget") } else {
-  ir = {schema: "sw-ml-study.safetensors-summary", version: 1, provenance: {artifact_id: artifact_id, format: "safetensors", source: path, analyzer: "mlpl-bounded-integer-statistics"}, tensor: {id: u:summary_join(artifact_id, ":tensor:", tensor_name), name: tensor_name, dtype: descriptor.dtype, shape: descriptor.shape, byte_count: descriptor.byte_count, statistics: statistics}};
-  u:summary_validate(ir, max_objects)?; json = to_json(ir)?; utf8_bytes = tally(tokenize_bytes(json));
-  if gt(utf8_bytes, max_output_bytes) { err("summary encoded output exceeds the configured byte budget") } else {
-  decoded = parse_json(json, {max_depth: 8, max_bytes: max_output_bytes, max_elements: 64})?; u:summary_validate(decoded, max_objects)?;
-  if 1 - equal(decoded, ir) { err("summary JSON round trip changed the IR") } else { ok({ir: ir, json: json, utf8_bytes: utf8_bytes}) }
-  } } }
+def u:safetensors_summary_json(path, artifact_id, tensor_name, max_header_bytes, max_elements, max_parameters, chunk_bytes, max_objects, max_output_bytes) {
+  "Build, validate, and encode one bounded renderer-neutral tensor summary.";
+  u:summary_budget(max_objects, 4, "summary object budget")?;
+  u:summary_budget(max_output_bytes, 1, "summary output-byte budget")?;
+  if (1 - equal(type_of(path), "string")) + (1 - equal(type_of(artifact_id), "string")) + (1 - equal(type_of(tensor_name), "string")) {
+    err("summary identifiers and source must be strings")
+  } else {
+    descriptor = u:safetensors_tensor_descriptor(path, tensor_name, max_header_bytes, max_elements, max_parameters)?;
+    statistics = u:safetensors_tensor_statistics(path, tensor_name, max_header_bytes, max_elements, max_parameters, chunk_bytes, 6)?;
+    conservative_bytes = 512 + tally(tokenize_bytes(path)) + 2 * tally(tokenize_bytes(artifact_id)) + 2 * tally(tokenize_bytes(tensor_name)) + tally(tokenize_bytes(descriptor.dtype)) + 24 * (tally(descriptor.shape) + 6);
+    if gt(conservative_bytes, max_output_bytes) {
+      err("summary conservative output bound exceeds the configured byte budget")
+    } else {
+      ir = {schema: "sw-ml-study.safetensors-summary", version: 1, provenance: {artifact_id: artifact_id, format: "safetensors", source: path, analyzer: "mlpl-bounded-integer-statistics"}, tensor: {id: u:summary_join(artifact_id, ":tensor:", tensor_name), name: tensor_name, dtype: descriptor.dtype, shape: descriptor.shape, byte_count: descriptor.byte_count, statistics: statistics}};
+      u:summary_validate(ir, max_objects)?;
+      json = to_json(ir)?;
+      utf8_bytes = tally(tokenize_bytes(json));
+      if gt(utf8_bytes, max_output_bytes) {
+        err("summary encoded output exceeds the configured byte budget")
+      } else {
+        decoded = parse_json(json, {max_depth: 8, max_bytes: max_output_bytes, max_elements: 64})?;
+        u:summary_validate(decoded, max_objects)?;
+        if 1 - equal(decoded, ir) {
+          err("summary JSON round trip changed the IR")
+        } else {
+          ok({ir: ir, json: json, utf8_bytes: utf8_bytes})
+        }
+      }
+    }
+  }
 }

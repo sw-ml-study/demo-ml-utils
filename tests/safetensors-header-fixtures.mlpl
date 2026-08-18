@@ -1,6 +1,13 @@
 include "../src/formats/safetensors_header.mlpl";
 
-def u:require_header(condition, message) { "Return Ok for a true fixture invariant, otherwise a named error."; if condition { ok(1) } else { err(message) } }
+def u:require_header(condition, message) {
+  "Return Ok for a true fixture invariant, otherwise a named error.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
 
 max_header_bytes = 4096;
 

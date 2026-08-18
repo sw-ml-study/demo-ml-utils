@@ -1,10 +1,63 @@
 include "icrl_rollout.mlpl";
 
-def u:icrl_variant_validate(variant,b) { "Validate one aligned rollout history."; rounds=tally(variant.actions); if lt(rounds,1)+gt(rounds,b.max_deployment_rounds)+1-eq(tally(variant.rewards),rounds)+1-eq(tally(variant.features),rounds)+1-eq(tally(variant.action_one_probabilities),rounds)+1-eq(tally(variant.context_lengths),rounds)+1-eq(tally(variant.cumulative_rewards),rounds)+1-eq(tally(variant.cumulative_regret),rounds) { err("ICRL history IR variant alignment mismatch") } else { ok(1) } }
-def u:icrl_ir_validate(ir,b) { "Headlessly validate renderer-neutral ICRL history/curve evidence.";
-  if 1-equal(record_keys(ir),["deployment","provenance","schema","task","variants","version"])+1-equal(ir.schema,"sw-ml-study.icrl-history-ir")+1-eq(ir.version,1)+1-equal(record_keys(ir.variants),["canonical","empty_context","reward_ablated","shuffled_context"]) { err("ICRL history IR root mismatch") } else {
-    if 1-equal(ir.deployment.fingerprint_before,ir.deployment.fingerprint_after)+1-eq(ir.deployment.parameter_updates,0) { err("ICRL history IR frozen deployment mismatch") } else { u:icrl_variant_validate(ir.variants.canonical,b)?; u:icrl_variant_validate(ir.variants.empty_context,b)?; u:icrl_variant_validate(ir.variants.reward_ablated,b)?; u:icrl_variant_validate(ir.variants.shuffled_context,b)?; ok(1) }
+def u:icrl_variant_validate(variant,b) {
+  "Validate one aligned rollout history.";
+  rounds=tally(variant.actions);
+  if lt(rounds,1)+gt(rounds,b.max_deployment_rounds)+1-eq(tally(variant.rewards),rounds)+1-eq(tally(variant.features),rounds)+1-eq(tally(variant.action_one_probabilities),rounds)+1-eq(tally(variant.context_lengths),rounds)+1-eq(tally(variant.cumulative_rewards),rounds)+1-eq(tally(variant.cumulative_regret),rounds) {
+    err("ICRL history IR variant alignment mismatch")
+  } else {
+    ok(1)
   }
 }
-def u:icrl_history_ir(path,b) { "Normalize held-out canonical and ablated rollouts into deterministic renderer-neutral evidence."; source=u:held_out_icrl_report(path,b)?; r=source.report; ir={schema:"sw-ml-study.icrl-history-ir",version:1,provenance:{analyzer:"mlpl-bounded-icrl-acceptance",dataset: path,offline_source_tasks: r.offline_training.source_task_ids,held_out_training_records: r.offline_training.held_out_records_used},task: r.task,deployment: r.deployment,variants: r.rollouts}; u:icrl_ir_validate(ir,b)?; json=to_json(ir,{tagged:1})?; size=tally(tokenize_bytes(json)); if gt(size,b.max_output_bytes) { err("ICRL history IR output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; u:icrl_ir_validate(decoded,b)?; if 1-equal(decoded,ir) { err("ICRL history IR round trip changed") } else { ok({ir: ir,json: json,utf8_bytes: size}) } } }
-def u:write_icrl_report(path,built,b) { "Atomically publish validated ICRL IR and verify exact semantic read-back."; u:icrl_ir_validate(built.ir,b)?; bytes=tokenize_bytes(built.json); if gt(tally(bytes),b.max_atomic_bytes) { err("ICRL atomic byte budget exceeded") } else { write_atomic(path,bytes)?; observed=read_bytes(path)?; if 1-equal(observed,bytes) { err("ICRL atomic exact read-back mismatch") } else { decoded=parse_json(decode_bytes(observed),{max_depth: b.max_json_depth,max_bytes: b.max_atomic_bytes,max_elements: b.max_json_elements})?; u:icrl_ir_validate(decoded,b)?; if 1-equal(decoded,built.ir) { err("ICRL atomic semantic read-back mismatch") } else { ok({path: path,bytes: tally(observed),atomic_write:1,self_validated:1}) } } } }
+def u:icrl_ir_validate(ir,b) {
+  "Headlessly validate renderer-neutral ICRL history/curve evidence.";
+  if 1-equal(record_keys(ir),["deployment","provenance","schema","task","variants","version"])+1-equal(ir.schema,"sw-ml-study.icrl-history-ir")+1-eq(ir.version,1)+1-equal(record_keys(ir.variants),["canonical","empty_context","reward_ablated","shuffled_context"]) {
+    err("ICRL history IR root mismatch")
+  } else {
+    if 1-equal(ir.deployment.fingerprint_before,ir.deployment.fingerprint_after)+1-eq(ir.deployment.parameter_updates,0) {
+      err("ICRL history IR frozen deployment mismatch")
+    } else { u:icrl_variant_validate(ir.variants.canonical,b)?; u:icrl_variant_validate(ir.variants.empty_context,b)?; u:icrl_variant_validate(ir.variants.reward_ablated,b)?; u:icrl_variant_validate(ir.variants.shuffled_context,b)?; ok(1) }
+  }
+}
+def u:icrl_history_ir(path,b) {
+  "Normalize held-out canonical and ablated rollouts into deterministic renderer-neutral evidence.";
+  source=u:held_out_icrl_report(path,b)?;
+  r=source.report;
+  ir={schema:"sw-ml-study.icrl-history-ir",version:1,provenance:{analyzer:"mlpl-bounded-icrl-acceptance",dataset: path,offline_source_tasks: r.offline_training.source_task_ids,held_out_training_records: r.offline_training.held_out_records_used},task: r.task,deployment: r.deployment,variants: r.rollouts};
+  u:icrl_ir_validate(ir,b)?;
+  json=to_json(ir,{tagged:1})?;
+  size=tally(tokenize_bytes(json));
+  if gt(size,b.max_output_bytes) {
+    err("ICRL history IR output budget exceeded")
+  } else {
+    decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+    u:icrl_ir_validate(decoded,b)?;
+    if 1-equal(decoded,ir) {
+      err("ICRL history IR round trip changed")
+    } else {
+      ok({ir: ir,json: json,utf8_bytes: size})
+    }
+  }
+}
+def u:write_icrl_report(path,built,b) {
+  "Atomically publish validated ICRL IR and verify exact semantic read-back.";
+  u:icrl_ir_validate(built.ir,b)?;
+  bytes=tokenize_bytes(built.json);
+  if gt(tally(bytes),b.max_atomic_bytes) {
+    err("ICRL atomic byte budget exceeded")
+  } else {
+    write_atomic(path,bytes)?;
+    observed=read_bytes(path)?;
+    if 1-equal(observed,bytes) {
+      err("ICRL atomic exact read-back mismatch")
+    } else {
+      decoded=parse_json(decode_bytes(observed),{max_depth: b.max_json_depth,max_bytes: b.max_atomic_bytes,max_elements: b.max_json_elements})?;
+      u:icrl_ir_validate(decoded,b)?;
+      if 1-equal(decoded,built.ir) {
+        err("ICRL atomic semantic read-back mismatch")
+      } else {
+        ok({path: path,bytes: tally(observed),atomic_write:1,self_validated:1})
+      }
+    }
+  }
+}

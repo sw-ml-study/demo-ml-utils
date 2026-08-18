@@ -1,6 +1,17 @@
 include "../src/visualization/tensor_city.mlpl";
-def u:require_city(value,message) { "Require a tensor-city invariant."; if value { ok(1) } else { err(message) } }
-def u:fixture_city(objects,tiles,depth,coordinate,iterations,output_bytes,json_elements) { "Build the deterministic catalog-only fixture city."; budgets = {max_header_bytes:4096,max_elements:256,max_catalog_bytes:4096,max_metadata:8,max_tensors:4,max_string_bytes:256,max_rank:4,max_parameters:1000000,max_objects: objects,max_tiles: tiles,max_links:0,max_hierarchy_depth: depth,max_coordinate: coordinate,max_label_bytes:64,max_id_bytes:128,max_iterations: iterations,max_output_bytes: output_bytes,max_json_depth:8,max_json_elements: json_elements}; u:build_tensor_city("fixtures/safetensors/valid-catalog.safetensors","safe-city","fixtures/gguf/valid-catalog.gguf","gguf-city",budgets) }
+def u:require_city(value,message) {
+  "Require a tensor-city invariant.";
+  if value {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:fixture_city(objects,tiles,depth,coordinate,iterations,output_bytes,json_elements) {
+  "Build the deterministic catalog-only fixture city.";
+  budgets = {max_header_bytes:4096,max_elements:256,max_catalog_bytes:4096,max_metadata:8,max_tensors:4,max_string_bytes:256,max_rank:4,max_parameters:1000000,max_objects: objects,max_tiles: tiles,max_links:0,max_hierarchy_depth: depth,max_coordinate: coordinate,max_label_bytes:64,max_id_bytes:128,max_iterations: iterations,max_output_bytes: output_bytes,max_json_depth:8,max_json_elements: json_elements};
+  u:build_tensor_city("fixtures/safetensors/valid-catalog.safetensors","safe-city","fixtures/gguf/valid-catalog.gguf","gguf-city",budgets)
+}
 
 qv17 = u:fixture_city(12,7,1,40,7,32768,4096)?;
 u:require_city(equal(qv17.ir.tensor_columns.name_lengths,[8,8,8,5,5,4,5]),"tensor-city deterministic catalog order")?;
@@ -10,13 +21,17 @@ u:require_city(equal(qv17.ir.tensor_columns.x,[0,2,4,0,2,4,6]) * equal(qv17.ir.t
 u:require_city(equal(qv17.ir.tensor_columns.heights,[3,3,1,5,33,5,5]) * equal(qv17.ir.tensor_columns.y,[1.5,1.5,0.5,2.5,16.5,2.5,2.5]),"tensor-city golden building heights")?;
 u:require_city(equal(qv17.ir.tensor_columns.parameters,[2,2,0,4,32,4,4]) * equal(qv17.ir.tensor_columns.byte_counts,[2,4,0,16,34,8,4]),"tensor-city scalar attributes")?;
 u:require_city(equal(u:city_text(flatten(qv17.ir.tensor_columns.id_bytes),qv17.ir.tensor_columns.id_lengths,4,128),"gguf-city:tensor:quant"),"tensor-city stable ID")?;
-again = u:fixture_city(12,7,1,40,7,32768,4096)?; u:require_city(equal(qv17.json,again.json),"tensor-city deterministic tagged JSON")?;
+again = u:fixture_city(12,7,1,40,7,32768,4096)?;
+u:require_city(equal(qv17.json,again.json),"tensor-city deterministic tagged JSON")?;
 u:require_city(is_err(u:fixture_city(11,7,1,40,7,32768,4096)),"tensor-city object budget rejection")?;
 u:require_city(is_err(u:fixture_city(12,6,1,40,7,32768,4096)),"tensor-city tile budget rejection")?;
 u:require_city(is_err(u:fixture_city(12,7,0,40,7,32768,4096)),"tensor-city hierarchy budget rejection")?;
 u:require_city(is_err(u:fixture_city(12,7,1,32,7,32768,4096)),"tensor-city coordinate budget rejection")?;
 u:require_city(is_err(u:fixture_city(12,7,1,40,6,32768,4096)),"tensor-city iteration budget rejection")?;
 u:require_city(is_err(u:fixture_city(12,7,1,40,7,4096,4096)),"tensor-city output budget rejection")?;
-bad_ids = scatter(flatten(qv17.ir.tensor_columns.id_bytes),0,88); malformed_layout = {count: qv17.ir.tensor_columns.count,name_bytes: qv17.ir.tensor_columns.name_bytes,name_lengths: qv17.ir.tensor_columns.name_lengths,name_depths: qv17.ir.tensor_columns.name_depths,id_bytes: reshape(bad_ids,[7,128]),id_lengths: qv17.ir.tensor_columns.id_lengths,format_codes: qv17.ir.tensor_columns.format_codes,group_ids: qv17.ir.tensor_columns.group_ids,x: qv17.ir.tensor_columns.x,y: qv17.ir.tensor_columns.y,z: qv17.ir.tensor_columns.z,widths: qv17.ir.tensor_columns.widths,depths: qv17.ir.tensor_columns.depths,heights: qv17.ir.tensor_columns.heights,parameters: qv17.ir.tensor_columns.parameters,byte_counts: qv17.ir.tensor_columns.byte_counts}; malformed = {schema: qv17.ir.schema,version: qv17.ir.version,provenance: qv17.ir.provenance,tensor_columns: malformed_layout};
+bad_ids = scatter(flatten(qv17.ir.tensor_columns.id_bytes),0,88);
+malformed_layout = {count: qv17.ir.tensor_columns.count,name_bytes: qv17.ir.tensor_columns.name_bytes,name_lengths: qv17.ir.tensor_columns.name_lengths,name_depths: qv17.ir.tensor_columns.name_depths,id_bytes: reshape(bad_ids,[7,128]),id_lengths: qv17.ir.tensor_columns.id_lengths,format_codes: qv17.ir.tensor_columns.format_codes,group_ids: qv17.ir.tensor_columns.group_ids,x: qv17.ir.tensor_columns.x,y: qv17.ir.tensor_columns.y,z: qv17.ir.tensor_columns.z,widths: qv17.ir.tensor_columns.widths,depths: qv17.ir.tensor_columns.depths,heights: qv17.ir.tensor_columns.heights,parameters: qv17.ir.tensor_columns.parameters,byte_counts: qv17.ir.tensor_columns.byte_counts};
+malformed = {schema: qv17.ir.schema,version: qv17.ir.version,provenance: qv17.ir.provenance,tensor_columns: malformed_layout};
 u:require_city(is_err(u:tensor_city_validate(malformed,12,7,0,1,40,64,128)),"tensor-city malformed stable ID rejection")?;
-print("PASS deterministic tensor-city layout"); ok(1)
+print("PASS deterministic tensor-city layout");
+ok(1)

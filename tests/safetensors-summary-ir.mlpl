@@ -1,7 +1,17 @@
 include "../src/visualization/safetensors_summary.mlpl";
 
-def u:require_summary(condition, message) { "Return Ok for a true summary invariant."; if condition { ok(1) } else { err(message) } }
-def u:build_summary(objects, bytes) { "Build the deterministic golden summary."; u:safetensors_summary_json("fixtures/safetensors/valid-decode.safetensors", "fixture-decode", "i16_values", 4096, 256, 1000000, 4, objects, bytes) }
+def u:require_summary(condition, message) {
+  "Return Ok for a true summary invariant.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:build_summary(objects, bytes) {
+  "Build the deterministic golden summary.";
+  u:safetensors_summary_json("fixtures/safetensors/valid-decode.safetensors", "fixture-decode", "i16_values", 4096, 256, 1000000, 4, objects, bytes)
+}
 
 summary = u:build_summary(4, 4096)?;
 u:require_summary(equal(summary.ir.tensor.id, "fixture-decode:tensor:i16_values"), "stable tensor ID")?;

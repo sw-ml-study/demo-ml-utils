@@ -2,4 +2,9 @@ include "../src/formats/gguf_statistics.mlpl";
 path = unwrap_or(list_get(args(),0),"");
 report = u:gguf_tensor_statistics(path,"zeros",4096,2,1,64,1,1048576,256,0,1,1048576,4096,9)?;
 expected = {count: 1048576, minimum: 0, maximum: 0, sum: 0, mean: 0, variance: 0};
-if equal(report.statistics,expected) * eq(report.iterations,4096) * eq(report.decoded_values,1048576) { print("PASS sparse GGUF bounded-memory acceptance"); ok(1) } else { err("sparse GGUF statistics mismatch") }
+if equal(report.statistics,expected) * eq(report.iterations,4096) * eq(report.decoded_values,1048576) {
+  print("PASS sparse GGUF bounded-memory acceptance");
+  ok(1)
+} else {
+  err("sparse GGUF statistics mismatch")
+}

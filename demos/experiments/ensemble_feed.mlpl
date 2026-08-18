@@ -4,9 +4,18 @@ print("DEMO: Ensemble disagreement and Feed composition");
 print("Scenario: average two deliberately biased predictors, then feed a visible squared feature from one stage into a downstream addition and compare it with removing that connection.");
 print("Native boundary: sw-MLPL supplies callable records, arrays, loops, and reductions. MLPL owns member ordering, aggregation, staged feature flow, shared evaluation, metrics, and ablation.");
 print("Budgets: three examples under an eight-example ceiling; predictions and intermediates have magnitude at most 100; empty or misaligned evaluations fail before iteration.");
-print("Ensemble members disagree by two at every input:"); print(r.ensemble);
-print("Ensemble explanation:"); print({input_2:"members predict 4 and 6",mean:"(4 + 6) / 2 = 5",target:5,result:"the opposing biases cancel; aggregate MSE is 0 versus member MSE 1"});
-print("Feed intermediate boundary and ablation:"); print(r.feed);
-print("Feed explanation:"); print({input_3:"stage one emits 3 squared = 9",stage_two:"original 3 + fed 9 = 12",ablation:"without the fed value, prediction is only 3",ablation_mse: r.feed.ablation_mse});
-print("CONCEPT Ensemble=member-disagreement-then-deterministic-mean"); print("CONCEPT Feed=stage-one-output-becomes-stage-two-feature"); print("CLOSURE transformed_computations_share_evaluator=yes"); print("ABLATION feed_without_stage_one_is_worse=yes"); print("CLASSIFICATION cross_repo_blockers=none");
-print("Interpretation: Ensemble improves because opposite member biases cancel under a declared ordered mean. Feed improves because the squared upstream signal is necessary for the target rule; both transformed records expose the same predict callable interface and use the same evaluator."); ok(1)
+print("Ensemble members disagree by two at every input:");
+print(r.ensemble);
+print("Ensemble explanation:");
+print({input_2:"members predict 4 and 6",mean:"(4 + 6) / 2 = 5",target:5,result:"the opposing biases cancel; aggregate MSE is 0 versus member MSE 1"});
+print("Feed intermediate boundary and ablation:");
+print(r.feed);
+print("Feed explanation:");
+print({input_3:"stage one emits 3 squared = 9",stage_two:"original 3 + fed 9 = 12",ablation:"without the fed value, prediction is only 3",ablation_mse: r.feed.ablation_mse});
+print("CONCEPT Ensemble=member-disagreement-then-deterministic-mean");
+print("CONCEPT Feed=stage-one-output-becomes-stage-two-feature");
+print("CLOSURE transformed_computations_share_evaluator=yes");
+print("ABLATION feed_without_stage_one_is_worse=yes");
+print("CLASSIFICATION cross_repo_blockers=none");
+print("Interpretation: Ensemble improves because opposite member biases cancel under a declared ordered mean. Feed improves because the squared upstream signal is necessary for the target rule; both transformed records expose the same predict callable interface and use the same evaluator.");
+ok(1)

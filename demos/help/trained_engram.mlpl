@@ -5,7 +5,11 @@ print("Scenario: a small sw-MLPL help specialist must propose one of six escalat
 print("Native boundary: sw-MLPL creates the labeled tensors, initializes Engram, differentiates the mean-squared objective, performs Adam updates on CPU, evaluates held-out phrases, and reports the addressed memory. No GPU, Python trainer, network, or hard-coded prediction supplies the result.");
 print("Budgets: 6 classes; 6 training phrases; 6 held-out phrases; 3 token features per phrase; 6 hidden dimensions; bigrams only; 256 hash slots; 160 CPU Adam steps.");
 print("What is trained: Engram's hashed n-gram table, value projection, and concat gate. The first token changes in every held-out phrase, while each decisive second-to-third token bigram was observed in training.");
-print("Before/after held-out evidence:"); print({before_loss: r.before_loss,after_loss: r.after_loss,expected_classes: r.expected_classes,predicted_classes: r.predicted_classes,route_legend: r.route_legend});
-print("Engram memory evidence:"); print(r.memory);
-print("Safety book-end: the trained component proposes a route; it does not authorize an answer, repository read, context disclosure, command, or network call. The existing deterministic evidence and consent contract must validate or override it."); print(r.policy);
-print("Interpretation: this is genuinely trained, but it is a deliberately tiny classifier rather than a conversational language model. Engram is valuable here because repeated local command phrases can be memorized cheaply; documentation retrieval remains the truth source and the non-learned escalation policy remains the authority."); ok(1)
+print("Before/after held-out evidence:");
+print({before_loss: r.before_loss,after_loss: r.after_loss,expected_classes: r.expected_classes,predicted_classes: r.predicted_classes,route_legend: r.route_legend});
+print("Engram memory evidence:");
+print(r.memory);
+print("Safety book-end: the trained component proposes a route; it does not authorize an answer, repository read, context disclosure, command, or network call. The existing deterministic evidence and consent contract must validate or override it.");
+print(r.policy);
+print("Interpretation: this is genuinely trained, but it is a deliberately tiny classifier rather than a conversational language model. Engram is valuable here because repeated local command phrases can be memorized cheaply; documentation retrieval remains the truth source and the non-learned escalation policy remains the authority.");
+ok(1)

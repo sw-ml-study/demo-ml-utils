@@ -1,11 +1,32 @@
-include "../src/experiments/split_lift.mlpl"; include "../src/experiments/rolling_experiment.mlpl";
-def u:rr(c,m) { "Require one rolling experiment golden."; if c { ok(1) } else { err(m) } }
-def u:rd1() { "Return rolling window one."; {train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[13,19]}} }
-def u:rd2() { "Return rolling window two."; {train:{ids:[111,112,211,212],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[3,5,9,11]},evaluation:{ids:[113,213],groups:[1,2],inputs:[20,20],targets:[25,31]}} }
-def u:rb(nodes,edges,bytes) { "Return rolling budgets plus grouped-fit limits."; {max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64,max_nodes: nodes,max_edges: edges,max_output_bytes: bytes} }
-b=u:rb(8,8,8192); r=u:rolling_report(u:rd1(),u:rd2(),b)?;
+include "../src/experiments/split_lift.mlpl";
+include "../src/experiments/rolling_experiment.mlpl";
+def u:rr(c,m) {
+  "Require one rolling experiment golden.";
+  if c {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:rd1() {
+  "Return rolling window one.";
+  {train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[13,19]}}
+}
+def u:rd2() {
+  "Return rolling window two.";
+  {train:{ids:[111,112,211,212],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[3,5,9,11]},evaluation:{ids:[113,213],groups:[1,2],inputs:[20,20],targets:[25,31]}}
+}
+def u:rb(nodes,edges,bytes) {
+  "Return rolling budgets plus grouped-fit limits.";
+  {max_train_rows:8,max_eval_rows:4,max_groups:4,max_rows_per_group:8,max_id_comparisons:64,max_nodes: nodes,max_edges: edges,max_output_bytes: bytes}
+}
+b=u:rb(8,8,8192);
+r=u:rolling_report(u:rd1(),u:rd2(),b)?;
 u:rr(equal(r.windows.window_1.parameters.offsets,[2,8])*equal(r.windows.window_2.parameters.offsets,[3,9]),"rolling fitted artifacts golden")?;
 u:rr(equal(r.windows.window_1.aggregate,[13,19])*equal(r.windows.window_2.aggregate,[25,31])*eq(r.windows.window_1.mse,0)*eq(r.windows.window_2.mse,0),"rolling output golden")?;
 u:rr(eq(r.parity,1)*eq(r.round_trip,1)*eq(r.independent_validation.nodes,7)*eq(r.independent_validation.edges,6),"rolling parity and IR golden")?;
-u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(6,8,8192))),"node budget rejection")?; u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(8,5,8192))),"edge budget rejection")?; u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(8,8,100))),"output budget rejection")?;
-print("PASS composed rolling experiment"); ok(1)
+u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(6,8,8192))),"node budget rejection")?;
+u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(8,5,8192))),"edge budget rejection")?;
+u:rr(is_err(u:rolling_report(u:rd1(),u:rd2(),u:rb(8,8,100))),"output budget rejection")?;
+print("PASS composed rolling experiment");
+ok(1)

@@ -1,47 +1,545 @@
-def u:checkpoint_u(bytes,offset,width) { "Decode one bounded little-endian unsigned field from resident inventory bytes."; if gt(offset+width,tally(bytes)) { return err("checkpoint field is truncated") } else { 0 }; index=0; value=0; multiplier=1; while lt(index,width) { value=value+take(bytes,0,offset+index)*multiplier; multiplier=multiplier*256; index=index+1 }; ok(value) }
-def u:checkpoint_signature(bytes,offset,expected) { "Compare a byte signature without reading beyond the artifact."; if gt(offset+tally(expected),tally(bytes)) { 0 } else { index=0; same=1; while lt(index,tally(expected)) { same=same*eq(take(bytes,0,offset+index),take(expected,0,index)); index=index+1 }; same } }
-def u:checkpoint_bytes_equal(left,right) { "Compare equally long byte vectors by scalar cells."; if 1-eq(tally(left),tally(right)) { 0 } else { index=0; same=1; while lt(index,tally(left)) { same=same*eq(take(left,0,index),take(right,0,index)); index=index+1 }; same } }
-def u:checkpoint_name_safe(name_bytes) { "Reject absolute, traversal, backslash, empty, and NUL ZIP member names."; if eq(tally(name_bytes),0) { 0 } else { safe=1-eq(take(name_bytes,0,0),47); index=0; while lt(index,tally(name_bytes)) { byte=take(name_bytes,0,index); if eq(byte,0)+eq(byte,92) { safe=0 } else { 0 }; if eq(byte,46) { if lt(index+1,tally(name_bytes)) { if eq(take(name_bytes,0,index+1),46) { before=if eq(index,0) { 47 } else { take(name_bytes,0,index-1) }; after=if eq(index+2,tally(name_bytes)) { 47 } else { take(name_bytes,0,index+2) }; if eq(before,47)*eq(after,47) { safe=0 } else { 0 } } else { 0 } } else { 0 } } else { 0 }; index=index+1 }; safe } }
-def u:checkpoint_append_name(name_bytes,table,lengths,width) { "Append one bounded ZIP member name to a fixed-width table."; if gt(tally(name_bytes),width) { err("checkpoint member name budget exceeded") } else { ok({table: concat(table,concat(name_bytes,fill([width-tally(name_bytes)],0))),lengths: concat(lengths,tally(name_bytes))}) } }
-def u:checkpoint_prior_name(name_bytes,table,lengths,count,width) { "Detect a duplicate exact ZIP member name."; found=0; index=0; while lt(index,count) { row=take(reshape(table,[count,width]),0,index); prior=compress(lt(range(width),take(lengths,0,index)),row); if u:checkpoint_bytes_equal(prior,name_bytes) { found=1 } else { 0 }; index=index+1 }; found }
-def u:pickle_newline(bytes,cursor,max_string_bytes) { "Find one bounded newline-terminated pickle text argument."; start=cursor; while lt(cursor,tally(bytes))*1-eq(take(bytes,0,cursor),10) { if gt(cursor-start,max_string_bytes-1) { return err("pickle text argument budget exceeded") } else { 0 }; cursor=cursor+1 }; if gt(cursor,tally(bytes)-1) { err("pickle text argument is truncated") } else { ok({next: cursor+1,length: cursor-start}) } }
-def u:passive_pickle_inventory(bytes,b) { "Passively inventory known pickle opcodes without evaluating their stack semantics.";
-  if gt(tally(bytes),b.max_pickle_bytes) { err("pickle byte budget exceeded") } else { cursor=0; opcodes=0; declarative=0; dangerous=0; global_ops=0; reduce_ops=0; constructor_ops=0; extension_ops=0; persistence_ops=0; memo_ops=0; strings=0; string_bytes=0; depth=0; max_depth_seen=0; protocol=-1; stopped=0;
-  while lt(cursor,tally(bytes)) { if gt(opcodes,b.max_opcodes-1)+gt(opcodes,b.max_iterations-1) { return err("pickle opcode or iteration budget exceeded") } else { 0 }; opcode=take(bytes,0,cursor); cursor=cursor+1; opcodes=opcodes+1;
-    if eq(opcode,128) { protocol=u:checkpoint_u(bytes,cursor,1)?; cursor=cursor+1; declarative=declarative+1 } else {
-    if eq(opcode,46) { stopped=1; declarative=declarative+1; if 1-eq(cursor,tally(bytes)) { return err("pickle bytes follow STOP") } else { 0 } } else {
-    if eq(opcode,40) { depth=depth+1; if gt(depth,b.max_depth) { return err("pickle mark depth budget exceeded") } else { 0 }; if gt(depth,max_depth_seen) { max_depth_seen=depth } else { 0 }; declarative=declarative+1 } else {
-    if eq(opcode,101)+eq(opcode,117)+eq(opcode,116) { if lt(depth,1) { return err("pickle mark stack underflow") } else { depth=depth-1 }; declarative=declarative+1 } else {
-    if eq(opcode,113) { u:checkpoint_u(bytes,cursor,1)?; cursor=cursor+1; memo_ops=memo_ops+1; declarative=declarative+1 } else {
-    if eq(opcode,114) { u:checkpoint_u(bytes,cursor,4)?; cursor=cursor+4; memo_ops=memo_ops+1; declarative=declarative+1 } else {
-    if eq(opcode,104)+eq(opcode,106) { width=if eq(opcode,104) { 1 } else { 4 }; u:checkpoint_u(bytes,cursor,width)?; cursor=cursor+width; memo_ops=memo_ops+1; declarative=declarative+1 } else {
-    if eq(opcode,88) { length=u:checkpoint_u(bytes,cursor,4)?; cursor=cursor+4; if gt(length,b.max_string_bytes)+gt(cursor+length,tally(bytes)) { return err("pickle string length or truncation failure") } else { 0 }; cursor=cursor+length; strings=strings+1; string_bytes=string_bytes+length; declarative=declarative+1 } else {
-    if eq(opcode,140) { length=u:checkpoint_u(bytes,cursor,1)?; cursor=cursor+1; if gt(length,b.max_string_bytes)+gt(cursor+length,tally(bytes)) { return err("pickle short string length or truncation failure") } else { 0 }; cursor=cursor+length; strings=strings+1; string_bytes=string_bytes+length; declarative=declarative+1 } else {
-    if eq(opcode,75)+eq(opcode,74)+eq(opcode,77) { width=if eq(opcode,75) { 1 } else { if eq(opcode,77) { 2 } else { 4 } }; u:checkpoint_u(bytes,cursor,width)?; cursor=cursor+width; declarative=declarative+1 } else {
-    if eq(opcode,125)+eq(opcode,93)+eq(opcode,41)+eq(opcode,78)+eq(opcode,136)+eq(opcode,137)+eq(opcode,115)+eq(opcode,97)+eq(opcode,134)+eq(opcode,133)+eq(opcode,135) { declarative=declarative+1 } else {
-    if eq(opcode,99) { first=u:pickle_newline(bytes,cursor,b.max_string_bytes)?; second=u:pickle_newline(bytes,first.next,b.max_string_bytes)?; cursor=second.next; strings=strings+2; string_bytes=string_bytes+first.length+second.length; dangerous=dangerous+1; global_ops=global_ops+1 } else {
-    if eq(opcode,147) { dangerous=dangerous+1; global_ops=global_ops+1 } else {
-    if eq(opcode,82) { dangerous=dangerous+1; reduce_ops=reduce_ops+1 } else {
-    if eq(opcode,105)+eq(opcode,111)+eq(opcode,129)+eq(opcode,146)+eq(opcode,98) { dangerous=dangerous+1; constructor_ops=constructor_ops+1 } else {
-    if eq(opcode,130)+eq(opcode,131)+eq(opcode,132) { width=if eq(opcode,130) { 1 } else { if eq(opcode,131) { 2 } else { 4 } }; u:checkpoint_u(bytes,cursor,width)?; cursor=cursor+width; dangerous=dangerous+1; extension_ops=extension_ops+1 } else {
-    if eq(opcode,80) { argument=u:pickle_newline(bytes,cursor,b.max_string_bytes)?; cursor=argument.next; strings=strings+1; string_bytes=string_bytes+argument.length; dangerous=dangerous+1; persistence_ops=persistence_ops+1 } else {
-    if eq(opcode,81) { dangerous=dangerous+1; persistence_ops=persistence_ops+1 } else { return err("pickle contains an unknown or unsupported opcode") }
-    } } } } } } } } } } } } } } } } } };
-  if (1-stopped)+gt(memo_ops,b.max_memo_entries)+gt(strings,b.max_strings)+gt(string_bytes,b.max_total_string_bytes) { err("pickle terminator, memo, or string budget failure") } else { risk=if gt(dangerous,0) { "high" } else { "declarative-inventory-only" }; ok({protocol: protocol,opcode_count: opcodes,declarative_opcodes: declarative,dangerous_opcodes: dangerous,global_opcodes: global_ops,reduce_opcodes: reduce_ops,constructor_opcodes: constructor_ops,extension_opcodes: extension_ops,persistence_opcodes: persistence_ops,memo_opcodes: memo_ops,string_count: strings,string_bytes: string_bytes,max_mark_depth: max_depth_seen,risk: risk,execution_performed:0}) }
+def u:checkpoint_u(bytes,offset,width) {
+  "Decode one bounded little-endian unsigned field from resident inventory bytes.";
+  if gt(offset+width,tally(bytes)) {
+    return err("checkpoint field is truncated")
+  } else {
+    0
+  };
+  index=0;
+  value=0;
+  multiplier=1;
+  while lt(index,width) {
+    value=value+take(bytes,0,offset+index)*multiplier;
+    multiplier=multiplier*256;
+    index=index+1
+  };
+  ok(value)
+}
+def u:checkpoint_signature(bytes,offset,expected) {
+  "Compare a byte signature without reading beyond the artifact.";
+  if gt(offset+tally(expected),tally(bytes)) {
+    0
+  } else {
+    index=0;
+    same=1;
+    while lt(index,tally(expected)) {
+      same=same*eq(take(bytes,0,offset+index),take(expected,0,index));
+      index=index+1
+    };
+    same
   }
 }
-def u:checkpoint_inventory(path,b) { "Validate exactly one stored data.pkl ZIP member and passively inventory its pickle opcodes.";
-  size=file_size(path)?; if gt(size,b.max_artifact_bytes)+lt(b.max_members,1)+lt(b.max_iterations,1) { err("checkpoint artifact, member, or iteration budget exceeded") } else { bytes=read_bytes(path,0,size)?; if 1-u:checkpoint_signature(bytes,0,[80,75,3,4]) { err("checkpoint local header is missing") } else {
-  flags=u:checkpoint_u(bytes,6,2)?; method=u:checkpoint_u(bytes,8,2)?; compressed=u:checkpoint_u(bytes,18,4)?; uncompressed=u:checkpoint_u(bytes,22,4)?; name_length=u:checkpoint_u(bytes,26,2)?; extra_length=u:checkpoint_u(bytes,28,2)?; data_start=30+name_length; data_end=data_start+compressed;
-  if gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length,0)+gt(name_length,b.max_string_bytes)+gt(data_end,size) { err("checkpoint local member policy mismatch") } else { name_bytes=flatten(compress(gt(range(size),29)*lt(range(size),data_start),bytes)); if (1-u:checkpoint_name_safe(name_bytes))+(1-equal(decode_bytes(name_bytes),"data.pkl")) { err("checkpoint requires one safe data.pkl member") } else { if u:checkpoint_signature(bytes,data_end,[80,75,3,4]) { err("checkpoint additional or duplicate member rejected") } else {
-  central=data_end; if 1-u:checkpoint_signature(bytes,central,[80,75,1,2]) { err("checkpoint central directory is missing") } else { central_flags=u:checkpoint_u(bytes,central+8,2)?; central_method=u:checkpoint_u(bytes,central+10,2)?; central_compressed=u:checkpoint_u(bytes,central+20,4)?; central_uncompressed=u:checkpoint_u(bytes,central+24,4)?; central_name_length=u:checkpoint_u(bytes,central+28,2)?; central_extra=u:checkpoint_u(bytes,central+30,2)?; central_comment=u:checkpoint_u(bytes,central+32,2)?; central_disk=u:checkpoint_u(bytes,central+34,2)?; local_offset=u:checkpoint_u(bytes,central+42,4)?; central_end=central+46+central_name_length+central_extra+central_comment;
-  if gt(central_end,size)+gt(band(central_flags,1),0)+1-eq(central_method,0)+1-eq(central_compressed,compressed)+1-eq(central_uncompressed,uncompressed)+gt(central_extra+central_comment+central_disk+local_offset,0) { err("checkpoint central directory policy mismatch") } else { central_name=flatten(compress(gt(range(size),central+45)*lt(range(size),central+46+central_name_length),bytes)); if 1-equal(decode_bytes(name_bytes),decode_bytes(central_name)) { err("checkpoint local/central name mismatch") } else {
-  eocd=central_end; if 1-u:checkpoint_signature(bytes,eocd,[80,75,5,6]) { err("checkpoint end record is missing") } else { disk=u:checkpoint_u(bytes,eocd+4,2)?; start_disk=u:checkpoint_u(bytes,eocd+6,2)?; disk_entries=u:checkpoint_u(bytes,eocd+8,2)?; total_entries=u:checkpoint_u(bytes,eocd+10,2)?; central_size=u:checkpoint_u(bytes,eocd+12,4)?; central_offset=u:checkpoint_u(bytes,eocd+16,4)?; comment_length=u:checkpoint_u(bytes,eocd+20,2)?; if 1-eq(eocd+22+comment_length,size)+gt(disk+start_disk+comment_length,0)+1-eq(disk_entries,1)+1-eq(total_entries,1)+1-eq(central_offset,central)+1-eq(central_size,eocd-central) { err("checkpoint end record mismatch") } else { pickle_bytes=flatten(compress(gt(range(size),data_start-1)*lt(range(size),data_end),bytes)); pickle=u:passive_pickle_inventory(pickle_bytes,b)?; report={schema:"sw-ml-study.checkpoint-risk",version:1,container:{format:"zip-stored-single-disk",artifact_bytes: size,member_count:1,central_entries:1,data_pickle_bytes: tally(pickle_bytes)},pickle: pickle,policy:{deserialization:"never",opcode_execution:"never",dangerous_acceptance:"report-high-risk-only"}}; json=to_json(report)?; encoded=tally(tokenize_bytes(json)); if gt(encoded,b.max_output_bytes) { err("checkpoint report output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("checkpoint risk report round trip changed") } else { ok({report: report,json: json,utf8_bytes: encoded}) } } }
-  } } } } } } } } }
-}
-def u:checkpoint_multi_inventory(path,b) { "Validate bounded stored ZIP members and passively inventory data.pkl opcodes.";
-  size=file_size(path)?; if gt(size,b.max_artifact_bytes) { err("checkpoint artifact byte budget exceeded") } else { bytes=read_bytes(path,0,size)?; cursor=0; members=0; names=fill([0],0); lengths=fill([0],0); rows=fill([0],0); pickle_bytes=fill([0],0);
-  while u:checkpoint_signature(bytes,cursor,[80,75,3,4]) { if gt(members,b.max_members-1)+gt(members,b.max_iterations-1) { return err("checkpoint member or iteration budget exceeded") } else { 0 }; flags=u:checkpoint_u(bytes,cursor+6,2)?; method=u:checkpoint_u(bytes,cursor+8,2)?; compressed=u:checkpoint_u(bytes,cursor+18,4)?; uncompressed=u:checkpoint_u(bytes,cursor+22,4)?; name_length=u:checkpoint_u(bytes,cursor+26,2)?; extra_length=u:checkpoint_u(bytes,cursor+28,2)?; if gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length,0)+gt(name_length,b.max_string_bytes) { return err("checkpoint encrypted, compressed, descriptor, extra, or name policy mismatch") } else { 0 }; data_start=cursor+30+name_length; data_end=data_start+compressed; if gt(data_end,size) { return err("checkpoint member is truncated") } else { 0 }; name_bytes=flatten(compress(gt(range(size),cursor+29)*lt(range(size),data_start),bytes)); if 1-u:checkpoint_name_safe(name_bytes) { return err("checkpoint member name is unsafe") } else { 0 }; if u:checkpoint_prior_name(name_bytes,names,lengths,members,b.max_string_bytes) { return err("checkpoint member name is duplicate") } else { 0 }; appended=u:checkpoint_append_name(name_bytes,names,lengths,b.max_string_bytes)?; names=appended.table; lengths=appended.lengths; rows=concat(rows,[cursor,compressed]); if equal(decode_bytes(name_bytes),"data.pkl") { pickle_bytes=flatten(compress(gt(range(size),data_start-1)*lt(range(size),data_end),bytes)) } else { 0 }; members=members+1; cursor=data_end } };
-  central_start=cursor; central=0; while u:checkpoint_signature(bytes,cursor,[80,75,1,2]) { if gt(central,members-1) { return err("checkpoint central directory has excess entries") } else { 0 }; flags=u:checkpoint_u(bytes,cursor+8,2)?; method=u:checkpoint_u(bytes,cursor+10,2)?; compressed=u:checkpoint_u(bytes,cursor+20,4)?; uncompressed=u:checkpoint_u(bytes,cursor+24,4)?; name_length=u:checkpoint_u(bytes,cursor+28,2)?; extra_length=u:checkpoint_u(bytes,cursor+30,2)?; comment_length=u:checkpoint_u(bytes,cursor+32,2)?; disk=u:checkpoint_u(bytes,cursor+34,2)?; local_offset=u:checkpoint_u(bytes,cursor+42,4)?; end=cursor+46+name_length+extra_length+comment_length; if gt(end,size)+gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length+comment_length+disk,0) { return err("checkpoint central directory policy mismatch") } else { 0 }; expected_row=take(reshape(rows,[members,2]),0,central); if 1-eq(local_offset,take(expected_row,0,0))+1-eq(compressed,take(expected_row,0,1)) { return err("checkpoint local/central directory mismatch") } else { 0 }; central=central+1; cursor=end };
-  if 1-u:checkpoint_signature(bytes,cursor,[80,75,5,6]) { err("checkpoint end-of-central-directory is missing") } else { disk=u:checkpoint_u(bytes,cursor+4,2)?; start_disk=u:checkpoint_u(bytes,cursor+6,2)?; disk_entries=u:checkpoint_u(bytes,cursor+8,2)?; total_entries=u:checkpoint_u(bytes,cursor+10,2)?; central_size=u:checkpoint_u(bytes,cursor+12,4)?; central_offset=u:checkpoint_u(bytes,cursor+16,4)?; comment_length=u:checkpoint_u(bytes,cursor+20,2)?; if gt(cursor+22+comment_length,size)+1-eq(cursor+22+comment_length,size)+gt(disk+start_disk+comment_length,0)+1-eq(disk_entries,members)+1-eq(total_entries,members)+1-eq(central_offset,central_start)+1-eq(central_size,cursor-central_start)+1-eq(central,members)+eq(tally(pickle_bytes),0) { err("checkpoint end record or required data.pkl mismatch") } else { pickle=u:passive_pickle_inventory(pickle_bytes,b)?; report={schema:"sw-ml-study.checkpoint-risk",version:1,container:{format:"zip-stored-single-disk",artifact_bytes: size,member_count: members,central_entries: central,data_pickle_bytes: tally(pickle_bytes)},pickle: pickle,policy:{deserialization:"never",opcode_execution:"never",dangerous_acceptance:"report-high-risk-only"}}; json=to_json(report)?; if gt(tally(tokenize_bytes(json)),b.max_output_bytes) { err("checkpoint report output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("checkpoint risk report round trip changed") } else { ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))}) } } } }
+def u:checkpoint_bytes_equal(left,right) {
+  "Compare equally long byte vectors by scalar cells.";
+  if 1-eq(tally(left),tally(right)) {
+    0
+  } else {
+    index=0;
+    same=1;
+    while lt(index,tally(left)) {
+      same=same*eq(take(left,0,index),take(right,0,index));
+      index=index+1
+    };
+    same
   }
+}
+def u:checkpoint_name_safe(name_bytes) {
+  "Reject absolute, traversal, backslash, empty, and NUL ZIP member names.";
+  if eq(tally(name_bytes),0) {
+    0
+  } else {
+    safe=1-eq(take(name_bytes,0,0),47);
+    index=0;
+    while lt(index,tally(name_bytes)) {
+      byte=take(name_bytes,0,index);
+      if eq(byte,0)+eq(byte,92) {
+        safe=0
+      } else {
+        0
+      };
+      if eq(byte,46) {
+        if lt(index+1,tally(name_bytes)) {
+          if eq(take(name_bytes,0,index+1),46) {
+            before=if eq(index,0) {
+              47
+            } else {
+              take(name_bytes,0,index-1)
+            };
+            after=if eq(index+2,tally(name_bytes)) {
+              47
+            } else {
+              take(name_bytes,0,index+2)
+            };
+            if eq(before,47)*eq(after,47) {
+              safe=0
+            } else {
+              0
+            }
+          } else {
+            0
+          }
+        } else {
+          0
+        }
+      } else {
+        0
+      };
+      index=index+1
+    };
+    safe
+  }
+}
+def u:checkpoint_append_name(name_bytes,table,lengths,width) {
+  "Append one bounded ZIP member name to a fixed-width table.";
+  if gt(tally(name_bytes),width) {
+    err("checkpoint member name budget exceeded")
+  } else {
+    ok({table: concat(table,concat(name_bytes,fill([width-tally(name_bytes)],0))),lengths: concat(lengths,tally(name_bytes))})
+  }
+}
+def u:checkpoint_prior_name(name_bytes,table,lengths,count,width) {
+  "Detect a duplicate exact ZIP member name.";
+  found=0;
+  index=0;
+  while lt(index,count) {
+    row=take(reshape(table,[count,width]),0,index);
+    prior=compress(lt(range(width),take(lengths,0,index)),row);
+    if u:checkpoint_bytes_equal(prior,name_bytes) {
+      found=1
+    } else {
+      0
+    };
+    index=index+1
+  };
+  found
+}
+def u:pickle_newline(bytes,cursor,max_string_bytes) {
+  "Find one bounded newline-terminated pickle text argument.";
+  start=cursor;
+  while lt(cursor,tally(bytes))*1-eq(take(bytes,0,cursor),10) {
+    if gt(cursor-start,max_string_bytes-1) {
+      return err("pickle text argument budget exceeded")
+    } else {
+      0
+    };
+    cursor=cursor+1
+  };
+  if gt(cursor,tally(bytes)-1) {
+    err("pickle text argument is truncated")
+  } else {
+    ok({next: cursor+1,length: cursor-start})
+  }
+}
+def u:passive_pickle_inventory(bytes,b) {
+  "Passively inventory known pickle opcodes without evaluating their stack semantics.";
+  if gt(tally(bytes),b.max_pickle_bytes) {
+    err("pickle byte budget exceeded")
+  } else {
+    cursor=0;
+    opcodes=0;
+    declarative=0;
+    dangerous=0;
+    global_ops=0;
+    reduce_ops=0;
+    constructor_ops=0;
+    extension_ops=0;
+    persistence_ops=0;
+    memo_ops=0;
+    strings=0;
+    string_bytes=0;
+    depth=0;
+    max_depth_seen=0;
+    protocol=-1;
+    stopped=0;
+    while lt(cursor,tally(bytes)) {
+      if gt(opcodes,b.max_opcodes-1)+gt(opcodes,b.max_iterations-1) {
+        return err("pickle opcode or iteration budget exceeded")
+      } else {
+        0
+      };
+      opcode=take(bytes,0,cursor);
+      cursor=cursor+1;
+      opcodes=opcodes+1;
+      if eq(opcode,128) {
+        protocol=u:checkpoint_u(bytes,cursor,1)?;
+        cursor=cursor+1;
+        declarative=declarative+1
+      } else {
+        if eq(opcode,46) {
+          stopped=1;
+          declarative=declarative+1;
+          if 1-eq(cursor,tally(bytes)) {
+            return err("pickle bytes follow STOP")
+          } else {
+            0
+          }
+        } else {
+          if eq(opcode,40) {
+            depth=depth+1;
+            if gt(depth,b.max_depth) {
+              return err("pickle mark depth budget exceeded")
+            } else {
+              0
+            };
+            if gt(depth,max_depth_seen) {
+              max_depth_seen=depth
+            } else {
+              0
+            };
+            declarative=declarative+1
+          } else {
+            if eq(opcode,101)+eq(opcode,117)+eq(opcode,116) {
+              if lt(depth,1) {
+                return err("pickle mark stack underflow")
+              } else {
+                depth=depth-1
+              };
+              declarative=declarative+1
+            } else {
+              if eq(opcode,113) { u:checkpoint_u(bytes,cursor,1)?; cursor=cursor+1; memo_ops=memo_ops+1; declarative=declarative+1 } else {
+                if eq(opcode,114) { u:checkpoint_u(bytes,cursor,4)?; cursor=cursor+4; memo_ops=memo_ops+1; declarative=declarative+1 } else {
+                  if eq(opcode,104)+eq(opcode,106) {
+                    width=if eq(opcode,104) {
+                      1
+                    } else {
+                      4
+                    };
+                    u:checkpoint_u(bytes,cursor,width)?;
+                    cursor=cursor+width;
+                    memo_ops=memo_ops+1;
+                    declarative=declarative+1
+                  } else {
+                    if eq(opcode,88) {
+                      length=u:checkpoint_u(bytes,cursor,4)?;
+                      cursor=cursor+4;
+                      if gt(length,b.max_string_bytes)+gt(cursor+length,tally(bytes)) {
+                        return err("pickle string length or truncation failure")
+                      } else {
+                        0
+                      };
+                      cursor=cursor+length;
+                      strings=strings+1;
+                      string_bytes=string_bytes+length;
+                      declarative=declarative+1
+                    } else {
+                      if eq(opcode,140) {
+                        length=u:checkpoint_u(bytes,cursor,1)?;
+                        cursor=cursor+1;
+                        if gt(length,b.max_string_bytes)+gt(cursor+length,tally(bytes)) {
+                          return err("pickle short string length or truncation failure")
+                        } else {
+                          0
+                        };
+                        cursor=cursor+length;
+                        strings=strings+1;
+                        string_bytes=string_bytes+length;
+                        declarative=declarative+1
+                      } else {
+                        if eq(opcode,75)+eq(opcode,74)+eq(opcode,77) {
+                          width=if eq(opcode,75) {
+                            1
+                          } else {
+                            if eq(opcode,77) {
+                              2
+                            } else {
+                              4
+                            }
+                          };
+                          u:checkpoint_u(bytes,cursor,width)?;
+                          cursor=cursor+width;
+                          declarative=declarative+1
+                        } else {
+                          if eq(opcode,125)+eq(opcode,93)+eq(opcode,41)+eq(opcode,78)+eq(opcode,136)+eq(opcode,137)+eq(opcode,115)+eq(opcode,97)+eq(opcode,134)+eq(opcode,133)+eq(opcode,135) {
+                            declarative=declarative+1
+                          } else {
+                            if eq(opcode,99) {
+                              first=u:pickle_newline(bytes,cursor,b.max_string_bytes)?;
+                              second=u:pickle_newline(bytes,first.next,b.max_string_bytes)?;
+                              cursor=second.next;
+                              strings=strings+2;
+                              string_bytes=string_bytes+first.length+second.length;
+                              dangerous=dangerous+1;
+                              global_ops=global_ops+1
+                            } else {
+                              if eq(opcode,147) {
+                                dangerous=dangerous+1;
+                                global_ops=global_ops+1
+                              } else {
+                                if eq(opcode,82) {
+                                  dangerous=dangerous+1;
+                                  reduce_ops=reduce_ops+1
+                                } else {
+                                  if eq(opcode,105)+eq(opcode,111)+eq(opcode,129)+eq(opcode,146)+eq(opcode,98) {
+                                    dangerous=dangerous+1;
+                                    constructor_ops=constructor_ops+1
+                                  } else {
+                                    if eq(opcode,130)+eq(opcode,131)+eq(opcode,132) {
+                                      width=if eq(opcode,130) {
+                                        1
+                                      } else {
+                                        if eq(opcode,131) {
+                                          2
+                                        } else {
+                                          4
+                                        }
+                                      };
+                                      u:checkpoint_u(bytes,cursor,width)?;
+                                      cursor=cursor+width;
+                                      dangerous=dangerous+1;
+                                      extension_ops=extension_ops+1
+                                    } else {
+                                      if eq(opcode,80) {
+                                        argument=u:pickle_newline(bytes,cursor,b.max_string_bytes)?;
+                                        cursor=argument.next;
+                                        strings=strings+1;
+                                        string_bytes=string_bytes+argument.length;
+                                        dangerous=dangerous+1;
+                                        persistence_ops=persistence_ops+1
+                                      } else {
+                                        if eq(opcode,81) {
+                                          dangerous=dangerous+1;
+                                          persistence_ops=persistence_ops+1
+                                        } else {
+                                          return err("pickle contains an unknown or unsupported opcode")
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    if (1-stopped)+gt(memo_ops,b.max_memo_entries)+gt(strings,b.max_strings)+gt(string_bytes,b.max_total_string_bytes) {
+      err("pickle terminator, memo, or string budget failure")
+    } else {
+      risk=if gt(dangerous,0) {
+        "high"
+      } else {
+        "declarative-inventory-only"
+      };
+      ok({protocol: protocol,opcode_count: opcodes,declarative_opcodes: declarative,dangerous_opcodes: dangerous,global_opcodes: global_ops,reduce_opcodes: reduce_ops,constructor_opcodes: constructor_ops,extension_opcodes: extension_ops,persistence_opcodes: persistence_ops,memo_opcodes: memo_ops,string_count: strings,string_bytes: string_bytes,max_mark_depth: max_depth_seen,risk: risk,execution_performed:0})
+    }
+  }
+}
+def u:checkpoint_inventory(path,b) {
+  "Validate exactly one stored data.pkl ZIP member and passively inventory its pickle opcodes.";
+  size=file_size(path)?;
+  if gt(size,b.max_artifact_bytes)+lt(b.max_members,1)+lt(b.max_iterations,1) {
+    err("checkpoint artifact, member, or iteration budget exceeded")
+  } else {
+    bytes=read_bytes(path,0,size)?;
+    if 1-u:checkpoint_signature(bytes,0,[80,75,3,4]) {
+      err("checkpoint local header is missing")
+    } else {
+      flags=u:checkpoint_u(bytes,6,2)?;
+      method=u:checkpoint_u(bytes,8,2)?;
+      compressed=u:checkpoint_u(bytes,18,4)?;
+      uncompressed=u:checkpoint_u(bytes,22,4)?;
+      name_length=u:checkpoint_u(bytes,26,2)?;
+      extra_length=u:checkpoint_u(bytes,28,2)?;
+      data_start=30+name_length;
+      data_end=data_start+compressed;
+      if gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length,0)+gt(name_length,b.max_string_bytes)+gt(data_end,size) {
+        err("checkpoint local member policy mismatch")
+      } else {
+        name_bytes=flatten(compress(gt(range(size),29)*lt(range(size),data_start),bytes));
+        if (1-u:checkpoint_name_safe(name_bytes))+(1-equal(decode_bytes(name_bytes),"data.pkl")) {
+          err("checkpoint requires one safe data.pkl member")
+        } else {
+          if u:checkpoint_signature(bytes,data_end,[80,75,3,4]) {
+            err("checkpoint additional or duplicate member rejected")
+          } else {
+            central=data_end;
+            if 1-u:checkpoint_signature(bytes,central,[80,75,1,2]) {
+              err("checkpoint central directory is missing")
+            } else {
+              central_flags=u:checkpoint_u(bytes,central+8,2)?;
+              central_method=u:checkpoint_u(bytes,central+10,2)?;
+              central_compressed=u:checkpoint_u(bytes,central+20,4)?;
+              central_uncompressed=u:checkpoint_u(bytes,central+24,4)?;
+              central_name_length=u:checkpoint_u(bytes,central+28,2)?;
+              central_extra=u:checkpoint_u(bytes,central+30,2)?;
+              central_comment=u:checkpoint_u(bytes,central+32,2)?;
+              central_disk=u:checkpoint_u(bytes,central+34,2)?;
+              local_offset=u:checkpoint_u(bytes,central+42,4)?;
+              central_end=central+46+central_name_length+central_extra+central_comment;
+              if gt(central_end,size)+gt(band(central_flags,1),0)+1-eq(central_method,0)+1-eq(central_compressed,compressed)+1-eq(central_uncompressed,uncompressed)+gt(central_extra+central_comment+central_disk+local_offset,0) {
+                err("checkpoint central directory policy mismatch")
+              } else {
+                central_name=flatten(compress(gt(range(size),central+45)*lt(range(size),central+46+central_name_length),bytes));
+                if 1-equal(decode_bytes(name_bytes),decode_bytes(central_name)) {
+                  err("checkpoint local/central name mismatch")
+                } else {
+                  eocd=central_end;
+                  if 1-u:checkpoint_signature(bytes,eocd,[80,75,5,6]) {
+                    err("checkpoint end record is missing")
+                  } else {
+                    disk=u:checkpoint_u(bytes,eocd+4,2)?;
+                    start_disk=u:checkpoint_u(bytes,eocd+6,2)?;
+                    disk_entries=u:checkpoint_u(bytes,eocd+8,2)?;
+                    total_entries=u:checkpoint_u(bytes,eocd+10,2)?;
+                    central_size=u:checkpoint_u(bytes,eocd+12,4)?;
+                    central_offset=u:checkpoint_u(bytes,eocd+16,4)?;
+                    comment_length=u:checkpoint_u(bytes,eocd+20,2)?;
+                    if 1-eq(eocd+22+comment_length,size)+gt(disk+start_disk+comment_length,0)+1-eq(disk_entries,1)+1-eq(total_entries,1)+1-eq(central_offset,central)+1-eq(central_size,eocd-central) {
+                      err("checkpoint end record mismatch")
+                    } else {
+                      pickle_bytes=flatten(compress(gt(range(size),data_start-1)*lt(range(size),data_end),bytes));
+                      pickle=u:passive_pickle_inventory(pickle_bytes,b)?;
+                      report={schema:"sw-ml-study.checkpoint-risk",version:1,container:{format:"zip-stored-single-disk",artifact_bytes: size,member_count:1,central_entries:1,data_pickle_bytes: tally(pickle_bytes)},pickle: pickle,policy:{deserialization:"never",opcode_execution:"never",dangerous_acceptance:"report-high-risk-only"}};
+                      json=to_json(report)?;
+                      encoded=tally(tokenize_bytes(json));
+                      if gt(encoded,b.max_output_bytes) {
+                        err("checkpoint report output budget exceeded")
+                      } else {
+                        decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+                        if 1-equal(decoded,report) {
+                          err("checkpoint risk report round trip changed")
+                        } else {
+                          ok({report: report,json: json,utf8_bytes: encoded})
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+def u:checkpoint_multi_inventory(path,b) {
+  "Validate bounded stored ZIP members and passively inventory data.pkl opcodes.";
+  size=file_size(path)?;
+  if gt(size,b.max_artifact_bytes) {
+    err("checkpoint artifact byte budget exceeded")
+  } else {
+    bytes=read_bytes(path,0,size)?;
+    cursor=0;
+    members=0;
+    names=fill([0],0);
+    lengths=fill([0],0);
+    rows=fill([0],0);
+    pickle_bytes=fill([0],0);
+    while u:checkpoint_signature(bytes,cursor,[80,75,3,4]) {
+      if gt(members,b.max_members-1)+gt(members,b.max_iterations-1) {
+        return err("checkpoint member or iteration budget exceeded")
+      } else {
+        0
+      };
+      flags=u:checkpoint_u(bytes,cursor+6,2)?;
+      method=u:checkpoint_u(bytes,cursor+8,2)?;
+      compressed=u:checkpoint_u(bytes,cursor+18,4)?;
+      uncompressed=u:checkpoint_u(bytes,cursor+22,4)?;
+      name_length=u:checkpoint_u(bytes,cursor+26,2)?;
+      extra_length=u:checkpoint_u(bytes,cursor+28,2)?;
+      if gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length,0)+gt(name_length,b.max_string_bytes) {
+        return err("checkpoint encrypted, compressed, descriptor, extra, or name policy mismatch")
+      } else {
+        0
+      };
+      data_start=cursor+30+name_length;
+      data_end=data_start+compressed;
+      if gt(data_end,size) {
+        return err("checkpoint member is truncated")
+      } else {
+        0
+      };
+      name_bytes=flatten(compress(gt(range(size),cursor+29)*lt(range(size),data_start),bytes));
+      if 1-u:checkpoint_name_safe(name_bytes) {
+        return err("checkpoint member name is unsafe")
+      } else {
+        0
+      };
+      if u:checkpoint_prior_name(name_bytes,names,lengths,members,b.max_string_bytes) {
+        return err("checkpoint member name is duplicate")
+      } else {
+        0
+      };
+      appended=u:checkpoint_append_name(name_bytes,names,lengths,b.max_string_bytes)?;
+      names=appended.table;
+      lengths=appended.lengths;
+      rows=concat(rows,[cursor,compressed]);
+      if equal(decode_bytes(name_bytes),"data.pkl") {
+        pickle_bytes=flatten(compress(gt(range(size),data_start-1)*lt(range(size),data_end),bytes))
+      } else {
+        0
+      };
+      members=members+1;
+      cursor=data_end
+    }
+  };
+  central_start=cursor;
+  central=0;
+  while u:checkpoint_signature(bytes,cursor,[80,75,1,2]) {
+    if gt(central,members-1) {
+      return err("checkpoint central directory has excess entries")
+    } else {
+      0
+    };
+    flags=u:checkpoint_u(bytes,cursor+8,2)?;
+    method=u:checkpoint_u(bytes,cursor+10,2)?;
+    compressed=u:checkpoint_u(bytes,cursor+20,4)?;
+    uncompressed=u:checkpoint_u(bytes,cursor+24,4)?;
+    name_length=u:checkpoint_u(bytes,cursor+28,2)?;
+    extra_length=u:checkpoint_u(bytes,cursor+30,2)?;
+    comment_length=u:checkpoint_u(bytes,cursor+32,2)?;
+    disk=u:checkpoint_u(bytes,cursor+34,2)?;
+    local_offset=u:checkpoint_u(bytes,cursor+42,4)?;
+    end=cursor+46+name_length+extra_length+comment_length;
+    if gt(end,size)+gt(band(flags,1),0)+1-eq(method,0)+1-eq(compressed,uncompressed)+gt(extra_length+comment_length+disk,0) {
+      return err("checkpoint central directory policy mismatch")
+    } else {
+      0
+    };
+    expected_row=take(reshape(rows,[members,2]),0,central);
+    if 1-eq(local_offset,take(expected_row,0,0))+1-eq(compressed,take(expected_row,0,1)) {
+      return err("checkpoint local/central directory mismatch")
+    } else {
+      0
+    };
+    central=central+1;
+    cursor=end
+  };
+  if 1-u:checkpoint_signature(bytes,cursor,[80,75,5,6]) {
+    err("checkpoint end-of-central-directory is missing")
+  } else {
+    disk=u:checkpoint_u(bytes,cursor+4,2)?;
+    start_disk=u:checkpoint_u(bytes,cursor+6,2)?;
+    disk_entries=u:checkpoint_u(bytes,cursor+8,2)?;
+    total_entries=u:checkpoint_u(bytes,cursor+10,2)?;
+    central_size=u:checkpoint_u(bytes,cursor+12,4)?;
+    central_offset=u:checkpoint_u(bytes,cursor+16,4)?;
+    comment_length=u:checkpoint_u(bytes,cursor+20,2)?;
+    if gt(cursor+22+comment_length,size)+1-eq(cursor+22+comment_length,size)+gt(disk+start_disk+comment_length,0)+1-eq(disk_entries,members)+1-eq(total_entries,members)+1-eq(central_offset,central_start)+1-eq(central_size,cursor-central_start)+1-eq(central,members)+eq(tally(pickle_bytes),0) {
+      err("checkpoint end record or required data.pkl mismatch")
+    } else {
+      pickle=u:passive_pickle_inventory(pickle_bytes,b)?;
+      report={schema:"sw-ml-study.checkpoint-risk",version:1,container:{format:"zip-stored-single-disk",artifact_bytes: size,member_count: members,central_entries: central,data_pickle_bytes: tally(pickle_bytes)},pickle: pickle,policy:{deserialization:"never",opcode_execution:"never",dangerous_acceptance:"report-high-risk-only"}};
+      json=to_json(report)?;
+      if gt(tally(tokenize_bytes(json)),b.max_output_bytes) {
+        err("checkpoint report output budget exceeded")
+      } else {
+        decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+        if 1-equal(decoded,report) {
+          err("checkpoint risk report round trip changed")
+        } else {
+          ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))})
+        }
+      }
+    }
+  }
+}

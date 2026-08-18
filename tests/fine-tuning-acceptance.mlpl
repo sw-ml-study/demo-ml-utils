@@ -1,15 +1,41 @@
 include "../src/adaptation/acceptance.mlpl";
-def u:fareq(v,m) { "Require one fine-tuning acceptance invariant."; if v { ok(1) } else { err(m) } }
-def u:acceptance_path() { "Return the required output path."; unwrap_or(list_get(args(),0),"") }
-def u:fb(iterations,curve,output,atomic) { "Return acceptance budgets shared by both trainers and the IR."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:32,max_fingerprint_elements:32,max_fingerprint_bytes:512,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,min_learning_rate:0.000001,max_learning_rate:1,max_steps:300,max_tolerance:1,max_iterations: iterations,max_abs_prediction:1000,max_gradient_norm:1000,max_abs_parameter:100,max_loss:10000,max_curve_points: curve,max_adapter_elements:128,max_adapter_rank:2,max_base_parameters:32,max_adapter_parameters:32,max_parity_error:0.0000000001,max_atomic_bytes: atomic} }
-path=u:acceptance_path(); b=u:fb(300,301,65536,65536); full=u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],{learning_rate:0.2,max_steps:60,tolerance:0.000001},b)?; low=u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",reshape(fill([6],0),[2,3]),reshape([0.1,-0.1],[2,1]),reshape([0.5,0.5,0.5],[1,3]),{learning_rate:0.05,max_steps:200,tolerance:0.00001},b)?; built=u:adaptation_curve_ir(full,low,b)?; repeated=u:adaptation_curve_ir(full,low,b)?;
+def u:fareq(v,m) {
+  "Require one fine-tuning acceptance invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:acceptance_path() {
+  "Return the required output path.";
+  unwrap_or(list_get(args(),0),"")
+}
+def u:fb(iterations,curve,output,atomic) {
+  "Return acceptance budgets shared by both trainers and the IR.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:32,max_fingerprint_elements:32,max_fingerprint_bytes:512,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,min_learning_rate:0.000001,max_learning_rate:1,max_steps:300,max_tolerance:1,max_iterations: iterations,max_abs_prediction:1000,max_gradient_norm:1000,max_abs_parameter:100,max_loss:10000,max_curve_points: curve,max_adapter_elements:128,max_adapter_rank:2,max_base_parameters:32,max_adapter_parameters:32,max_parity_error:0.0000000001,max_atomic_bytes: atomic}
+}
+path=u:acceptance_path();
+b=u:fb(300,301,65536,65536);
+full=u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],{learning_rate:0.2,max_steps:60,tolerance:0.000001},b)?;
+low=u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",reshape(fill([6],0),[2,3]),reshape([0.1,-0.1],[2,1]),reshape([0.5,0.5,0.5],[1,3]),{learning_rate:0.05,max_steps:200,tolerance:0.00001},b)?;
+built=u:adaptation_curve_ir(full,low,b)?;
+repeated=u:adaptation_curve_ir(full,low,b)?;
 u:fareq(equal(built.json,repeated.json)*equal(full.report.final_parameters,[1.0271554288023172,1.9780045688061034,2.976207558506189]),"deterministic full and IR golden")?;
-leaked={schema:"sw-ml-study.adaptation-dataset",version:1,task:"leaked",feature_count:2,train:{ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[1],x:[0,0],y:[0]}}; u:fareq(is_err(u:adaptation_dataset(leaked,b)),"split leakage rejection")?;
-malformed={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{extra:1,ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}}; u:fareq(is_err(u:adaptation_dataset(malformed,b)),"malformed split rejection")?;
-nonfinite={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{ids:[1],x:[pow(10,400),0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}}; u:fareq(is_err(u:adaptation_dataset(nonfinite,b)),"non-finite feature rejection")?;
+leaked={schema:"sw-ml-study.adaptation-dataset",version:1,task:"leaked",feature_count:2,train:{ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[1],x:[0,0],y:[0]}};
+u:fareq(is_err(u:adaptation_dataset(leaked,b)),"split leakage rejection")?;
+malformed={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{extra:1,ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}};
+u:fareq(is_err(u:adaptation_dataset(malformed,b)),"malformed split rejection")?;
+nonfinite={schema:"sw-ml-study.adaptation-dataset",version:1,task:"bad",feature_count:2,train:{ids:[1],x:[pow(10,400),0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}};
+u:fareq(is_err(u:adaptation_dataset(nonfinite,b)),"non-finite feature rejection")?;
 u:fareq(is_err(u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],{learning_rate:0.2,max_steps:60,tolerance:0.000001},u:fb(10,301,65536,65536))),"full iteration rejection")?;
 u:fareq(is_err(u:low_rank_fine_tune("fixtures/adaptation/tiny-regression.json",reshape(fill([6],0),[2,3]),reshape([0.1,-0.1],[2,1]),reshape([0.5,0.5,0.5],[1,3]),{learning_rate:0.05,max_steps:200,tolerance:0.00001},u:fb(100,301,65536,65536))),"low-rank iteration rejection")?;
-u:fareq(is_err(u:adaptation_curve_ir(full,low,u:fb(300,100,65536,65536))),"curve limit rejection")?; u:fareq(is_err(u:adaptation_curve_ir(full,low,u:fb(300,301,100,65536))),"output limit rejection")?;
-written=u:write_adaptation_report(path,built,b)?; u:fareq(eq(written.atomic_write,1)*eq(written.self_validated,1)*equal(read_bytes(path)?,tokenize_bytes(built.json)),"atomic exact report read-back")?;
-write_atomic(path,[9,8,7])?; u:fareq(is_err(u:write_adaptation_report(path,built,u:fb(300,301,65536,100)))*equal(read_bytes(path)?,[9,8,7]),"atomic pre-write failure preserves destination")?;
-remove_path(path)?; print("PASS fine-tuning adversarial and atomic acceptance"); ok(1)
+u:fareq(is_err(u:adaptation_curve_ir(full,low,u:fb(300,100,65536,65536))),"curve limit rejection")?;
+u:fareq(is_err(u:adaptation_curve_ir(full,low,u:fb(300,301,100,65536))),"output limit rejection")?;
+written=u:write_adaptation_report(path,built,b)?;
+u:fareq(eq(written.atomic_write,1)*eq(written.self_validated,1)*equal(read_bytes(path)?,tokenize_bytes(built.json)),"atomic exact report read-back")?;
+write_atomic(path,[9,8,7])?;
+u:fareq(is_err(u:write_adaptation_report(path,built,u:fb(300,301,65536,100)))*equal(read_bytes(path)?,[9,8,7]),"atomic pre-write failure preserves destination")?;
+remove_path(path)?;
+print("PASS fine-tuning adversarial and atomic acceptance");
+ok(1)

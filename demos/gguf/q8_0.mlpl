@@ -4,7 +4,9 @@ print("DEMO: exact bounded GGUF Q8_0 block decode");
 print("Scenario: decode only the tensor named quant: one 34-byte Q8_0 block whose 32 signed quants sweep from -16 through 15.");
 print("Native boundary: file_size plus one exact payload read_bytes call. MLPL work: catalog validation, name resolution, binary16 scale conversion, signed quant decoding, and dequantization.");
 print("Budgets: 4096 catalog bytes, 4 tensors, one Q8_0 block, exactly 34 payload bytes, and 32 output values.");
-print("Selected block:"); print({name: decoded.name, file_offset: decoded.file_offset, payload_bytes: decoded.byte_count, binary16_scale: decoded.scales, output_values: decoded.parameters});
-print("Dequantized values (signed int8 quant multiplied by 0.5):"); print(decoded.values);
+print("Selected block:");
+print({name: decoded.name, file_offset: decoded.file_offset, payload_bytes: decoded.byte_count, binary16_scale: decoded.scales, output_values: decoded.parameters});
+print("Dequantized values (signed int8 quant multiplied by 0.5):");
+print(decoded.values);
 print("Interpretation: the evenly spaced -8 through 7.5 ramp makes the scale and sign conversion visible, while alpha, ints, and bytes remain unread.");
 ok(1)

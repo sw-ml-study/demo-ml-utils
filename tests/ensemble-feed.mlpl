@@ -1,6 +1,14 @@
 include "../src/experiments/ensemble_feed.mlpl";
-def u:efr(c,m) { "Require one Ensemble/Feed golden."; if c { ok(1) } else { err(m) } }
-b={max_examples:8,max_abs_value:100}; r=u:ensemble_feed_report([1,2,3],[3,5,7],[2,6,12],b)?;
+def u:efr(c,m) {
+  "Require one Ensemble/Feed golden.";
+  if c {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+b={max_examples:8,max_abs_value:100};
+r=u:ensemble_feed_report([1,2,3],[3,5,7],[2,6,12],b)?;
 u:efr(equal(r.ensemble.low_predictions,[2,4,6])*equal(r.ensemble.high_predictions,[4,6,8])*equal(r.ensemble.disagreement,[2,2,2]),"ensemble member golden")?;
 u:efr(equal(r.ensemble.aggregate_predictions,[3,5,7])*eq(r.ensemble.low_mse,1)*eq(r.ensemble.high_mse,1)*eq(r.ensemble.aggregate_mse,0),"ensemble aggregate golden")?;
 u:efr(equal(r.feed.stage_one_output,[1,4,9])*equal(r.feed.predictions,[2,6,12])*eq(r.feed.mse,0),"feed boundary golden")?;
@@ -9,4 +17,5 @@ u:efr(is_err(u:ensemble_feed_report([],[],[],b)),"empty evaluation rejection")?;
 u:efr(is_err(u:ensemble_feed_report([1,2],[3],[2,6],b)),"misaligned evaluation rejection")?;
 u:efr(is_err(u:ensemble_feed_report([1,2,3],[3,5,7],[2,6,12],{max_examples:2,max_abs_value:100})),"example budget rejection")?;
 u:efr(is_err(u:ensemble_feed_report([1,2,30],[3,5,61],[2,6,930],{max_examples:8,max_abs_value:100})),"prediction magnitude rejection")?;
-print("PASS bounded Ensemble/Feed composition"); ok(1)
+print("PASS bounded Ensemble/Feed composition");
+ok(1)

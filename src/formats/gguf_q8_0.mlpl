@@ -1,26 +1,82 @@
 include "gguf_slice.mlpl";
 
-def u:gguf_fp16(bytes) { "Decode one finite little-endian IEEE 754 binary16 value.";
-  bits = take(bytes,0,0) + 256 * take(bytes,0,1); sign = if gt(bits,32767) { -1 } else { 1 }; magnitude = mod(bits,32768); exponent = floor(magnitude / 1024); fraction = mod(magnitude,1024);
-  if eq(exponent,31) { err("GGUF Q8_0 scale must be finite") } else { if eq(exponent,0) { ok(sign * (fraction / 1024) * pow(2,-14)) } else { ok(sign * (1 + fraction / 1024) * pow(2,exponent - 15)) } }
+def u:gguf_fp16(bytes) {
+  "Decode one finite little-endian IEEE 754 binary16 value.";
+  bits = take(bytes,0,0) + 256 * take(bytes,0,1);
+  sign = if gt(bits,32767) {
+    -1
+  } else {
+    1
+  };
+  magnitude = mod(bits,32768);
+  exponent = floor(magnitude / 1024);
+  fraction = mod(magnitude,1024);
+  if eq(exponent,31) {
+    err("GGUF Q8_0 scale must be finite")
+  } else {
+    if eq(exponent,0) {
+      ok(sign * (fraction / 1024) * pow(2,-14))
+    } else {
+      ok(sign * (1 + fraction / 1024) * pow(2,exponent - 15))
+    }
+  }
 }
 
-def u:gguf_decode_q8_0(bytes, max_blocks, max_output_elements) { "Decode complete 34-byte Q8_0 blocks into budgeted values.";
-  if (1 - eq(rank(max_blocks),0)) + (1 - eq(max_blocks,floor(max_blocks))) + lt(max_blocks,0) + (1 - eq(rank(max_output_elements),0)) + (1 - eq(max_output_elements,floor(max_output_elements))) + lt(max_output_elements,0) { err("invalid GGUF Q8_0 decode budget") } else {
-  if 1 - eq(mod(tally(bytes),34),0) { err("GGUF Q8_0 payload contains a partial block") } else { blocks = tally(bytes) / 34; elements = blocks * 32;
-  if gt(blocks,max_blocks) + gt(elements,max_output_elements) { err("GGUF Q8_0 block or output budget exceeded") } else { block = 0; values = fill([0],0); scales = fill([0],0);
-  positions = range(tally(bytes));
-  while lt(block,blocks) { base = block * 34; scale_bytes = compress(gt(positions,base - 1) * lt(positions,base + 2),bytes); scale = u:gguf_fp16(scale_bytes)?; quant_bytes = compress(gt(positions,base + 1) * lt(positions,base + 34),bytes); quants = u:gguf_decode_signed(quant_bytes,1); values = concat(values,quants * scale); scales = concat(scales,scale); block = block + 1 };
-  ok({blocks: blocks, scales: scales, values: values})
-  } } }
+def u:gguf_decode_q8_0(bytes, max_blocks, max_output_elements) {
+  "Decode complete 34-byte Q8_0 blocks into budgeted values.";
+  if (1 - eq(rank(max_blocks),0)) + (1 - eq(max_blocks,floor(max_blocks))) + lt(max_blocks,0) + (1 - eq(rank(max_output_elements),0)) + (1 - eq(max_output_elements,floor(max_output_elements))) + lt(max_output_elements,0) {
+    err("invalid GGUF Q8_0 decode budget")
+  } else {
+    if 1 - eq(mod(tally(bytes),34),0) {
+      err("GGUF Q8_0 payload contains a partial block")
+    } else {
+      blocks = tally(bytes) / 34;
+      elements = blocks * 32;
+      if gt(blocks,max_blocks) + gt(elements,max_output_elements) {
+        err("GGUF Q8_0 block or output budget exceeded")
+      } else {
+        block = 0;
+        values = fill([0],0);
+        scales = fill([0],0);
+        positions = range(tally(bytes));
+        while lt(block,blocks) {
+          base = block * 34;
+          scale_bytes = compress(gt(positions,base - 1) * lt(positions,base + 2),bytes);
+          scale = u:gguf_fp16(scale_bytes)?;
+          quant_bytes = compress(gt(positions,base + 1) * lt(positions,base + 34),bytes);
+          quants = u:gguf_decode_signed(quant_bytes,1);
+          values = concat(values,quants * scale);
+          scales = concat(scales,scale);
+          block = block + 1
+        };
+        ok({blocks: blocks, scales: scales, values: values})
+      }
+    }
+  }
 }
 
-def u:read_gguf_q8_0(path, name, max_catalog_bytes, max_metadata, max_tensors, max_string_bytes, max_rank, max_parameters, max_read_bytes, max_blocks, max_output_elements) { "Selectively read and decode one catalog-validated Q8_0 tensor.";
-  if (1 - eq(rank(max_read_bytes),0)) + (1 - eq(max_read_bytes,floor(max_read_bytes))) + lt(max_read_bytes,0) { err("invalid GGUF Q8_0 read budget") } else {
-  catalog = u:catalog_gguf(path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?; index = u:gguf_find_tensor(catalog,name)?; row = take(catalog.tensor_rows,0,index); byte_count = take(row,0,3); parameters = take(row,0,1);
-  if 1 - eq(take(row,0,2),8) { err("selected GGUF tensor is not Q8_0") } else { blocks = parameters / 32;
-  if lt(byte_count,0) + gt(byte_count,max_read_bytes) + gt(blocks,max_blocks) + gt(parameters,max_output_elements) { err("GGUF Q8_0 selection exceeds a read, block, or output budget") } else {
-  file_offset = catalog.catalog_bytes + take(row,0,0); bytes = read_bytes(path,file_offset,byte_count)?; decoded = u:gguf_decode_q8_0(bytes,max_blocks,max_output_elements)?;
-  ok({name: name, type_id: 8, parameters: parameters, byte_count: byte_count, file_offset: file_offset, blocks: decoded.blocks, scales: decoded.scales, values: decoded.values})
-  } } }
+def u:read_gguf_q8_0(path, name, max_catalog_bytes, max_metadata, max_tensors, max_string_bytes, max_rank, max_parameters, max_read_bytes, max_blocks, max_output_elements) {
+  "Selectively read and decode one catalog-validated Q8_0 tensor.";
+  if (1 - eq(rank(max_read_bytes),0)) + (1 - eq(max_read_bytes,floor(max_read_bytes))) + lt(max_read_bytes,0) {
+    err("invalid GGUF Q8_0 read budget")
+  } else {
+    catalog = u:catalog_gguf(path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?;
+    index = u:gguf_find_tensor(catalog,name)?;
+    row = take(catalog.tensor_rows,0,index);
+    byte_count = take(row,0,3);
+    parameters = take(row,0,1);
+    if 1 - eq(take(row,0,2),8) {
+      err("selected GGUF tensor is not Q8_0")
+    } else {
+      blocks = parameters / 32;
+      if lt(byte_count,0) + gt(byte_count,max_read_bytes) + gt(blocks,max_blocks) + gt(parameters,max_output_elements) {
+        err("GGUF Q8_0 selection exceeds a read, block, or output budget")
+      } else {
+        file_offset = catalog.catalog_bytes + take(row,0,0);
+        bytes = read_bytes(path,file_offset,byte_count)?;
+        decoded = u:gguf_decode_q8_0(bytes,max_blocks,max_output_elements)?;
+        ok({name: name, type_id: 8, parameters: parameters, byte_count: byte_count, file_offset: file_offset, blocks: decoded.blocks, scales: decoded.scales, values: decoded.values})
+      }
+    }
+  }
 }

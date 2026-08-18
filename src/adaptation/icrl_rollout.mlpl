@@ -1,11 +1,84 @@
 include "distilled_policy.mlpl";
 
-def u:icrl_rollout(tape,arms,horizon,artifact,mode,b) { "Roll out a frozen distilled policy from growing or ablated reward context after bounded exploration."; if gt(horizon,b.max_deployment_rounds)+1-eq(tally(tape),arms*horizon) { err("ICRL rollout shape or round budget exceeded") } else { arm_rewards=fill([arms],0); actions=fill([0],0); rewards=fill([0],0); features=fill([0],0); probabilities=fill([0],0); context_lengths=fill([0],0); round=0; while lt(round,horizon) { raw_feature=take(arm_rewards,0,1)-take(arm_rewards,0,0); feature=if equal(mode,"canonical")+equal(mode,"shuffled") { raw_feature } else { if equal(mode,"empty")+equal(mode,"reward-ablated") { 0 } else { return err("unknown ICRL rollout control") } }; probability=take(u:policy_probabilities([feature],artifact.parameters,b)?,0,0); action=if lt(round,arms) { round } else { if gt(probability,0.5) { 1 } else { 0 } }; reward=take(tape,0,round*arms+action); arm_rewards=scatter(arm_rewards,action,take(arm_rewards,0,action)+reward); actions=concat(actions,action); rewards=concat(rewards,reward); features=concat(features,feature); probabilities=concat(probabilities,probability); context_lengths=concat(context_lengths,if equal(mode,"empty") { 0 } else { round }); round=round+1 }; history=u:bandit_history(tape,arms,horizon,actions,b)?; ok({mode: mode,actions: actions,rewards: rewards,features: features,action_one_probabilities: probabilities,context_lengths: context_lengths,cumulative_rewards: history.cumulative_rewards,cumulative_regret: history.cumulative_regret,total_reward: history.total_reward,total_regret: history.total_regret}) } }
-def u:held_out_icrl_report(path,b) { "Train only on sources, then evaluate frozen reward-context adaptation on held-out task 501.";
-  trained=u:distill_policy(path,[0,0],{learning_rate:0.5,steps:40},b)?; artifact=trained.report.artifact; before=artifact.fingerprint; bytes=read_bytes(path)?; tasks=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?; u:bandit_tasks_validate(tasks,b)?; tape=tasks.held_out.reward_tapes;
-  canonical=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"canonical",b)?; empty=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"empty",b)?; shuffled=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"shuffled",b)?; ablated=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"reward-ablated",b)?; after=u:adaptation_fingerprint(artifact.parameters,b)?;
-  if 1-equal(before,after)+1-equal(canonical.actions,shuffled.actions)+1-gt(canonical.total_reward,empty.total_reward)+1-eq(empty.total_reward,ablated.total_reward) { err("ICRL frozen or ablation invariant failed") } else {
-    report={schema:"sw-ml-study.held-out-icrl-rollout",version:1,task:{id: take(tasks.held_out.ids,0,0),split:"held-out",reward_tape: tape},deployment:{artifact: artifact,fingerprint_before: before,fingerprint_after: after,parameter_updates:0,icrl_claim:1},offline_training:{source_task_ids: trained.report.source.task_ids,held_out_records_used: trained.report.source.held_out_records_used,updates: trained.report.training.updates},rollouts:{canonical: canonical,empty_context: empty,shuffled_context: shuffled,reward_ablated: ablated},interpretation:{growing_reward_context:1,shuffled_invariant_for_cumulative_feature:1,empty_and_ablated_harm:1}}; json=to_json(report,{tagged:1})?; size=tally(tokenize_bytes(json));
-    if gt(size,b.max_output_bytes) { err("ICRL rollout output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("ICRL rollout report round trip changed") } else { ok({report: report,json: json,utf8_bytes: size}) } }
+def u:icrl_rollout(tape,arms,horizon,artifact,mode,b) {
+  "Roll out a frozen distilled policy from growing or ablated reward context after bounded exploration.";
+  if gt(horizon,b.max_deployment_rounds)+1-eq(tally(tape),arms*horizon) {
+    err("ICRL rollout shape or round budget exceeded")
+  } else {
+    arm_rewards=fill([arms],0);
+    actions=fill([0],0);
+    rewards=fill([0],0);
+    features=fill([0],0);
+    probabilities=fill([0],0);
+    context_lengths=fill([0],0);
+    round=0;
+    while lt(round,horizon) {
+      raw_feature=take(arm_rewards,0,1)-take(arm_rewards,0,0);
+      feature=if equal(mode,"canonical")+equal(mode,"shuffled") {
+        raw_feature
+      } else {
+        if equal(mode,"empty")+equal(mode,"reward-ablated") {
+          0
+        } else {
+          return err("unknown ICRL rollout control")
+        }
+      };
+      probability=take(u:policy_probabilities([feature],artifact.parameters,b)?,0,0);
+      action=if lt(round,arms) {
+        round
+      } else {
+        if gt(probability,0.5) {
+          1
+        } else {
+          0
+        }
+      };
+      reward=take(tape,0,round*arms+action);
+      arm_rewards=scatter(arm_rewards,action,take(arm_rewards,0,action)+reward);
+      actions=concat(actions,action);
+      rewards=concat(rewards,reward);
+      features=concat(features,feature);
+      probabilities=concat(probabilities,probability);
+      context_lengths=concat(context_lengths,if equal(mode,"empty") {
+          0
+        } else {
+          round
+        });
+      round=round+1
+    };
+    history=u:bandit_history(tape,arms,horizon,actions,b)?;
+    ok({mode: mode,actions: actions,rewards: rewards,features: features,action_one_probabilities: probabilities,context_lengths: context_lengths,cumulative_rewards: history.cumulative_rewards,cumulative_regret: history.cumulative_regret,total_reward: history.total_reward,total_regret: history.total_regret})
+  }
+}
+def u:held_out_icrl_report(path,b) {
+  "Train only on sources, then evaluate frozen reward-context adaptation on held-out task 501.";
+  trained=u:distill_policy(path,[0,0],{learning_rate:0.5,steps:40},b)?;
+  artifact=trained.report.artifact;
+  before=artifact.fingerprint;
+  bytes=read_bytes(path)?;
+  tasks=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?;
+  u:bandit_tasks_validate(tasks,b)?;
+  tape=tasks.held_out.reward_tapes;
+  canonical=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"canonical",b)?;
+  empty=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"empty",b)?;
+  shuffled=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"shuffled",b)?;
+  ablated=u:icrl_rollout(tape,tasks.arms,tasks.horizon,artifact,"reward-ablated",b)?;
+  after=u:adaptation_fingerprint(artifact.parameters,b)?;
+  if 1-equal(before,after)+1-equal(canonical.actions,shuffled.actions)+1-gt(canonical.total_reward,empty.total_reward)+1-eq(empty.total_reward,ablated.total_reward) {
+    err("ICRL frozen or ablation invariant failed")
+  } else {
+    report={schema:"sw-ml-study.held-out-icrl-rollout",version:1,task:{id: take(tasks.held_out.ids,0,0),split:"held-out",reward_tape: tape},deployment:{artifact: artifact,fingerprint_before: before,fingerprint_after: after,parameter_updates:0,icrl_claim:1},offline_training:{source_task_ids: trained.report.source.task_ids,held_out_records_used: trained.report.source.held_out_records_used,updates: trained.report.training.updates},rollouts:{canonical: canonical,empty_context: empty,shuffled_context: shuffled,reward_ablated: ablated},interpretation:{growing_reward_context:1,shuffled_invariant_for_cumulative_feature:1,empty_and_ablated_harm:1}};
+    json=to_json(report,{tagged:1})?;
+    size=tally(tokenize_bytes(json));
+    if gt(size,b.max_output_bytes) {
+      err("ICRL rollout output budget exceeded")
+    } else {
+      decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+      if 1-equal(decoded,report) {
+        err("ICRL rollout report round trip changed")
+      } else {
+        ok({report: report,json: json,utf8_bytes: size})
+      }
+    }
   }
 }

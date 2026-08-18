@@ -1,10 +1,27 @@
 include "../src/adaptation/icl_comparison_ir.mlpl";
-def u:icirreq(v,m) { "Require one ICL comparison IR invariant."; if v { ok(1) } else { err(m) } }
-def u:icirb(evidence,output) { "Return ICL comparison budgets."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples:4,max_query_examples:4,max_query_elements:32,max_context_query_comparisons:32,max_abs_prediction:1000,max_association_work:64,max_abs_similarity:10,max_abs_contribution:100,max_evidence_elements: evidence} }
-b=u:icirb(64,32768); built=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?; ir=built.ir;
+def u:icirreq(v,m) {
+  "Require one ICL comparison IR invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:icirb(evidence,output) {
+  "Return ICL comparison budgets.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples:4,max_query_examples:4,max_query_elements:32,max_context_query_comparisons:32,max_abs_prediction:1000,max_association_work:64,max_abs_similarity:10,max_abs_contribution:100,max_evidence_elements: evidence}
+}
+b=u:icirb(64,32768);
+built=u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?;
+ir=built.ir;
 u:icirreq(equal(record_keys(ir.variants),["few_shot","one_shot","zero_shot"])*equal(ir.query_ids,[301,302,303]),"comparison root golden")?;
 u:icirreq(equal([ir.variants.zero_shot.mse,ir.variants.one_shot.mse,ir.variants.few_shot.mse],[152/3,24,0])*equal([ir.variants.zero_shot.exact_matches,ir.variants.one_shot.exact_matches,ir.variants.few_shot.exact_matches],[0,1,3]),"loss and exact-match golden")?;
 u:icirreq(equal([ir.variants.zero_shot.accuracy,ir.variants.one_shot.accuracy,ir.variants.few_shot.accuracy],[0,1/3,1])*equal(ir.variants.few_shot.context_ids,[201,202]),"accuracy and context golden")?;
-u:icirreq(equal(ir.deployment.fingerprint_before,ir.deployment.fingerprint_after)*eq(ir.deployment.updates,0),"frozen deployment golden")?; u:icirreq(equal(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?.json,built.json),"deterministic tagged JSON golden")?;
-bad={schema: ir.schema,version:2,provenance: ir.provenance,deployment: ir.deployment,query_ids: ir.query_ids,variants: ir.variants}; u:icirreq(is_err(u:icl_comparison_validate(bad,b)),"version rejection")?; u:icirreq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:icirb(5,32768))),"evidence budget rejection")?; u:icirreq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:icirb(64,100))),"output budget rejection")?;
-print("PASS ICL comparison IR"); ok(1)
+u:icirreq(equal(ir.deployment.fingerprint_before,ir.deployment.fingerprint_after)*eq(ir.deployment.updates,0),"frozen deployment golden")?;
+u:icirreq(equal(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,b)?.json,built.json),"deterministic tagged JSON golden")?;
+bad={schema: ir.schema,version:2,provenance: ir.provenance,deployment: ir.deployment,query_ids: ir.query_ids,variants: ir.variants};
+u:icirreq(is_err(u:icl_comparison_validate(bad,b)),"version rejection")?;
+u:icirreq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:icirb(5,32768))),"evidence budget rejection")?;
+u:icirreq(is_err(u:icl_comparison_ir("fixtures/adaptation/tiny-regression.json",[1,0,0],0.000000001,u:icirb(64,100))),"output budget rejection")?;
+print("PASS ICL comparison IR");
+ok(1)

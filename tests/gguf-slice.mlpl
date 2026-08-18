@@ -1,11 +1,24 @@
 include "../src/formats/gguf_slice.mlpl";
-def u:gguf_read_fixture(name,budget) { "Read a golden tensor from the mixed GGUF fixture."; u:read_gguf_tensor("fixtures/gguf/valid-catalog.gguf",name,4096,8,4,256,4,1000000,budget) }
-def u:require_gguf_slice(value,message) { "Require a GGUF slice invariant."; if value { ok(1) } else { err(message) } }
+def u:gguf_read_fixture(name,budget) {
+  "Read a golden tensor from the mixed GGUF fixture.";
+  u:read_gguf_tensor("fixtures/gguf/valid-catalog.gguf",name,4096,8,4,256,4,1000000,budget)
+}
+def u:require_gguf_slice(value,message) {
+  "Require a GGUF slice invariant.";
+  if value {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
 
-i16 = u:gguf_read_fixture("ints",8)?; u:require_gguf_slice(equal(i16.values,[-32768,-2,32767,42]),"GGUF I16 golden decode")?;
-i8 = u:gguf_read_fixture("bytes",4)?; u:require_gguf_slice(equal(i8.values,[-128,-1,0,127]),"GGUF I8 golden decode")?;
+i16 = u:gguf_read_fixture("ints",8)?;
+u:require_gguf_slice(equal(i16.values,[-32768,-2,32767,42]),"GGUF I16 golden decode")?;
+i8 = u:gguf_read_fixture("bytes",4)?;
+u:require_gguf_slice(equal(i8.values,[-128,-1,0,127]),"GGUF I8 golden decode")?;
 u:require_gguf_slice(is_err(u:gguf_read_fixture("ints",7)),"GGUF read budget rejection")?;
 u:require_gguf_slice(is_err(u:gguf_read_fixture("missing",100)),"GGUF missing tensor rejection")?;
 u:require_gguf_slice(is_err(u:gguf_read_fixture("alpha",100)),"GGUF unsupported F32 decode rejection")?;
 u:require_gguf_slice(is_err(u:gguf_read_fixture("quant",100)),"GGUF catalog-only Q8_0 rejection")?;
-print("PASS GGUF selective unquantized slices"); ok(1)
+print("PASS GGUF selective unquantized slices");
+ok(1)

@@ -1,10 +1,29 @@
 include "../src/adaptation/bandit_contract.mlpl";
-def u:bcreq(v,m) { "Require one bandit contract invariant."; if v { ok(1) } else { err(m) } }
-def u:bcb(arms,horizon,comparisons,records,output) { "Return bounded bandit contract limits."; {max_arms: arms,max_horizon: horizon,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons: comparisons,min_reward:0,max_reward:1,max_history_records: records,max_dataset_bytes:2048,max_json_depth:10,max_json_elements:4096,max_output_bytes: output} }
-b=u:bcb(4,8,8,8,32768); built=u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",b)?; r=built.report;
+def u:bcreq(v,m) {
+  "Require one bandit contract invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:bcb(arms,horizon,comparisons,records,output) {
+  "Return bounded bandit contract limits.";
+  {max_arms: arms,max_horizon: horizon,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons: comparisons,min_reward:0,max_reward:1,max_history_records: records,max_dataset_bytes:2048,max_json_depth:10,max_json_elements:4096,max_output_bytes: output}
+}
+b=u:bcb(4,8,8,8,32768);
+built=u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",b)?;
+r=built.report;
 u:bcreq(equal([r.dataset.training_tasks,r.dataset.held_out_tasks,r.dataset.arms,r.dataset.horizon,r.dataset.task_comparisons],[2,1,2,4,2]),"bandit dataset golden")?;
 u:bcreq(equal(r.baselines.greedy.history.actions,[0,0,0,0])*equal(r.baselines.greedy.history.rewards,[0,0,0,0])*eq(r.baselines.greedy.history.total_regret,4),"greedy baseline golden")?;
 u:bcreq(equal(r.baselines.ucb.history.actions,[0,1,1,1])*equal(r.baselines.ucb.history.rewards,[0,1,1,1])*eq(r.baselines.ucb.history.total_reward,3)*eq(r.baselines.ucb.history.total_regret,1),"UCB baseline golden")?;
-u:bcreq(eq(r.baselines.greedy.icrl_claim,0)*eq(r.baselines.ucb.icrl_claim,0)*equal(r.environment.split,"held-out"),"non-ICRL baseline labels")?; u:bcreq(equal(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic tagged JSON")?;
-leak={schema:"sw-ml-study.bandit-tasks",version:1,arms:2,horizon:1,training:{ids:[1],reward_tapes:[0,1]},held_out:{ids:[1],reward_tapes:[1,0]}}; u:bcreq(is_err(u:bandit_tasks_validate(leak,b)),"task leakage rejection")?; u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(1,8,8,8,32768))),"arm budget rejection")?; u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,3,8,8,32768))),"horizon budget rejection")?; u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,8,1,8,32768))),"comparison budget rejection")?; u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,8,8,3,32768))),"history budget rejection")?;
-print("PASS bandit history contract"); ok(1)
+u:bcreq(eq(r.baselines.greedy.icrl_claim,0)*eq(r.baselines.ucb.icrl_claim,0)*equal(r.environment.split,"held-out"),"non-ICRL baseline labels")?;
+u:bcreq(equal(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic tagged JSON")?;
+leak={schema:"sw-ml-study.bandit-tasks",version:1,arms:2,horizon:1,training:{ids:[1],reward_tapes:[0,1]},held_out:{ids:[1],reward_tapes:[1,0]}};
+u:bcreq(is_err(u:bandit_tasks_validate(leak,b)),"task leakage rejection")?;
+u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(1,8,8,8,32768))),"arm budget rejection")?;
+u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,3,8,8,32768))),"horizon budget rejection")?;
+u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,8,1,8,32768))),"comparison budget rejection")?;
+u:bcreq(is_err(u:bandit_contract_report("fixtures/adaptation/tiny-bandits.json",u:bcb(4,8,8,3,32768))),"history budget rejection")?;
+print("PASS bandit history contract");
+ok(1)

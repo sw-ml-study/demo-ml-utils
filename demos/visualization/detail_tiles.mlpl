@@ -5,7 +5,9 @@ print("DEMO: cross-format distribution and sampled-surface tiles");
 print("Scenario: compare a three-value Safetensors I16 tensor with the 32-value GGUF Q8_0 ramp using four histogram bins and endpoint-inclusive surface strips.");
 print("Native boundary: exact bounded payload reads plus generic tagged JSON. MLPL work: integer/Q8_0 decode, extrema policy, histogram accumulation, deterministic surface sampling, stable parent IDs, and validation.");
 print("Budgets: 34 payload bytes, one Q8_0 block, 32 decoded values, four bins, four surface points, five objects, two iterations, 8192 output bytes, JSON depth 8, and 512 elements.");
-print("Safetensors bins and strip:"); print({bins: d.ir.safetensors.bin_counts,indices: d.ir.safetensors.sample_indices,values: d.ir.safetensors.sample_values});
-print("GGUF bins and strip:"); print({bins: d.ir.gguf.bin_counts,indices: d.ir.gguf.sample_indices,values: d.ir.gguf.sample_values});
+print("Safetensors bins and strip:");
+print({bins: d.ir.safetensors.bin_counts,indices: d.ir.safetensors.sample_indices,values: d.ir.safetensors.sample_values});
+print("GGUF bins and strip:");
+print({bins: d.ir.gguf.bin_counts,indices: d.ir.gguf.sample_indices,values: d.ir.gguf.sample_values});
 print("Interpretation: the Q8_0 ramp fills four bins evenly and samples both endpoints; the sparse three-value I16 distribution visibly leaves one bin empty. Renderers receive bounded derived detail, not complete arbitrary tensors.");
 ok(1)

@@ -1,9 +1,25 @@
 include "../src/visualization/transport.mlpl";
-def u:rt(v,m) { "Require a transport invariant."; if v { ok(1) } else { err(m) } }
-def u:tb(payload,message,total,objects,lod,sequence,messages,iterations) { "Return transport budgets."; {max_payload_bytes: payload,max_message_bytes: message,max_total_bytes: total,max_objects: objects,max_lod: lod,max_sequence: sequence,max_label_bytes:64,max_json_depth:8,max_json_elements:128,max_messages: messages,max_iterations: iterations} }
-p0=to_json({schema:"sw-ml-study.scene-tiles",version:1})?; p1=to_json({schema:"sw-ml-study.tensor-city",version:1})?; p2=to_json({schema:"sw-ml-study.distribution-surfaces",version:1})?; p3=to_json({schema:"sw-ml-study.q8-error-tile",version:1})?; budgets=u:tb(256,1024,4096,12,3,3,4,4);
-bundle=u:transport_bundle(p0,p1,p2,p3,budgets)?; u:rt(equal(bundle.sequences,[0,1,2,3])*equal(bundle.lods,[0,1,2,3])*eq(bundle.messages,4),"transport golden ordering")?;
-again=u:transport_bundle(p0,p1,p2,p3,budgets)?; u:rt(equal(bundle.jsonl,again.jsonl),"transport deterministic JSONL")?;
+def u:rt(v,m) {
+  "Require a transport invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:tb(payload,message,total,objects,lod,sequence,messages,iterations) {
+  "Return transport budgets.";
+  {max_payload_bytes: payload,max_message_bytes: message,max_total_bytes: total,max_objects: objects,max_lod: lod,max_sequence: sequence,max_label_bytes:64,max_json_depth:8,max_json_elements:128,max_messages: messages,max_iterations: iterations}
+}
+p0=to_json({schema:"sw-ml-study.scene-tiles",version:1})?;
+p1=to_json({schema:"sw-ml-study.tensor-city",version:1})?;
+p2=to_json({schema:"sw-ml-study.distribution-surfaces",version:1})?;
+p3=to_json({schema:"sw-ml-study.q8-error-tile",version:1})?;
+budgets=u:tb(256,1024,4096,12,3,3,4,4);
+bundle=u:transport_bundle(p0,p1,p2,p3,budgets)?;
+u:rt(equal(bundle.sequences,[0,1,2,3])*equal(bundle.lods,[0,1,2,3])*eq(bundle.messages,4),"transport golden ordering")?;
+again=u:transport_bundle(p0,p1,p2,p3,budgets)?;
+u:rt(equal(bundle.jsonl,again.jsonl),"transport deterministic JSONL")?;
 u:rt(is_err(u:transport_message("scene",0,"p",p1,budgets)),"transport kind/schema rejection")?;
 u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(20,1024,4096,12,3,3,4,4))),"transport payload budget rejection")?;
 u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(256,40,4096,12,3,3,4,4))),"transport message budget rejection")?;
@@ -11,4 +27,5 @@ u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(256,1024,100,12,3,3,4,4))),"tran
 u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(256,1024,4096,11,3,3,4,4))),"transport object budget rejection")?;
 u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(256,1024,4096,12,2,3,4,4))),"transport LOD budget rejection")?;
 u:rt(is_err(u:transport_bundle(p0,p1,p2,p3,u:tb(256,1024,4096,12,3,3,3,4))),"transport message count rejection")?;
-print("PASS visualization transport contract"); ok(1)
+print("PASS visualization transport contract");
+ok(1)

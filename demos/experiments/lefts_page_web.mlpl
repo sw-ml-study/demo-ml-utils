@@ -41,20 +41,61 @@
 # equivalent, not a port of the LEFTS Python API. No include, fixture,
 # filesystem, Python, sklearn, or network access is used.
 
-def u:page_require(condition,message) { "Stop with a named error when one demo invariant fails."; if condition { ok(1) } else { err(message) } }
+def u:page_require(condition,message) {
+  "Stop with a named error when one demo invariant fails.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
 
 # LEAF: the smallest reusable computation in this lesson. Its learned value is
 # a four-number parameter vector: bias, temperature, humidity, and activity.
-def u:page_dot4(w,a,b,c) { "Predict from bias plus three normalized tabular features."; take(w,0,0)+take(w,0,1)*a+take(w,0,2)*b+take(w,0,3)*c }
+def u:page_dot4(w,a,b,c) {
+  "Predict from bias plus three normalized tabular features.";
+  take(w,0,0)+take(w,0,1)*a+take(w,0,2)*b+take(w,0,3)*c
+}
 
 # FIT CONTRACT: cutoff is the forecast month. The strict month < cutoff filter
 # is the central anti-leakage rule; changing it to <= would train on the answer.
 # The work budget also keeps this browser-safe teaching optimizer bounded.
-def u:page_fit_ridge(cutoff,months,temp,humidity,hour,demand,steps,learning_rate,lambda,max_work) { "Fit one independent teaching Ridge model using rows strictly before cutoff.";
-  rows=0; i=0; while lt(i,tally(months)) { if lt(take(months,0,i),cutoff) { rows=rows+1 } else { 0 }; i=i+1 };
-  if lt(rows,1)+gt(rows*steps,max_work) { err("rolling Ridge fit has no history or exceeds work budget") } else {
-    w=[0,0,0,0]; step=0;
-    while lt(step,steps) { gradient=[0,0,0,0]; i=0; while lt(i,tally(months)) { if lt(take(months,0,i),cutoff) { a=take(temp,0,i); h=take(humidity,0,i); t=take(hour,0,i); error=u:page_dot4(w,a,h,t)-take(demand,0,i); gradient=gradient+[error,error*a,error*h,error*t] } else { 0 }; i=i+1 }; gradient=gradient*(2/rows)+[0,2*lambda*take(w,0,1),2*lambda*take(w,0,2),2*lambda*take(w,0,3)]; w=w-learning_rate*gradient; step=step+1 };
+def u:page_fit_ridge(cutoff,months,temp,humidity,hour,demand,steps,learning_rate,lambda,max_work) {
+  "Fit one independent teaching Ridge model using rows strictly before cutoff.";
+  rows=0;
+  i=0;
+  while lt(i,tally(months)) {
+    if lt(take(months,0,i),cutoff) {
+      rows=rows+1
+    } else {
+      0
+    };
+    i=i+1
+  };
+  if lt(rows,1)+gt(rows*steps,max_work) {
+    err("rolling Ridge fit has no history or exceeds work budget")
+  } else {
+    w=[0,0,0,0];
+    step=0;
+    while lt(step,steps) {
+      gradient=[0,0,0,0];
+      i=0;
+      while lt(i,tally(months)) {
+        if lt(take(months,0,i),cutoff) {
+          a=take(temp,0,i);
+          h=take(humidity,0,i);
+          t=take(hour,0,i);
+          error=u:page_dot4(w,a,h,t)-take(demand,0,i);
+          gradient=gradient+[error,error*a,error*h,error*t]
+        } else {
+          0
+        };
+        i=i+1
+      };
+      gradient=gradient*(2/rows)+[0,2*lambda*take(w,0,1),2*lambda*take(w,0,2),2*lambda*take(w,0,3)];
+      w=w-learning_rate*gradient;
+      step=step+1
+    };
     ok({weights: w,training_rows: rows,cutoff_month: cutoff})
   }
 }
@@ -64,10 +105,29 @@ def u:page_fit_ridge(cutoff,months,temp,humidity,hour,demand,steps,learning_rate
 # parameters; no later model mutates an earlier one. The matching month is then
 # routed to that model alone. Finally, concat coalesces the disjoint scalar
 # outputs into a single calendar-ordered prediction vector.
-def u:page_rolling_lift(months,temp,humidity,hour,demand,b) { "Lift the Ridge leaf over months 1 through 12 and route each row to its matching model.";
-  weights=[]; training_rows=[]; predictions=[]; model_month=1;
-  while lt(model_month,13) { fitted=u:page_fit_ridge(model_month,months,temp,humidity,hour,demand,b.steps,b.learning_rate,b.lambda,b.max_fit_work)?; weights=concat(weights,fitted.weights); training_rows=concat(training_rows,fitted.training_rows); row=model_month; prediction=u:page_dot4(fitted.weights,take(temp,0,row),take(humidity,0,row),take(hour,0,row)); predictions=concat(predictions,prediction); model_month=model_month+1 };
-  targets=[]; i=1; while lt(i,13) { targets=concat(targets,take(demand,0,i)); i=i+1 }; errors=predictions-targets; ok({model_months: iota(12)+1,training_rows: training_rows,weights: reshape(weights,[12,4]),predictions: predictions,targets: targets,mse: reduce_add(errors*errors)/12,routing:"prediction cell m uses only model m, trained on rows whose month is less than m",aggregation:"coalesce in month order; exactly one model supplies each cell"})
+def u:page_rolling_lift(months,temp,humidity,hour,demand,b) {
+  "Lift the Ridge leaf over months 1 through 12 and route each row to its matching model.";
+  weights=[];
+  training_rows=[];
+  predictions=[];
+  model_month=1;
+  while lt(model_month,13) {
+    fitted=u:page_fit_ridge(model_month,months,temp,humidity,hour,demand,b.steps,b.learning_rate,b.lambda,b.max_fit_work)?;
+    weights=concat(weights,fitted.weights);
+    training_rows=concat(training_rows,fitted.training_rows);
+    row=model_month;
+    prediction=u:page_dot4(fitted.weights,take(temp,0,row),take(humidity,0,row),take(hour,0,row));
+    predictions=concat(predictions,prediction);
+    model_month=model_month+1
+  };
+  targets=[];
+  i=1;
+  while lt(i,13) {
+    targets=concat(targets,take(demand,0,i));
+    i=i+1
+  };
+  errors=predictions-targets;
+  ok({model_months: iota(12)+1,training_rows: training_rows,weights: reshape(weights,[12,4]),predictions: predictions,targets: targets,mse: reduce_add(errors*errors)/12,routing:"prediction cell m uses only model m, trained on rows whose month is less than m",aggregation:"coalesce in month order; exactly one model supplies each cell"})
 }
 
 # INPUT STORY

@@ -1,8 +1,24 @@
 include "../../src/experiments/tune.mlpl";
-dataset={train:{ids:[101,102],x:[0,1],y:[1,3]},validation:{ids:[201,202],x:[1,2],y:[3,5]},test:{ids:[301,302],x:[3,4],y:[7,9]}}; r=u:tune_report(dataset,[0,1,2],{max_examples:8,max_candidates:8,max_elements:64,max_id_comparisons:64,max_abs_value:100})?;
-print("DEMO: leakage-safe Tune as configuration-producing computation"); print("Scenario: fit slope 2 from training rows, let validation choose among offsets 0, 1, and 2, then evaluate the selected affine computation exactly once on untouched held-out rows.");
-print("Native boundary: sw-MLPL supplies records, arrays, loops, and reductions. MLPL owns identity separation, slope fitting, candidate scoring, deterministic selection, and held-out evaluation."); print("Budgets: eight total examples, eight candidates, 64 numeric elements, 64 identity comparisons, and magnitude 100; this run uses two rows in each split and three candidates.");
-print("Three-way split provenance:"); print(r.provenance); print("Training-produced base configuration:"); print(r.fitted); print("Every validation candidate and score:"); print(r.selection); print("Held-out result after selection:"); print(r.held_out);
-print("Selection explanation:"); print({offset_0_mse:1,offset_1_mse:0,offset_2_mse:1,winner:"offset 1 uniquely minimizes validation MSE",held_out_rule:"2x + 1 predicts 7 and 9 exactly"});
-print("CONCEPT Tune=validation-selects-downstream-configuration"); print("SELECTION deterministic_tie_break=lowest_candidate_index"); print("LEAKAGE held_out_reads_before_selection=0"); print("EVALUATION held_out_evaluations=1"); print("CLASSIFICATION cross_repo_blockers=none");
-print("Interpretation: Tune produces offset configuration 1 for the downstream affine predictor using validation evidence only. The held-out rows confirm MSE 0 after selection; they never participate in scoring. This is bounded teaching selection, not production hyperparameter optimization."); ok(1)
+dataset={train:{ids:[101,102],x:[0,1],y:[1,3]},validation:{ids:[201,202],x:[1,2],y:[3,5]},test:{ids:[301,302],x:[3,4],y:[7,9]}};
+r=u:tune_report(dataset,[0,1,2],{max_examples:8,max_candidates:8,max_elements:64,max_id_comparisons:64,max_abs_value:100})?;
+print("DEMO: leakage-safe Tune as configuration-producing computation");
+print("Scenario: fit slope 2 from training rows, let validation choose among offsets 0, 1, and 2, then evaluate the selected affine computation exactly once on untouched held-out rows.");
+print("Native boundary: sw-MLPL supplies records, arrays, loops, and reductions. MLPL owns identity separation, slope fitting, candidate scoring, deterministic selection, and held-out evaluation.");
+print("Budgets: eight total examples, eight candidates, 64 numeric elements, 64 identity comparisons, and magnitude 100; this run uses two rows in each split and three candidates.");
+print("Three-way split provenance:");
+print(r.provenance);
+print("Training-produced base configuration:");
+print(r.fitted);
+print("Every validation candidate and score:");
+print(r.selection);
+print("Held-out result after selection:");
+print(r.held_out);
+print("Selection explanation:");
+print({offset_0_mse:1,offset_1_mse:0,offset_2_mse:1,winner:"offset 1 uniquely minimizes validation MSE",held_out_rule:"2x + 1 predicts 7 and 9 exactly"});
+print("CONCEPT Tune=validation-selects-downstream-configuration");
+print("SELECTION deterministic_tie_break=lowest_candidate_index");
+print("LEAKAGE held_out_reads_before_selection=0");
+print("EVALUATION held_out_evaluations=1");
+print("CLASSIFICATION cross_repo_blockers=none");
+print("Interpretation: Tune produces offset configuration 1 for the downstream affine predictor using validation evidence only. The held-out rows confirm MSE 0 after selection; they never participate in scoring. This is bounded teaching selection, not production hyperparameter optimization.");
+ok(1)

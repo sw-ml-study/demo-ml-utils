@@ -1,4 +1,15 @@
 include "../../src/quantization/numeric_conversion.mlpl";
-b={max_values:8,max_iterations:8,max_output_values:8,max_abs_input:1000,max_output_bytes:4096,max_decode_bytes:4096,max_json_depth:8,max_json_elements:128,max_report_fields:8}; samples=[-300,-2.9,-0.5,0,0.5,2.9,255.9,300]; reference=[-128,-3,-1,0,1,3,127,127]; evidence=u:numeric_conversion_report(samples,reference,b)?;
-print("DEMO: bounded numeric conversion and reconstruction evidence"); print("Scenario: pass boundary-heavy model values through signed-byte, unsigned-byte, and unchanged floating policies, then compare signed-byte output with a target vector."); print("Native boundary: generic tagged JSON encode/decode only. MLPL work: finite-input validation, truncate-toward-zero, saturation, vector conversion, absolute errors, RMSE, maximum error, cosine, and report validation."); print("Budgets: eight input, iteration, and output values; magnitude at most 1000; eight report fields; 4096 encoded/decode bytes; JSON depth 8 and 128 elements.");
-print("Boundary conversions:"); print({input: samples,i8: evidence.report.i8,u8: evidence.report.u8,f64: evidence.report.f64}); print("Comparison with target:"); print(evidence.report.metrics); print("Interpretation: fractions move toward zero, i8 clamps outside -128..127, u8 also clamps negatives to zero and values above 255, while f64 preserves inputs. Nonzero RMSE/max error expose where this simple policy differs from the target; cosine summarizes retained direction and shape."); ok(1)
+b={max_values:8,max_iterations:8,max_output_values:8,max_abs_input:1000,max_output_bytes:4096,max_decode_bytes:4096,max_json_depth:8,max_json_elements:128,max_report_fields:8};
+samples=[-300,-2.9,-0.5,0,0.5,2.9,255.9,300];
+reference=[-128,-3,-1,0,1,3,127,127];
+evidence=u:numeric_conversion_report(samples,reference,b)?;
+print("DEMO: bounded numeric conversion and reconstruction evidence");
+print("Scenario: pass boundary-heavy model values through signed-byte, unsigned-byte, and unchanged floating policies, then compare signed-byte output with a target vector.");
+print("Native boundary: generic tagged JSON encode/decode only. MLPL work: finite-input validation, truncate-toward-zero, saturation, vector conversion, absolute errors, RMSE, maximum error, cosine, and report validation.");
+print("Budgets: eight input, iteration, and output values; magnitude at most 1000; eight report fields; 4096 encoded/decode bytes; JSON depth 8 and 128 elements.");
+print("Boundary conversions:");
+print({input: samples,i8: evidence.report.i8,u8: evidence.report.u8,f64: evidence.report.f64});
+print("Comparison with target:");
+print(evidence.report.metrics);
+print("Interpretation: fractions move toward zero, i8 clamps outside -128..127, u8 also clamps negatives to zero and values above 255, while f64 preserves inputs. Nonzero RMSE/max error expose where this simple policy differs from the target; cosine summarizes retained direction and shape.");
+ok(1)

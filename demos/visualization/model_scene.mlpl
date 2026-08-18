@@ -6,10 +6,15 @@ print("Scenario: catalog three Safetensors tensors and four GGUF tensors, then p
 print("Native boundary: bounded catalog I/O plus generic tagged to_json/parse_json. MLPL work: sorted name discovery, stable IDs, hierarchy, coordinates, extents, scalar attributes, collision checks, and headless validation.");
 print("Budgets: 12 logical objects, seven tiles/iterations, hierarchy depth 1, coordinates through 40, 64-byte names, 128-byte IDs, 32768 output bytes, JSON depth 8, and 4096 decoded elements.");
 print("Layout policy: Safetensors district z=0 and GGUF district z=4; names keep deterministic catalog order; x advances by 2; width/depth are 1; height is 1 + parameter_count and y centers each building.");
-print("Ordered name lengths (tensor_a, tensor_b, tensor_c, alpha, quant, ints, bytes):"); print(qv17.ir.tensor_columns.name_lengths);
-print("District/group codes:"); print(qv17.ir.tensor_columns.group_ids);
-print("Dot-separated name hierarchy depths:"); print(qv17.ir.tensor_columns.name_depths);
-print("Building x, z, and height columns:"); print({x: qv17.ir.tensor_columns.x,z: qv17.ir.tensor_columns.z,height: qv17.ir.tensor_columns.heights});
-print("Representative stable ID:"); print(u:city_text(flatten(qv17.ir.tensor_columns.id_bytes),qv17.ir.tensor_columns.id_lengths,4,128));
+print("Ordered name lengths (tensor_a, tensor_b, tensor_c, alpha, quant, ints, bytes):");
+print(qv17.ir.tensor_columns.name_lengths);
+print("District/group codes:");
+print(qv17.ir.tensor_columns.group_ids);
+print("Dot-separated name hierarchy depths:");
+print(qv17.ir.tensor_columns.name_depths);
+print("Building x, z, and height columns:");
+print({x: qv17.ir.tensor_columns.x,z: qv17.ir.tensor_columns.z,height: qv17.ir.tensor_columns.heights});
+print("Representative stable ID:");
+print(u:city_text(flatten(qv17.ir.tensor_columns.id_bytes),qv17.ir.tensor_columns.id_lengths,4,128));
 print("Interpretation: quant is visibly tallest at height 33, the empty Safetensors tensor remains a height-1 building, districts cannot overlap in z, and renderers receive catalog-derived geometry rather than tensor payloads.");
 ok(1)

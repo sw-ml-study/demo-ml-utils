@@ -1,17 +1,75 @@
 include "icl_contract.mlpl";
 
-def u:associative_predict(record,parameters,context_count,b) { "Predict queries from frozen baseline plus dot-product-weighted context residuals.";
-  features=record.provenance.features; queries=tally(record.query.ids); available=tally(record.context.ids);
-  if (1-eq(context_count,floor(context_count)))+lt(context_count,0)+gt(context_count,available)+gt(context_count,b.max_context_examples)+gt(queries*context_count*features,b.max_association_work) { err("associative ICL context count or work budget exceeded") } else {
-    baseline=u:icl_zero_predict(record.query.x,features,parameters,b)?; context_baseline=u:icl_zero_predict(record.context.x,features,parameters,b)?; predictions=fill([0],0); similarities=fill([0],0); contributions=fill([0],0); query=0;
-    while lt(query,queries) { prediction=take(baseline,0,query); context=0; while lt(context,context_count) { similarity=0; feature=0; while lt(feature,features) { similarity=similarity+take(record.query.x,0,query*features+feature)*take(record.context.x,0,context*features+feature); feature=feature+1 }; residual=take(record.context.labels,0,context)-take(context_baseline,0,context); contribution=similarity*residual; if (1-eq(similarity,similarity))+gt(abs(similarity),b.max_abs_similarity)+(1-eq(contribution,contribution))+gt(abs(contribution),b.max_abs_contribution) { return err("associative ICL similarity or contribution is non-finite or over budget") } else { similarities=concat(similarities,similarity); contributions=concat(contributions,contribution); prediction=prediction+contribution }; context=context+1 }; if (1-eq(prediction,prediction))+gt(abs(prediction),b.max_abs_prediction) { return err("associative ICL prediction is non-finite or over budget") } else { predictions=concat(predictions,prediction) }; query=query+1 };
+def u:associative_predict(record,parameters,context_count,b) {
+  "Predict queries from frozen baseline plus dot-product-weighted context residuals.";
+  features=record.provenance.features;
+  queries=tally(record.query.ids);
+  available=tally(record.context.ids);
+  if (1-eq(context_count,floor(context_count)))+lt(context_count,0)+gt(context_count,available)+gt(context_count,b.max_context_examples)+gt(queries*context_count*features,b.max_association_work) {
+    err("associative ICL context count or work budget exceeded")
+  } else {
+    baseline=u:icl_zero_predict(record.query.x,features,parameters,b)?;
+    context_baseline=u:icl_zero_predict(record.context.x,features,parameters,b)?;
+    predictions=fill([0],0);
+    similarities=fill([0],0);
+    contributions=fill([0],0);
+    query=0;
+    while lt(query,queries) {
+      prediction=take(baseline,0,query);
+      context=0;
+      while lt(context,context_count) {
+        similarity=0;
+        feature=0;
+        while lt(feature,features) {
+          similarity=similarity+take(record.query.x,0,query*features+feature)*take(record.context.x,0,context*features+feature);
+          feature=feature+1
+        };
+        residual=take(record.context.labels,0,context)-take(context_baseline,0,context);
+        contribution=similarity*residual;
+        if (1-eq(similarity,similarity))+gt(abs(similarity),b.max_abs_similarity)+(1-eq(contribution,contribution))+gt(abs(contribution),b.max_abs_contribution) {
+          return err("associative ICL similarity or contribution is non-finite or over budget")
+        } else {
+          similarities=concat(similarities,similarity);
+          contributions=concat(contributions,contribution);
+          prediction=prediction+contribution
+        };
+        context=context+1
+      };
+      if (1-eq(prediction,prediction))+gt(abs(prediction),b.max_abs_prediction) {
+        return err("associative ICL prediction is non-finite or over budget")
+      } else {
+        predictions=concat(predictions,prediction)
+      };
+      query=query+1
+    };
     ok({context_count: context_count,predictions: predictions,similarities: reshape(similarities,[queries,context_count]),contributions: reshape(contributions,[queries,context_count]),mse: u:icl_mse(predictions,record.query.targets)?,association_work: queries*context_count*features})
   }
 }
 
-def u:associative_icl_report(path,parameters,b) { "Compare zero-, one-, and few-shot associative inference under an exact frozen-parameter invariant.";
-  contract=u:icl_contract_report(path,parameters,b)?; before=contract.report.deployment.fingerprint_before; record=contract.report.record; zero=u:associative_predict(record,parameters,0,b)?; one=u:associative_predict(record,parameters,1,b)?; few=u:associative_predict(record,parameters,tally(record.context.ids),b)?; after=u:adaptation_fingerprint(parameters,b)?;
-  if 1-equal(before,after)+1-equal(zero.predictions,contract.report.zero_shot.predictions)+1-eq(zero.mse,contract.report.zero_shot.mse)+1-gt(zero.mse,one.mse)+1-gt(one.mse,few.mse) { err("associative ICL frozen, baseline, or improvement invariant failed") } else {
-    report={schema:"sw-ml-study.associative-icl",version:1,task: record.provenance.task,mechanism:{name:"dot-product-context-residual",production_transformer_claim:0,parameter_updates:0},deployment:{parameters: parameters,fingerprint_before: before,fingerprint_after: after},context:{ids: record.context.ids,x: record.context.x,labels: record.context.labels},query:{ids: record.query.ids,x: record.query.x,targets: record.query.targets},zero_shot: zero,one_shot: one,few_shot: few,boundary:{similarities:"manual-mlpl-dot-products",residual_composition:"mlpl",native_training:0,external_inference:0}}; json=to_json(report,{tagged:1})?; size=tally(tokenize_bytes(json)); if gt(size,b.max_output_bytes) { err("associative ICL output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("associative ICL tagged JSON round trip changed") } else { ok({report: report,json: json,utf8_bytes: size}) } }
+def u:associative_icl_report(path,parameters,b) {
+  "Compare zero-, one-, and few-shot associative inference under an exact frozen-parameter invariant.";
+  contract=u:icl_contract_report(path,parameters,b)?;
+  before=contract.report.deployment.fingerprint_before;
+  record=contract.report.record;
+  zero=u:associative_predict(record,parameters,0,b)?;
+  one=u:associative_predict(record,parameters,1,b)?;
+  few=u:associative_predict(record,parameters,tally(record.context.ids),b)?;
+  after=u:adaptation_fingerprint(parameters,b)?;
+  if 1-equal(before,after)+1-equal(zero.predictions,contract.report.zero_shot.predictions)+1-eq(zero.mse,contract.report.zero_shot.mse)+1-gt(zero.mse,one.mse)+1-gt(one.mse,few.mse) {
+    err("associative ICL frozen, baseline, or improvement invariant failed")
+  } else {
+    report={schema:"sw-ml-study.associative-icl",version:1,task: record.provenance.task,mechanism:{name:"dot-product-context-residual",production_transformer_claim:0,parameter_updates:0},deployment:{parameters: parameters,fingerprint_before: before,fingerprint_after: after},context:{ids: record.context.ids,x: record.context.x,labels: record.context.labels},query:{ids: record.query.ids,x: record.query.x,targets: record.query.targets},zero_shot: zero,one_shot: one,few_shot: few,boundary:{similarities:"manual-mlpl-dot-products",residual_composition:"mlpl",native_training:0,external_inference:0}};
+    json=to_json(report,{tagged:1})?;
+    size=tally(tokenize_bytes(json));
+    if gt(size,b.max_output_bytes) {
+      err("associative ICL output budget exceeded")
+    } else {
+      decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+      if 1-equal(decoded,report) {
+        err("associative ICL tagged JSON round trip changed")
+      } else {
+        ok({report: report,json: json,utf8_bytes: size})
+      }
+    }
   }
 }

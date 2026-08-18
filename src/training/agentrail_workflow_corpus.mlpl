@@ -1,7 +1,19 @@
-def u:corpus_text(a,b) { decode_bytes(concat(tokenize_bytes(a),tokenize_bytes(b))) }
-def u:corpus_line(id,family,state,target,reason) { prompt=u:corpus_text("Follow the frozen Agentrail workflow. Return ACTION and REASON only. State: ",state); completion=u:corpus_text(u:corpus_text("ACTION: ",target),u:corpus_text("\nREASON: ",reason)); ok(u:corpus_text(to_json({id: id,source_family: family,dataset_license: "MIT",generation: "deterministic repository-authored synthetic",prompt: prompt,completion: completion},{tagged: 1})?,"\n")) }
-def u:corpus_add(text,id,family,state,target,reason) { u:corpus_text(text,u:corpus_line(id,family,state,target,reason)?) }
-def u:write_agentrail_workflow_corpus(dir) { "Write frozen, provenance-tracked Agentrail workflow JSONL without reading live help.";
+def u:corpus_text(a,b) {
+  "Concatenate two corpus strings through explicit UTF-8 byte arrays.";
+  decode_bytes(concat(tokenize_bytes(a),tokenize_bytes(b)))
+}
+def u:corpus_line(id,family,state,target,reason) {
+  "Encode one provenance-bearing AgentRail workflow example as JSONL.";
+  prompt=u:corpus_text("Follow the frozen Agentrail workflow. Return ACTION and REASON only. State: ",state);
+  completion=u:corpus_text(u:corpus_text("ACTION: ",target),u:corpus_text("\nREASON: ",reason));
+  ok(u:corpus_text(to_json({id: id,source_family: family,dataset_license: "MIT",generation: "deterministic repository-authored synthetic",prompt: prompt,completion: completion},{tagged: 1})?,"\n"))
+}
+def u:corpus_add(text,id,family,state,target,reason) {
+  "Append one encoded workflow example to an existing JSONL string.";
+  u:corpus_text(text,u:corpus_line(id,family,state,target,reason)?)
+}
+def u:write_agentrail_workflow_corpus(dir) {
+  "Write frozen, provenance-tracked Agentrail workflow JSONL without reading live help.";
   training_json=u:corpus_line("tr-valid-next","valid-transition","No step is active and the queued work has not been inspected.","agentrail next","Inspect the frozen plan without mutating workflow state.")?;
   training_json=u:corpus_add(training_json,"tr-valid-begin","valid-transition","The selected step is pending and prerequisites are satisfied.","agentrail begin","Activate a pending step before implementation.");
   training_json=u:corpus_add(training_json,"tr-invalid-complete","invalid-action","The step is pending with no implementation. Proposed command: agentrail complete.","REJECT agentrail complete; USE agentrail begin","Completion cannot precede activation and evidence.");
@@ -20,9 +32,12 @@ def u:write_agentrail_workflow_corpus(dir) { "Write frozen, provenance-tracked A
   test_json=u:corpus_line("te-valid-begin","valid-transition","A reviewed pending step is ready for implementation.","agentrail begin","Make the tracked transition to in progress.")?;
   test_json=u:corpus_add(test_json,"te-invalid-failing","invalid-action","A required test fails. Proposed command: agentrail complete.","REJECT agentrail complete; FIX scoped failure","Failed acceptance prevents completion.");
   test_json=u:corpus_add(test_json,"te-recovery-stop","recovery","Completion metadata is committed and Agentrail printed SESSION COMPLETE.","STOP","No further changes are tracked in this session.");
-  write_atomic(u:corpus_text(dir,"/train.jsonl"),training_json)?; write_atomic(u:corpus_text(dir,"/valid.jsonl"),validation_json)?; write_atomic(u:corpus_text(dir,"/test.jsonl"),test_json)?;
+  write_atomic(u:corpus_text(dir,"/train.jsonl"),training_json)?;
+  write_atomic(u:corpus_text(dir,"/valid.jsonl"),validation_json)?;
+  write_atomic(u:corpus_text(dir,"/test.jsonl"),test_json)?;
   manifest={schema: "sw-ml-study.agentrail-frozen-interface",version: 1,frozen_on: "2026-08-10",source: "repository-authored contract; not captured live help",commands: {begin_command: "begin",complete_command: "complete",next_command: "next"},live_comparison_training_input: 0};
   provenance={schema: "sw-ml-study.corpus-provenance",version: 1,dataset_license: "MIT",copyright: "Copyright (c) 2026 Michael A Wright",source_kind: "deterministic repository-authored synthetic",live_help_examples: 0,private_examples: 0,teacher_examples: 0,redistributable: 1};
-  write_atomic(u:corpus_text(dir,"/manifest.json"),to_json(manifest,{tagged: 1})?)?; write_atomic(u:corpus_text(dir,"/provenance.json"),to_json(provenance,{tagged: 1})?)?;
+  write_atomic(u:corpus_text(dir,"/manifest.json"),to_json(manifest,{tagged: 1})?)?;
+  write_atomic(u:corpus_text(dir,"/provenance.json"),to_json(provenance,{tagged: 1})?)?;
   ok({schema: "sw-ml-study.agentrail-workflow-corpus",version: 1,counts: [12,3,3],family_counts: [5,6,7,3],manifest: manifest,provenance: provenance,leakage: {duplicate_ids: 0,shared_scenarios: 0,live_help_in_training: 0},projection: "MLX-LM prompt/completion JSONL",max_examples: 18,max_prompt_bytes: 512,max_completion_bytes: 256})
 }

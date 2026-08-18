@@ -1,6 +1,13 @@
 # Executable contract for binary-format capabilities available today.
 
-def u:require(condition, message) { "Return Ok when condition is true, otherwise a named probe failure."; if condition { ok(1) } else { err(message) } }
+def u:require(condition, message) {
+  "Return Ok when condition is true, otherwise a named probe failure.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
 
 path = ".capability-probe.bin";
 expected = [0,1,127,255];

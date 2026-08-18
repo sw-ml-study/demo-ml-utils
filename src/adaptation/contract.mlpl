@@ -1,7 +1,180 @@
-def u:adaptation_split(split,features,b) { "Validate one deterministic supervised split under explicit work and magnitude budgets."; if 1-equal(record_keys(split),["ids","x","y"])+1-eq(rank(split.ids),1)+1-eq(rank(split.x),1)+1-eq(rank(split.y),1)+1-eq(mod(tally(split.x),features),0) { err("adaptation split schema or rank mismatch") } else { rows=tally(split.x)/features; if 1-eq(rows,tally(split.ids))+1-eq(rows,tally(split.y))+lt(rows,1)+gt(rows,b.max_examples_per_split)+gt(rows*features,b.max_elements_per_split) { err("adaptation split shape or element budget mismatch") } else { index=0; while lt(index,rows) { id=take(split.ids,0,index); target=take(split.y,0,index); if (1-eq(id,floor(id)))+lt(id,1)+(1-eq(target,target))+gt(abs(target),b.max_abs_value) { return err("adaptation id or target is invalid") } else { 0 }; prior=0; while lt(prior,index) { if eq(id,take(split.ids,0,prior)) { return err("adaptation split contains a duplicate id") } else { 0 }; prior=prior+1 }; feature=0; while lt(feature,features) { value=take(split.x,0,index*features+feature); if (1-eq(value,value))+gt(abs(value),b.max_abs_value) { return err("adaptation feature is non-finite or over budget") } else { 0 }; feature=feature+1 }; index=index+1 }; ok({examples: rows,elements: rows*features}) } } }
-def u:adaptation_disjoint(left,right,b) { "Prove two split-id vectors are disjoint within a comparison budget."; comparisons=0; i=0; while lt(i,tally(left)) { j=0; while lt(j,tally(right)) { if gt(comparisons,b.max_split_comparisons-1) { return err("adaptation split comparison budget exceeded") } else { 0 }; if eq(take(left,0,i),take(right,0,j)) { return err("adaptation split leakage detected") } else { 0 }; comparisons=comparisons+1; j=j+1 }; i=i+1 }; ok(comparisons) }
-def u:adaptation_dataset(dataset,b) { "Validate the shared train/context/evaluation dataset contract and reject id leakage."; if 1-equal(record_keys(dataset),["context","evaluation","feature_count","schema","task","train","version"])+1-equal(dataset.schema,"sw-ml-study.adaptation-dataset")+1-eq(dataset.version,1)+1-equal(type_of(dataset.task),"string") { err("adaptation dataset root schema mismatch") } else { features=dataset.feature_count; if (1-eq(features,floor(features)))+lt(features,1)+gt(features,b.max_features) { err("adaptation feature-count budget exceeded") } else { train_summary=u:adaptation_split(dataset.train,features,b)?; context_summary=u:adaptation_split(dataset.context,features,b)?; evaluation_summary=u:adaptation_split(dataset.evaluation,features,b)?; tc=u:adaptation_disjoint(dataset.train.ids,dataset.context.ids,b)?; te=u:adaptation_disjoint(dataset.train.ids,dataset.evaluation.ids,b)?; ce=u:adaptation_disjoint(dataset.context.ids,dataset.evaluation.ids,b)?; total=train_summary.examples+context_summary.examples+evaluation_summary.examples; if gt(total,b.max_total_examples) { err("adaptation total-example budget exceeded") } else { ok({task: dataset.task,features: features,train_examples: train_summary.examples,context_examples: context_summary.examples,evaluation_examples: evaluation_summary.examples,total_examples: total,split_comparisons: tc+te+ce,leakage_detected:0}) } } } }
-def u:adaptation_fingerprint(parameters,b) { "Return a canonical tagged-JSON parameter fingerprint for exact deployment comparisons."; if 1-equal(type_of(parameters),"array") { err("adaptation parameters must be an array") } else { flat=flatten(parameters); if gt(tally(flat),b.max_parameters)+gt(tally(flat),b.max_fingerprint_elements) { err("adaptation parameter fingerprint budget exceeded") } else { index=0; while lt(index,tally(flat)) { value=take(flat,0,index); if (1-eq(value,value))+gt(abs(value),b.max_abs_value) { return err("adaptation parameter is non-finite or over budget") } else { 0 }; index=index+1 }; encoded=to_json(parameters,{tagged:1})?; if gt(tally(tokenize_bytes(encoded)),b.max_fingerprint_bytes) { err("adaptation parameter fingerprint byte budget exceeded") } else { ok(encoded) } } } }
-def u:adaptation_numeric_capabilities() { "Exercise deterministic numeric primitives needed by manual gradients and attention."; probabilities=softmax(reshape([1,2,3,4],[2,2]),1); seeded=random(17,[4]); ok({dot: dot([1,2],[3,4]),matmul: matmul(reshape([1,2,3,4],[2,2]),reshape([2,0,1,2],[2,2])),softmax: probabilities,softmax_row_sums: reduce(:add,probabilities,1),sigmoid_zero: sigmoid(0),log_exp_one: log(exp(1)),seeded_random: seeded,seeded_repeated: equal(seeded,random(17,[4]))}) }
-def u:adaptation_mode(mode,deployment_updates,context_records,reward_records) { "Enforce the defining deployment-time distinction among fine-tuning, ICL, and ICRL."; if equal(mode,"fine-tuning") { if lt(deployment_updates,1) { err("fine-tuning must record parameter updates") } else { ok({parameter_updates:1,labeled_context_only:0,reward_history_only:0}) } } else { if equal(mode,"icl") { if 1-eq(deployment_updates,0)+lt(context_records,1)+gt(reward_records,0) { err("ICL requires labeled context and unchanged deployment parameters") } else { ok({parameter_updates:0,labeled_context_only:1,reward_history_only:0}) } } else { if equal(mode,"icrl") { if 1-eq(deployment_updates,0)+lt(reward_records,1) { err("ICRL requires reward history and unchanged deployment parameters") } else { ok({parameter_updates:0,labeled_context_only:0,reward_history_only:1}) } } else { err("unknown adaptation mode") } } } }
-def u:adaptation_contract_report(path,b) { "Build and round-trip the shared bounded adaptation contract and executable numeric evidence."; bytes=read_bytes(path)?; if gt(tally(bytes),b.max_dataset_bytes) { err("adaptation dataset byte budget exceeded") } else { dataset=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?; summary=u:adaptation_dataset(dataset,b)?; fingerprint=u:adaptation_fingerprint([0,0,0],b)?; numeric=u:adaptation_numeric_capabilities()?; fine=u:adaptation_mode("fine-tuning",1,0,0)?; icl=u:adaptation_mode("icl",0,summary.context_examples,0)?; icrl=u:adaptation_mode("icrl",0,0,4)?; report={schema:"sw-ml-study.adaptation-contract",version:1,dataset: summary,terminology:{fine_tuning: fine,icl: icl,icrl: icrl},parameter_fingerprint: fingerprint,numeric: numeric,boundary:{dataset_io:"native-read_bytes",json:"native-generic-codec",validation:"mlpl",model_training:"not-in-contract-step",external_model_inference:0}}; json=to_json(report,{tagged:1})?; if gt(tally(tokenize_bytes(json)),b.max_output_bytes) { err("adaptation contract output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("adaptation contract round trip changed") } else { ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))}) } } } }
+def u:adaptation_split(split,features,b) {
+  "Validate one deterministic supervised split under explicit work and magnitude budgets.";
+  if 1-equal(record_keys(split),["ids","x","y"])+1-eq(rank(split.ids),1)+1-eq(rank(split.x),1)+1-eq(rank(split.y),1)+1-eq(mod(tally(split.x),features),0) {
+    err("adaptation split schema or rank mismatch")
+  } else {
+    rows=tally(split.x)/features;
+    if 1-eq(rows,tally(split.ids))+1-eq(rows,tally(split.y))+lt(rows,1)+gt(rows,b.max_examples_per_split)+gt(rows*features,b.max_elements_per_split) {
+      err("adaptation split shape or element budget mismatch")
+    } else {
+      index=0;
+      while lt(index,rows) {
+        id=take(split.ids,0,index);
+        target=take(split.y,0,index);
+        if (1-eq(id,floor(id)))+lt(id,1)+(1-eq(target,target))+gt(abs(target),b.max_abs_value) {
+          return err("adaptation id or target is invalid")
+        } else {
+          0
+        };
+        prior=0;
+        while lt(prior,index) {
+          if eq(id,take(split.ids,0,prior)) {
+            return err("adaptation split contains a duplicate id")
+          } else {
+            0
+          };
+          prior=prior+1
+        };
+        feature=0;
+        while lt(feature,features) {
+          value=take(split.x,0,index*features+feature);
+          if (1-eq(value,value))+gt(abs(value),b.max_abs_value) {
+            return err("adaptation feature is non-finite or over budget")
+          } else {
+            0
+          };
+          feature=feature+1
+        };
+        index=index+1
+      };
+      ok({examples: rows,elements: rows*features})
+    }
+  }
+}
+def u:adaptation_disjoint(left,right,b) {
+  "Prove two split-id vectors are disjoint within a comparison budget.";
+  comparisons=0;
+  i=0;
+  while lt(i,tally(left)) {
+    j=0;
+    while lt(j,tally(right)) {
+      if gt(comparisons,b.max_split_comparisons-1) {
+        return err("adaptation split comparison budget exceeded")
+      } else {
+        0
+      };
+      if eq(take(left,0,i),take(right,0,j)) {
+        return err("adaptation split leakage detected")
+      } else {
+        0
+      };
+      comparisons=comparisons+1;
+      j=j+1
+    };
+    i=i+1
+  };
+  ok(comparisons)
+}
+def u:adaptation_dataset(dataset,b) {
+  "Validate the shared train/context/evaluation dataset contract and reject id leakage.";
+  if 1-equal(record_keys(dataset),["context","evaluation","feature_count","schema","task","train","version"])+1-equal(dataset.schema,"sw-ml-study.adaptation-dataset")+1-eq(dataset.version,1)+1-equal(type_of(dataset.task),"string") {
+    err("adaptation dataset root schema mismatch")
+  } else {
+    features=dataset.feature_count;
+    if (1-eq(features,floor(features)))+lt(features,1)+gt(features,b.max_features) {
+      err("adaptation feature-count budget exceeded")
+    } else {
+      train_summary=u:adaptation_split(dataset.train,features,b)?;
+      context_summary=u:adaptation_split(dataset.context,features,b)?;
+      evaluation_summary=u:adaptation_split(dataset.evaluation,features,b)?;
+      tc=u:adaptation_disjoint(dataset.train.ids,dataset.context.ids,b)?;
+      te=u:adaptation_disjoint(dataset.train.ids,dataset.evaluation.ids,b)?;
+      ce=u:adaptation_disjoint(dataset.context.ids,dataset.evaluation.ids,b)?;
+      total=train_summary.examples+context_summary.examples+evaluation_summary.examples;
+      if gt(total,b.max_total_examples) {
+        err("adaptation total-example budget exceeded")
+      } else {
+        ok({task: dataset.task,features: features,train_examples: train_summary.examples,context_examples: context_summary.examples,evaluation_examples: evaluation_summary.examples,total_examples: total,split_comparisons: tc+te+ce,leakage_detected:0})
+      }
+    }
+  }
+}
+def u:adaptation_fingerprint(parameters,b) {
+  "Return a canonical tagged-JSON parameter fingerprint for exact deployment comparisons.";
+  if 1-equal(type_of(parameters),"array") {
+    err("adaptation parameters must be an array")
+  } else {
+    flat=flatten(parameters);
+    if gt(tally(flat),b.max_parameters)+gt(tally(flat),b.max_fingerprint_elements) {
+      err("adaptation parameter fingerprint budget exceeded")
+    } else {
+      index=0;
+      while lt(index,tally(flat)) {
+        value=take(flat,0,index);
+        if (1-eq(value,value))+gt(abs(value),b.max_abs_value) {
+          return err("adaptation parameter is non-finite or over budget")
+        } else {
+          0
+        };
+        index=index+1
+      };
+      encoded=to_json(parameters,{tagged:1})?;
+      if gt(tally(tokenize_bytes(encoded)),b.max_fingerprint_bytes) {
+        err("adaptation parameter fingerprint byte budget exceeded")
+      } else {
+        ok(encoded)
+      }
+    }
+  }
+}
+def u:adaptation_numeric_capabilities() {
+  "Exercise deterministic numeric primitives needed by manual gradients and attention.";
+  probabilities=softmax(reshape([1,2,3,4],[2,2]),1);
+  seeded=random(17,[4]);
+  ok({dot: dot([1,2],[3,4]),matmul: matmul(reshape([1,2,3,4],[2,2]),reshape([2,0,1,2],[2,2])),softmax: probabilities,softmax_row_sums: reduce(:add,probabilities,1),sigmoid_zero: sigmoid(0),log_exp_one: log(exp(1)),seeded_random: seeded,seeded_repeated: equal(seeded,random(17,[4]))})
+}
+def u:adaptation_mode(mode,deployment_updates,context_records,reward_records) {
+  "Enforce the defining deployment-time distinction among fine-tuning, ICL, and ICRL.";
+  if equal(mode,"fine-tuning") {
+    if lt(deployment_updates,1) {
+      err("fine-tuning must record parameter updates")
+    } else {
+      ok({parameter_updates:1,labeled_context_only:0,reward_history_only:0})
+    }
+  } else {
+    if equal(mode,"icl") {
+      if 1-eq(deployment_updates,0)+lt(context_records,1)+gt(reward_records,0) {
+        err("ICL requires labeled context and unchanged deployment parameters")
+      } else {
+        ok({parameter_updates:0,labeled_context_only:1,reward_history_only:0})
+      }
+    } else {
+      if equal(mode,"icrl") {
+        if 1-eq(deployment_updates,0)+lt(reward_records,1) {
+          err("ICRL requires reward history and unchanged deployment parameters")
+        } else {
+          ok({parameter_updates:0,labeled_context_only:0,reward_history_only:1})
+        }
+      } else {
+        err("unknown adaptation mode")
+      }
+    }
+  }
+}
+def u:adaptation_contract_report(path,b) {
+  "Build and round-trip the shared bounded adaptation contract and executable numeric evidence.";
+  bytes=read_bytes(path)?;
+  if gt(tally(bytes),b.max_dataset_bytes) {
+    err("adaptation dataset byte budget exceeded")
+  } else {
+    dataset=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?;
+    summary=u:adaptation_dataset(dataset,b)?;
+    fingerprint=u:adaptation_fingerprint([0,0,0],b)?;
+    numeric=u:adaptation_numeric_capabilities()?;
+    fine=u:adaptation_mode("fine-tuning",1,0,0)?;
+    icl=u:adaptation_mode("icl",0,summary.context_examples,0)?;
+    icrl=u:adaptation_mode("icrl",0,0,4)?;
+    report={schema:"sw-ml-study.adaptation-contract",version:1,dataset: summary,terminology:{fine_tuning: fine,icl: icl,icrl: icrl},parameter_fingerprint: fingerprint,numeric: numeric,boundary:{dataset_io:"native-read_bytes",json:"native-generic-codec",validation:"mlpl",model_training:"not-in-contract-step",external_model_inference:0}};
+    json=to_json(report,{tagged:1})?;
+    if gt(tally(tokenize_bytes(json)),b.max_output_bytes) {
+      err("adaptation contract output budget exceeded")
+    } else {
+      decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+      if 1-equal(decoded,report) {
+        err("adaptation contract round trip changed")
+      } else {
+        ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))})
+      }
+    }
+  }
+}

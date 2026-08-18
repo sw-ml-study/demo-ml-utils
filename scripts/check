@@ -9,6 +9,7 @@ sh -n "$repo_root"/scripts/* "$repo_root"/tests/test-*
 "$repo_root/scripts/check-doc-links"
 "$repo_root/scripts/check-fixtures"
 "$repo_root/scripts/check-sources"
+"$repo_root/scripts/check-mlpl-style"
 "$repo_root/tests/test-validation"
 "$repo_root/tests/test-demo-output" >/dev/null
 git -C "$repo_root" diff --check

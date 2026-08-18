@@ -1,9 +1,170 @@
-def u:sl_require(c,m) { "Return Ok for one Split/Lift invariant."; if c { ok(1) } else { err(m) } }
-def u:sl_validate_ids(train_ids,eval_ids,b) { "Reject duplicate or leaking row identities under a comparison budget."; comparisons=0; i=0; while lt(i,tally(train_ids)) { j=0; while lt(j,i) { comparisons=comparisons+1; if gt(comparisons,b.max_id_comparisons) { return err("Split identity comparison budget exceeded") } else { 0 }; if eq(take(train_ids,0,i),take(train_ids,0,j)) { return err("duplicate training identity") } else { 0 }; j=j+1 }; j=0; while lt(j,tally(eval_ids)) { comparisons=comparisons+1; if gt(comparisons,b.max_id_comparisons) { return err("Split identity comparison budget exceeded") } else { 0 }; if eq(take(train_ids,0,i),take(eval_ids,0,j)) { return err("training/evaluation leakage") } else { 0 }; j=j+1 }; i=i+1 }; i=0; while lt(i,tally(eval_ids)) { j=0; while lt(j,i) { comparisons=comparisons+1; if gt(comparisons,b.max_id_comparisons) { return err("Split identity comparison budget exceeded") } else { 0 }; if eq(take(eval_ids,0,i),take(eval_ids,0,j)) { return err("duplicate evaluation identity") } else { 0 }; j=j+1 }; i=i+1 }; ok(comparisons) }
-def u:sl_validate(dataset,groups,b) { "Validate aligned bounded scalar-regression splits and named numeric groups."; tr=tally(dataset.train.ids); ev=tally(dataset.evaluation.ids); if lt(tr,1)+lt(ev,1)+gt(tr,b.max_train_rows)+gt(ev,b.max_eval_rows)+lt(tally(groups),1)+gt(tally(groups),b.max_groups) { err("Split row or group budget mismatch") } else { if 1-equal([tr,tr,tr,tr],[tally(dataset.train.ids),tally(dataset.train.groups),tally(dataset.train.inputs),tally(dataset.train.targets)])+1-equal([ev,ev,ev,ev],[tally(dataset.evaluation.ids),tally(dataset.evaluation.groups),tally(dataset.evaluation.inputs),tally(dataset.evaluation.targets)]) { err("Split columns are not aligned") } else { comparisons=u:sl_validate_ids(dataset.train.ids,dataset.evaluation.ids,b)?; ok({train_rows: tr,evaluation_rows: ev,groups: tally(groups),id_comparisons: comparisons,leakage_detected: 0}) } } }
-def u:sl_fit_group(dataset,group,b) { "Fit one group-specific residual mean from training rows only."; residuals=[]; i=0; while lt(i,tally(dataset.train.ids)) { if eq(take(dataset.train.groups,0,i),group) { residuals=concat(residuals,take(dataset.train.targets,0,i)-take(dataset.train.inputs,0,i)) } else { 0 }; i=i+1 }; if lt(tally(residuals),1)+gt(tally(residuals),b.max_rows_per_group) { err("group is empty or over row budget") } else { ok({group: group,offset: reduce_add(residuals)/tally(residuals),training_rows: tally(residuals)}) } }
-def u:sl_fit_all(dataset,groups,b) { "Factor repeated group fitting into aligned numeric parameter arrays."; offsets=[]; counts=[]; i=0; while lt(i,tally(groups)) { fitted=u:sl_fit_group(dataset,take(groups,0,i),b)?; offsets=concat(offsets,fitted.offset); counts=concat(counts,fitted.training_rows); i=i+1 }; ok({groups: groups,offsets: offsets,training_rows: counts}) }
-def u:sl_offset_for(parameters,group,b) { "Look up one fitted group offset with bounded comparisons."; i=0; while lt(i,tally(parameters.groups)) { if gt(i,b.max_groups-1) { return err("group lookup budget exceeded") } else { 0 }; if eq(take(parameters.groups,0,i),group) { return ok(take(parameters.offsets,0,i)) } else { 0 }; i=i+1 }; err("evaluation row uses an unfitted group") }
-def u:sl_predict(dataset,parameters,b) { "Predict evaluation rows using their aligned group parameter."; predictions=[]; i=0; while lt(i,tally(dataset.evaluation.ids)) { offset=u:sl_offset_for(parameters,take(dataset.evaluation.groups,0,i),b)?; predictions=concat(predictions,take(dataset.evaluation.inputs,0,i)+offset); i=i+1 }; ok(predictions) }
-def u:sl_mse(predictions,targets) { "Compute mean squared error for aligned non-empty vectors."; if lt(tally(targets),1)+1-eq(tally(predictions),tally(targets)) { err("MSE vectors must be aligned and non-empty") } else { d=predictions-targets; ok(reduce_add(d*d)/tally(d)) } }
-def u:split_lift_report(dataset,groups,b) { "Compare an explicit two-group workflow with a factored grouped-fit computation."; summary=u:sl_validate(dataset,groups,b)?; if 1-eq(tally(groups),2) { err("teaching baseline requires exactly two groups") } else { g0=u:sl_fit_group(dataset,take(groups,0,0),b)?; g1=u:sl_fit_group(dataset,take(groups,0,1),b)?; explicit_parameters={groups: groups,offsets: [g0.offset,g1.offset],training_rows: [g0.training_rows,g1.training_rows]}; explicit_predictions=u:sl_predict(dataset,explicit_parameters,b)?; factored_parameters=u:sl_fit_all(dataset,groups,b)?; factored_predictions=u:sl_predict(dataset,factored_parameters,b)?; global_offset=reduce_add(dataset.train.targets-dataset.train.inputs)/tally(dataset.train.ids); global_predictions=dataset.evaluation.inputs+global_offset; global_mse=u:sl_mse(global_predictions,dataset.evaluation.targets)?; explicit_mse=u:sl_mse(explicit_predictions,dataset.evaluation.targets)?; factored_mse=u:sl_mse(factored_predictions,dataset.evaluation.targets)?; ok({split: summary,provenance: {train_ids: dataset.train.ids,evaluation_ids: dataset.evaluation.ids,train_groups: dataset.train.groups,evaluation_groups: dataset.evaluation.groups},global: {offset: global_offset,predictions: global_predictions,mse: global_mse},explicit: {parameters: explicit_parameters,predictions: explicit_predictions,mse: explicit_mse},factored: {parameters: factored_parameters,predictions: factored_predictions,mse: factored_mse},targets: dataset.evaluation.targets,parity: equal(explicit_parameters,factored_parameters)*equal(explicit_predictions,factored_predictions),decision: {named_experiment_lift: 0,reason: "grouped_fit states this concrete operation more clearly; Lift remains the motivating concept"},blockers: []}) } }
+def u:sl_require(c,m) {
+  "Return Ok for one Split/Lift invariant.";
+  if c {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:sl_validate_ids(train_ids,eval_ids,b) {
+  "Reject duplicate or leaking row identities under a comparison budget.";
+  comparisons=0;
+  i=0;
+  while lt(i,tally(train_ids)) {
+    j=0;
+    while lt(j,i) {
+      comparisons=comparisons+1;
+      if gt(comparisons,b.max_id_comparisons) {
+        return err("Split identity comparison budget exceeded")
+      } else {
+        0
+      };
+      if eq(take(train_ids,0,i),take(train_ids,0,j)) {
+        return err("duplicate training identity")
+      } else {
+        0
+      };
+      j=j+1
+    };
+    j=0;
+    while lt(j,tally(eval_ids)) {
+      comparisons=comparisons+1;
+      if gt(comparisons,b.max_id_comparisons) {
+        return err("Split identity comparison budget exceeded")
+      } else {
+        0
+      };
+      if eq(take(train_ids,0,i),take(eval_ids,0,j)) {
+        return err("training/evaluation leakage")
+      } else {
+        0
+      };
+      j=j+1
+    };
+    i=i+1
+  };
+  i=0;
+  while lt(i,tally(eval_ids)) {
+    j=0;
+    while lt(j,i) {
+      comparisons=comparisons+1;
+      if gt(comparisons,b.max_id_comparisons) {
+        return err("Split identity comparison budget exceeded")
+      } else {
+        0
+      };
+      if eq(take(eval_ids,0,i),take(eval_ids,0,j)) {
+        return err("duplicate evaluation identity")
+      } else {
+        0
+      };
+      j=j+1
+    };
+    i=i+1
+  };
+  ok(comparisons)
+}
+def u:sl_validate(dataset,groups,b) {
+  "Validate aligned bounded scalar-regression splits and named numeric groups.";
+  tr=tally(dataset.train.ids);
+  ev=tally(dataset.evaluation.ids);
+  if lt(tr,1)+lt(ev,1)+gt(tr,b.max_train_rows)+gt(ev,b.max_eval_rows)+lt(tally(groups),1)+gt(tally(groups),b.max_groups) {
+    err("Split row or group budget mismatch")
+  } else {
+    if 1-equal([tr,tr,tr,tr],[tally(dataset.train.ids),tally(dataset.train.groups),tally(dataset.train.inputs),tally(dataset.train.targets)])+1-equal([ev,ev,ev,ev],[tally(dataset.evaluation.ids),tally(dataset.evaluation.groups),tally(dataset.evaluation.inputs),tally(dataset.evaluation.targets)]) {
+      err("Split columns are not aligned")
+    } else {
+      comparisons=u:sl_validate_ids(dataset.train.ids,dataset.evaluation.ids,b)?;
+      ok({train_rows: tr,evaluation_rows: ev,groups: tally(groups),id_comparisons: comparisons,leakage_detected: 0})
+    }
+  }
+}
+def u:sl_fit_group(dataset,group,b) {
+  "Fit one group-specific residual mean from training rows only.";
+  residuals=[];
+  i=0;
+  while lt(i,tally(dataset.train.ids)) {
+    if eq(take(dataset.train.groups,0,i),group) {
+      residuals=concat(residuals,take(dataset.train.targets,0,i)-take(dataset.train.inputs,0,i))
+    } else {
+      0
+    };
+    i=i+1
+  };
+  if lt(tally(residuals),1)+gt(tally(residuals),b.max_rows_per_group) {
+    err("group is empty or over row budget")
+  } else {
+    ok({group: group,offset: reduce_add(residuals)/tally(residuals),training_rows: tally(residuals)})
+  }
+}
+def u:sl_fit_all(dataset,groups,b) {
+  "Factor repeated group fitting into aligned numeric parameter arrays.";
+  offsets=[];
+  counts=[];
+  i=0;
+  while lt(i,tally(groups)) {
+    fitted=u:sl_fit_group(dataset,take(groups,0,i),b)?;
+    offsets=concat(offsets,fitted.offset);
+    counts=concat(counts,fitted.training_rows);
+    i=i+1
+  };
+  ok({groups: groups,offsets: offsets,training_rows: counts})
+}
+def u:sl_offset_for(parameters,group,b) {
+  "Look up one fitted group offset with bounded comparisons.";
+  i=0;
+  while lt(i,tally(parameters.groups)) {
+    if gt(i,b.max_groups-1) {
+      return err("group lookup budget exceeded")
+    } else {
+      0
+    };
+    if eq(take(parameters.groups,0,i),group) {
+      return ok(take(parameters.offsets,0,i))
+    } else {
+      0
+    };
+    i=i+1
+  };
+  err("evaluation row uses an unfitted group")
+}
+def u:sl_predict(dataset,parameters,b) {
+  "Predict evaluation rows using their aligned group parameter.";
+  predictions=[];
+  i=0;
+  while lt(i,tally(dataset.evaluation.ids)) {
+    offset=u:sl_offset_for(parameters,take(dataset.evaluation.groups,0,i),b)?;
+    predictions=concat(predictions,take(dataset.evaluation.inputs,0,i)+offset);
+    i=i+1
+  };
+  ok(predictions)
+}
+def u:sl_mse(predictions,targets) {
+  "Compute mean squared error for aligned non-empty vectors.";
+  if lt(tally(targets),1)+1-eq(tally(predictions),tally(targets)) {
+    err("MSE vectors must be aligned and non-empty")
+  } else {
+    d=predictions-targets;
+    ok(reduce_add(d*d)/tally(d))
+  }
+}
+def u:split_lift_report(dataset,groups,b) {
+  "Compare an explicit two-group workflow with a factored grouped-fit computation.";
+  summary=u:sl_validate(dataset,groups,b)?;
+  if 1-eq(tally(groups),2) {
+    err("teaching baseline requires exactly two groups")
+  } else {
+    g0=u:sl_fit_group(dataset,take(groups,0,0),b)?;
+    g1=u:sl_fit_group(dataset,take(groups,0,1),b)?;
+    explicit_parameters={groups: groups,offsets: [g0.offset,g1.offset],training_rows: [g0.training_rows,g1.training_rows]};
+    explicit_predictions=u:sl_predict(dataset,explicit_parameters,b)?;
+    factored_parameters=u:sl_fit_all(dataset,groups,b)?;
+    factored_predictions=u:sl_predict(dataset,factored_parameters,b)?;
+    global_offset=reduce_add(dataset.train.targets-dataset.train.inputs)/tally(dataset.train.ids);
+    global_predictions=dataset.evaluation.inputs+global_offset;
+    global_mse=u:sl_mse(global_predictions,dataset.evaluation.targets)?;
+    explicit_mse=u:sl_mse(explicit_predictions,dataset.evaluation.targets)?;
+    factored_mse=u:sl_mse(factored_predictions,dataset.evaluation.targets)?;
+    ok({split: summary,provenance: {train_ids: dataset.train.ids,evaluation_ids: dataset.evaluation.ids,train_groups: dataset.train.groups,evaluation_groups: dataset.evaluation.groups},global: {offset: global_offset,predictions: global_predictions,mse: global_mse},explicit: {parameters: explicit_parameters,predictions: explicit_predictions,mse: explicit_mse},factored: {parameters: factored_parameters,predictions: factored_predictions,mse: factored_mse},targets: dataset.evaluation.targets,parity: equal(explicit_parameters,factored_parameters)*equal(explicit_predictions,factored_predictions),decision: {named_experiment_lift: 0,reason: "grouped_fit states this concrete operation more clearly; Lift remains the motivating concept"},blockers: []})
+  }
+}

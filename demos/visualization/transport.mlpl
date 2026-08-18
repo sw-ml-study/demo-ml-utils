@@ -1,4 +1,15 @@
 include "../../src/visualization/transport.mlpl";
-b0=to_json({schema:"sw-ml-study.scene-tiles",version:1,summary:"two cross-format comparison tiles"})?; b1=to_json({schema:"sw-ml-study.tensor-city",version:1,summary:"seven catalog buildings"})?; b2=to_json({schema:"sw-ml-study.distribution-surfaces",version:1,summary:"four bins and endpoint samples"})?; b3=to_json({schema:"sw-ml-study.q8-error-tile",version:1,summary:"Q8 block and reconstruction metrics"})?;
-b={max_payload_bytes:512,max_message_bytes:1024,max_total_bytes:4096,max_objects:12,max_lod:3,max_sequence:3,max_label_bytes:64,max_json_depth:8,max_json_elements:128,max_messages:4,max_iterations:4}; bundle=u:transport_bundle(b0,b1,b2,b3,b)?;
-print("DEMO: bounded visualization JSONL transport"); print("Scenario: package scene, tensor-city, selected-detail, and Q8-error IR as four ordered messages for a CLI, server, or static viewer."); print("Native boundary: generic JSON encode/decode and stdout/file transport. MLPL work: kind/schema policy, sequence/LOD assignment, provenance, payload accounting, envelope validation, ordering, and JSONL construction."); print("Budgets: four messages/iterations, sequence and LOD 0..3, 12 logical objects, 512 payload bytes, 1024 bytes per envelope, 4096 total bytes, 64-byte provenance, JSON depth 8, and 128 payload elements."); print("Ordered flow:"); print({sequences: bundle.sequences,lods: bundle.lods,message_bytes: bundle.message_bytes,total_bytes: bundle.bytes}); print("Interpretation: consumers can progressively render overview through quantization detail; each payload declares and validates its own schema before transport, and no socket or browser is required for acceptance."); ok(1)
+b0=to_json({schema:"sw-ml-study.scene-tiles",version:1,summary:"two cross-format comparison tiles"})?;
+b1=to_json({schema:"sw-ml-study.tensor-city",version:1,summary:"seven catalog buildings"})?;
+b2=to_json({schema:"sw-ml-study.distribution-surfaces",version:1,summary:"four bins and endpoint samples"})?;
+b3=to_json({schema:"sw-ml-study.q8-error-tile",version:1,summary:"Q8 block and reconstruction metrics"})?;
+b={max_payload_bytes:512,max_message_bytes:1024,max_total_bytes:4096,max_objects:12,max_lod:3,max_sequence:3,max_label_bytes:64,max_json_depth:8,max_json_elements:128,max_messages:4,max_iterations:4};
+bundle=u:transport_bundle(b0,b1,b2,b3,b)?;
+print("DEMO: bounded visualization JSONL transport");
+print("Scenario: package scene, tensor-city, selected-detail, and Q8-error IR as four ordered messages for a CLI, server, or static viewer.");
+print("Native boundary: generic JSON encode/decode and stdout/file transport. MLPL work: kind/schema policy, sequence/LOD assignment, provenance, payload accounting, envelope validation, ordering, and JSONL construction.");
+print("Budgets: four messages/iterations, sequence and LOD 0..3, 12 logical objects, 512 payload bytes, 1024 bytes per envelope, 4096 total bytes, 64-byte provenance, JSON depth 8, and 128 payload elements.");
+print("Ordered flow:");
+print({sequences: bundle.sequences,lods: bundle.lods,message_bytes: bundle.message_bytes,total_bytes: bundle.bytes});
+print("Interpretation: consumers can progressively render overview through quantization detail; each payload declares and validates its own schema before transport, and no socket or browser is required for acceptance.");
+ok(1)

@@ -1,4 +1,46 @@
 include "bandit_contract.mlpl";
 
-def u:source_history(tasks,index,b) { "Generate one bounded UCB1 source-learning history with task provenance."; arms=tasks.arms; horizon=tasks.horizon; width=arms*horizon; tape=take(reshape(tasks.training.reward_tapes,[tally(tasks.training.ids),width]),0,index); actions=u:bandit_ucb_actions(tape,arms,horizon)?; history=u:bandit_history(tape,arms,horizon,actions,b)?; ok({task_id: take(tasks.training.ids,0,index),split:"training",generator:"ucb1-source-learner",icrl_claim:0,reward_tape: tape,history: history}) }
-def u:source_histories_report(path,b) { "Generate deterministic diverse histories from training tasks while excluding held-out evaluation."; bytes=read_bytes(path)?; if gt(tally(bytes),b.max_dataset_bytes) { err("source history dataset byte budget exceeded") } else { tasks=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?; summary=u:bandit_tasks_validate(tasks,b)?; count=tally(tasks.training.ids); if gt(count,b.max_generated_tasks)+gt(count*tasks.horizon,b.max_generated_records) { err("source history generation task or record budget exceeded") } else { first=u:source_history(tasks,0,b)?; second=u:source_history(tasks,1,b)?; if equal(first.history.actions,second.history.actions)+equal(first.reward_tape,second.reward_tape) { err("source histories lack task diversity") } else { report={schema:"sw-ml-study.source-bandit-histories",version:1,provenance:{dataset: path,source_split:"training",held_out_task_ids: tasks.held_out.ids,generator:"deterministic-ucb1",deployment_evaluation_included:0},histories:{task_401: first,task_402: second},summary:{tasks: count,records: count*tasks.horizon,total_reward: first.history.total_reward+second.history.total_reward,total_regret: first.history.total_regret+second.history.total_regret,diverse_actions:1,diverse_reward_tapes:1},dataset: summary}; json=to_json(report,{tagged:1})?; size=tally(tokenize_bytes(json)); if gt(size,b.max_output_bytes) { err("source histories output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("source histories tagged JSON round trip changed") } else { ok({report: report,json: json,utf8_bytes: size}) } } } } } }
+def u:source_history(tasks,index,b) {
+  "Generate one bounded UCB1 source-learning history with task provenance.";
+  arms=tasks.arms;
+  horizon=tasks.horizon;
+  width=arms*horizon;
+  tape=take(reshape(tasks.training.reward_tapes,[tally(tasks.training.ids),width]),0,index);
+  actions=u:bandit_ucb_actions(tape,arms,horizon)?;
+  history=u:bandit_history(tape,arms,horizon,actions,b)?;
+  ok({task_id: take(tasks.training.ids,0,index),split:"training",generator:"ucb1-source-learner",icrl_claim:0,reward_tape: tape,history: history})
+}
+def u:source_histories_report(path,b) {
+  "Generate deterministic diverse histories from training tasks while excluding held-out evaluation.";
+  bytes=read_bytes(path)?;
+  if gt(tally(bytes),b.max_dataset_bytes) {
+    err("source history dataset byte budget exceeded")
+  } else {
+    tasks=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?;
+    summary=u:bandit_tasks_validate(tasks,b)?;
+    count=tally(tasks.training.ids);
+    if gt(count,b.max_generated_tasks)+gt(count*tasks.horizon,b.max_generated_records) {
+      err("source history generation task or record budget exceeded")
+    } else {
+      first=u:source_history(tasks,0,b)?;
+      second=u:source_history(tasks,1,b)?;
+      if equal(first.history.actions,second.history.actions)+equal(first.reward_tape,second.reward_tape) {
+        err("source histories lack task diversity")
+      } else {
+        report={schema:"sw-ml-study.source-bandit-histories",version:1,provenance:{dataset: path,source_split:"training",held_out_task_ids: tasks.held_out.ids,generator:"deterministic-ucb1",deployment_evaluation_included:0},histories:{task_401: first,task_402: second},summary:{tasks: count,records: count*tasks.horizon,total_reward: first.history.total_reward+second.history.total_reward,total_regret: first.history.total_regret+second.history.total_regret,diverse_actions:1,diverse_reward_tapes:1},dataset: summary};
+        json=to_json(report,{tagged:1})?;
+        size=tally(tokenize_bytes(json));
+        if gt(size,b.max_output_bytes) {
+          err("source histories output budget exceeded")
+        } else {
+          decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+          if 1-equal(decoded,report) {
+            err("source histories tagged JSON round trip changed")
+          } else {
+            ok({report: report,json: json,utf8_bytes: size})
+          }
+        }
+      }
+    }
+  }
+}

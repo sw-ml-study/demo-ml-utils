@@ -1,7 +1,17 @@
 include "../src/formats/safetensors_catalog.mlpl";
 
-def u:require_catalog(condition, message) { "Return Ok for a true catalog invariant, otherwise a named error."; if condition { ok(1) } else { err(message) } }
-def u:catalog_fixture(name) { "Catalog a named fixture with repository teaching budgets."; u:catalog_safetensors(name, 4096, 256, 1000000) }
+def u:require_catalog(condition, message) {
+  "Return Ok for a true catalog invariant, otherwise a named error.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:catalog_fixture(name) {
+  "Catalog a named fixture with repository teaching budgets.";
+  u:catalog_safetensors(name, 4096, 256, 1000000)
+}
 
 catalog = u:catalog_fixture("fixtures/safetensors/valid-catalog.safetensors")?;
 u:require_catalog(equal(catalog.header_keys, ["__metadata__","tensor_a","tensor_b","tensor_c"]), "deterministic sorted tensor discovery")?;

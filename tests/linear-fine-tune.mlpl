@@ -1,7 +1,20 @@
 include "../src/adaptation/linear_fine_tune.mlpl";
-def u:lfreq(v,m) { "Require one manual linear fine-tuning invariant."; if v { ok(1) } else { err(m) } }
-def u:lfb(steps,iterations,rate,parameter,curve,output) { "Return bounded linear fine-tuning limits."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:8,max_json_elements:2048,max_output_bytes: output,min_learning_rate:0.000001,max_learning_rate: rate,max_steps: steps,max_tolerance:1,max_iterations: iterations,max_abs_prediction:1000,max_gradient_norm:1000,max_abs_parameter: parameter,max_loss:10000,max_curve_points: curve} }
-b=u:lfb(100,100,1,100,101,32768); config={learning_rate:0.2,max_steps:60,tolerance:0.000001}; trained=u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],config,b)?; r=trained.report;
+def u:lfreq(v,m) {
+  "Require one manual linear fine-tuning invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:lfb(steps,iterations,rate,parameter,curve,output) {
+  "Return bounded linear fine-tuning limits.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:8,max_json_elements:2048,max_output_bytes: output,min_learning_rate:0.000001,max_learning_rate: rate,max_steps: steps,max_tolerance:1,max_iterations: iterations,max_abs_prediction:1000,max_gradient_norm:1000,max_abs_parameter: parameter,max_loss:10000,max_curve_points: curve}
+}
+b=u:lfb(100,100,1,100,101,32768);
+config={learning_rate:0.2,max_steps:60,tolerance:0.000001};
+trained=u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],config,b)?;
+r=trained.report;
 u:lfreq(eq(r.updates,60)*equal(r.stopping_reason,"max_steps")*lt(r.train.final_loss,0.001),"linear update and stopping golden")?;
 u:lfreq(gt(r.evaluation.baseline_loss,50)*lt(r.evaluation.fine_tuned_loss,0.01),"linear held-out improvement golden")?;
 u:lfreq(lt(reduce(:max,abs(r.final_parameters-[1,2,3])),0.05)*1-equal(r.initial_fingerprint,r.final_fingerprint),"linear parameter recovery and fingerprint change")?;
@@ -14,4 +27,5 @@ u:lfreq(is_err(u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,
 u:lfreq(is_err(u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],config,u:lfb(100,100,1,1,101,32768))),"parameter magnitude budget rejection")?;
 u:lfreq(is_err(u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],config,u:lfb(100,100,1,100,60,32768))),"curve budget rejection")?;
 u:lfreq(is_err(u:linear_fine_tune("fixtures/adaptation/tiny-regression.json",[0,0,0],config,u:lfb(100,100,1,100,101,500))),"output byte budget rejection")?;
-print("PASS manual linear fine-tuning"); ok(1)
+print("PASS manual linear fine-tuning");
+ok(1)

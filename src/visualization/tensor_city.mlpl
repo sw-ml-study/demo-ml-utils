@@ -1,40 +1,271 @@
 include "scene_tile_ir.mlpl";
 
-def u:city_append_text(text,table,lengths,width) { "Append UTF-8 text to a fixed-width renderer-neutral table.";
-  bytes = tokenize_bytes(text); if gt(tally(bytes),width) { err("tensor-city text exceeds its width budget") } else { ok({table: concat(table,concat(bytes,fill([width - tally(bytes)],0))),lengths: concat(lengths,tally(bytes))}) }
+def u:city_append_text(text,table,lengths,width) {
+  "Append UTF-8 text to a fixed-width renderer-neutral table.";
+  bytes = tokenize_bytes(text);
+  if gt(tally(bytes),width) {
+    err("tensor-city text exceeds its width budget")
+  } else {
+    ok({table: concat(table,concat(bytes,fill([width - tally(bytes)],0))),lengths: concat(lengths,tally(bytes))})
+  }
 }
-def u:city_text(table,lengths,index,width) { "Decode one fixed-width text row."; row = take(reshape(table,[tally(lengths),width]),0,index); decode_bytes(compress(lt(range(width),take(lengths,0,index)),row)) }
-def u:city_unique(table,lengths,count,width) { "Require exact unique padded text rows.";
-  outer = 0; unique = 1; while lt(outer,count) { inner = outer + 1; left = u:city_text(table,lengths,outer,width); while lt(inner,count) { if equal(left,u:city_text(table,lengths,inner,width)) { unique = 0 } else { 0 }; inner = inner + 1 }; outer = outer + 1 }; unique
+def u:city_text(table,lengths,index,width) {
+  "Decode one fixed-width text row.";
+  row = take(reshape(table,[tally(lengths),width]),0,index);
+  decode_bytes(compress(lt(range(width),take(lengths,0,index)),row))
 }
-def u:city_coordinate(value,max_coordinate) { "Validate one finite non-negative city coordinate or extent."; eq(rank(value),0) * eq(value,value) * gt(max_coordinate + 1,value) * gt(value + 1,0) }
-def u:city_name_depth(name,max_hierarchy_depth) { "Count dot-separated tensor-name segments under a hierarchy budget."; bytes = tokenize_bytes(name); index = 0; depth = 1; while lt(index,tally(bytes)) { if eq(take(bytes,0,index),46) { depth = depth + 1 } else { 0 }; index = index + 1 }; if gt(depth,max_hierarchy_depth) { err("tensor-city name hierarchy exceeds budget") } else { ok(depth) } }
+def u:city_unique(table,lengths,count,width) {
+  "Require exact unique padded text rows.";
+  outer = 0;
+  unique = 1;
+  while lt(outer,count) {
+    inner = outer + 1;
+    left = u:city_text(table,lengths,outer,width);
+    while lt(inner,count) {
+      if equal(left,u:city_text(table,lengths,inner,width)) {
+        unique = 0
+      } else {
+        0
+      };
+      inner = inner + 1
+    };
+    outer = outer + 1
+  };
+  unique
+}
+def u:city_coordinate(value,max_coordinate) {
+  "Validate one finite non-negative city coordinate or extent.";
+  eq(rank(value),0) * eq(value,value) * gt(max_coordinate + 1,value) * gt(value + 1,0)
+}
+def u:city_name_depth(name,max_hierarchy_depth) {
+  "Count dot-separated tensor-name segments under a hierarchy budget.";
+  bytes = tokenize_bytes(name);
+  index = 0;
+  depth = 1;
+  while lt(index,tally(bytes)) {
+    if eq(take(bytes,0,index),46) {
+      depth = depth + 1
+    } else {
+      0
+    };
+    index = index + 1
+  };
+  if gt(depth,max_hierarchy_depth) {
+    err("tensor-city name hierarchy exceeds budget")
+  } else {
+    ok(depth)
+  }
+}
 
-def u:tensor_city_validate(ir,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes) { "Headlessly validate tensor-city column alignment, IDs, and geometry.";
-  u:summary_budget(max_objects,5,"tensor-city object budget")?; u:summary_budget(max_tiles,1,"tensor-city tile budget")?; u:summary_budget(max_links,0,"tensor-city link budget")?; u:summary_budget(max_hierarchy_depth,1,"tensor-city hierarchy budget")?; u:summary_budget(max_coordinate,1,"tensor-city coordinate budget")?;
-  if 1 - equal(record_keys(ir),["provenance","schema","tensor_columns","version"]) { err("tensor-city root schema mismatch") } else {
-  if (1 - equal(ir.schema,"sw-ml-study.tensor-city")) + (1 - eq(ir.version,1)) { err("tensor-city schema version mismatch") } else {
-  if 1 - equal(record_keys(ir.provenance),["analyzer","sources"]) { err("tensor-city provenance schema mismatch") } else {
-  expected_keys = ["byte_counts","count","depths","format_codes","group_ids","heights","id_bytes","id_lengths","name_bytes","name_depths","name_lengths","parameters","widths","x","y","z"];
-  if 1 - equal(record_keys(ir.tensor_columns),expected_keys) { err("tensor-city layout schema mismatch") } else { count = ir.tensor_columns.count;
-  if gt(count,max_tiles) + gt(count + 5,max_objects) + (1 - eq(tally(ir.tensor_columns.name_lengths),count)) + (1 - eq(tally(ir.tensor_columns.id_lengths),count)) { err("tensor-city count or object budget mismatch") } else {
-  if (1 - equal(shape(ir.tensor_columns.name_bytes),[count,max_label_bytes])) + (1 - equal(shape(ir.tensor_columns.id_bytes),[count,max_id_bytes])) { err("tensor-city text table shape mismatch") } else {
-  if 1 - u:city_unique(flatten(ir.tensor_columns.id_bytes),ir.tensor_columns.id_lengths,count,max_id_bytes) { err("tensor-city stable ID collision") } else {
-  columns = [tally(ir.tensor_columns.format_codes),tally(ir.tensor_columns.group_ids),tally(ir.tensor_columns.name_depths),tally(ir.tensor_columns.x),tally(ir.tensor_columns.y),tally(ir.tensor_columns.z),tally(ir.tensor_columns.widths),tally(ir.tensor_columns.depths),tally(ir.tensor_columns.heights),tally(ir.tensor_columns.parameters),tally(ir.tensor_columns.byte_counts)]; if 1 - equal(columns,fill([11],count)) { err("tensor-city column length mismatch") } else {
-  index = 0; while lt(index,count) { name = u:city_text(flatten(ir.tensor_columns.name_bytes),ir.tensor_columns.name_lengths,index,max_label_bytes); source = if eq(take(ir.tensor_columns.format_codes,0,index),0) { ir.provenance.sources.safetensors.artifact_id } else { ir.provenance.sources.gguf.artifact_id }; expected_id = u:summary_join(source,":tensor:",name); if 1 - equal(u:city_text(flatten(ir.tensor_columns.id_bytes),ir.tensor_columns.id_lengths,index,max_id_bytes),expected_id) { return err("tensor-city stable ID mismatch") } else { 0 };
-    if gt(take(ir.tensor_columns.name_depths,0,index),max_hierarchy_depth) + (1 - u:city_coordinate(take(ir.tensor_columns.x,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.y,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.z,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.widths,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.depths,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.heights,0,index),max_coordinate)) { return err("tensor-city hierarchy or coordinate budget mismatch") } else { 0 }; index = index + 1 };
-  ok(1)
-  } } } } } } } }
+def u:tensor_city_validate(ir,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes) {
+  "Headlessly validate tensor-city column alignment, IDs, and geometry.";
+  u:summary_budget(max_objects,5,"tensor-city object budget")?;
+  u:summary_budget(max_tiles,1,"tensor-city tile budget")?;
+  u:summary_budget(max_links,0,"tensor-city link budget")?;
+  u:summary_budget(max_hierarchy_depth,1,"tensor-city hierarchy budget")?;
+  u:summary_budget(max_coordinate,1,"tensor-city coordinate budget")?;
+  if 1 - equal(record_keys(ir),["provenance","schema","tensor_columns","version"]) {
+    err("tensor-city root schema mismatch")
+  } else {
+    if (1 - equal(ir.schema,"sw-ml-study.tensor-city")) + (1 - eq(ir.version,1)) {
+      err("tensor-city schema version mismatch")
+    } else {
+      if 1 - equal(record_keys(ir.provenance),["analyzer","sources"]) {
+        err("tensor-city provenance schema mismatch")
+      } else {
+        expected_keys = ["byte_counts","count","depths","format_codes","group_ids","heights","id_bytes","id_lengths","name_bytes","name_depths","name_lengths","parameters","widths","x","y","z"];
+        if 1 - equal(record_keys(ir.tensor_columns),expected_keys) {
+          err("tensor-city layout schema mismatch")
+        } else {
+          count = ir.tensor_columns.count;
+          if gt(count,max_tiles) + gt(count + 5,max_objects) + (1 - eq(tally(ir.tensor_columns.name_lengths),count)) + (1 - eq(tally(ir.tensor_columns.id_lengths),count)) {
+            err("tensor-city count or object budget mismatch")
+          } else {
+            if (1 - equal(shape(ir.tensor_columns.name_bytes),[count,max_label_bytes])) + (1 - equal(shape(ir.tensor_columns.id_bytes),[count,max_id_bytes])) {
+              err("tensor-city text table shape mismatch")
+            } else {
+              if 1 - u:city_unique(flatten(ir.tensor_columns.id_bytes),ir.tensor_columns.id_lengths,count,max_id_bytes) {
+                err("tensor-city stable ID collision")
+              } else {
+                columns = [tally(ir.tensor_columns.format_codes),tally(ir.tensor_columns.group_ids),tally(ir.tensor_columns.name_depths),tally(ir.tensor_columns.x),tally(ir.tensor_columns.y),tally(ir.tensor_columns.z),tally(ir.tensor_columns.widths),tally(ir.tensor_columns.depths),tally(ir.tensor_columns.heights),tally(ir.tensor_columns.parameters),tally(ir.tensor_columns.byte_counts)];
+                if 1 - equal(columns,fill([11],count)) {
+                  err("tensor-city column length mismatch")
+                } else {
+                  index = 0;
+                  while lt(index,count) {
+                    name = u:city_text(flatten(ir.tensor_columns.name_bytes),ir.tensor_columns.name_lengths,index,max_label_bytes);
+                    source = if eq(take(ir.tensor_columns.format_codes,0,index),0) {
+                      ir.provenance.sources.safetensors.artifact_id
+                    } else {
+                      ir.provenance.sources.gguf.artifact_id
+                    };
+                    expected_id = u:summary_join(source,":tensor:",name);
+                    if 1 - equal(u:city_text(flatten(ir.tensor_columns.id_bytes),ir.tensor_columns.id_lengths,index,max_id_bytes),expected_id) {
+                      return err("tensor-city stable ID mismatch")
+                    } else {
+                      0
+                    };
+                    if gt(take(ir.tensor_columns.name_depths,0,index),max_hierarchy_depth) + (1 - u:city_coordinate(take(ir.tensor_columns.x,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.y,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.z,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.widths,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.depths,0,index),max_coordinate)) + (1 - u:city_coordinate(take(ir.tensor_columns.heights,0,index),max_coordinate)) {
+                      return err("tensor-city hierarchy or coordinate budget mismatch")
+                    } else {
+                      0
+                    };
+                    index = index + 1
+                  };
+                  ok(1)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-def u:build_tensor_city(safe_path,safe_artifact,gguf_path,gguf_artifact,budgets) { "Catalog two artifacts and construct deterministic tensor-city columns without payload reads.";
-  max_header_bytes = budgets.max_header_bytes; max_elements = budgets.max_elements; max_catalog_bytes = budgets.max_catalog_bytes; max_metadata = budgets.max_metadata; max_tensors = budgets.max_tensors; max_string_bytes = budgets.max_string_bytes; max_rank = budgets.max_rank; max_parameters = budgets.max_parameters; max_objects = budgets.max_objects; max_tiles = budgets.max_tiles; max_links = budgets.max_links; max_hierarchy_depth = budgets.max_hierarchy_depth; max_coordinate = budgets.max_coordinate; max_label_bytes = budgets.max_label_bytes; max_id_bytes = budgets.max_id_bytes; max_iterations = budgets.max_iterations; max_output_bytes = budgets.max_output_bytes; max_json_depth = budgets.max_json_depth; max_json_elements = budgets.max_json_elements;
-  u:summary_budget(max_tiles,1,"tensor-city tile budget")?; u:summary_budget(max_iterations,1,"tensor-city iteration budget")?; u:summary_budget(max_output_bytes,1,"tensor-city output budget")?; u:summary_budget(max_json_depth,6,"tensor-city JSON depth budget")?; u:summary_budget(max_json_elements,64,"tensor-city JSON element budget")?; u:scene_label(safe_artifact,max_label_bytes)?; u:scene_label(gguf_artifact,max_label_bytes)?;
-  safe = u:catalog_safetensors(safe_path,max_header_bytes,max_elements,max_parameters)?; gguf = u:catalog_gguf(gguf_path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?; total = safe.tensor_count + gguf.tensor_count;
-  if gt(total,max_tiles) + gt(total,max_iterations) + gt(total + 5,max_objects) { err("tensor-city tile, iteration, or logical object budget exceeded") } else {
-  names = fill([0],0); name_lengths = fill([0],0); name_depths = fill([0],0); ids = fill([0],0); id_lengths = fill([0],0); formats = fill([0],0); groups = fill([0],0); xs = fill([0],0); ys = fill([0],0); zs = fill([0],0); widths = fill([0],0); depths = fill([0],0); heights = fill([0],0); parameters = fill([0],0); byte_counts = fill([0],0); output_index = 0; safe_index = 0; key_index = 0;
-  while lt(key_index,list_len(safe.header_keys)) { name = list_get(safe.header_keys,key_index)?; if 1 - equal(name,"__metadata__") { row = take(safe.rows_by_name,0,safe_index); id = u:summary_join(safe_artifact,":tensor:",name); appended = u:city_append_text(name,names,name_lengths,max_label_bytes)?; names = appended.table; name_lengths = appended.lengths; name_depths = concat(name_depths,u:city_name_depth(name,max_hierarchy_depth)?); appended_id = u:city_append_text(id,ids,id_lengths,max_id_bytes)?; ids = appended_id.table; id_lengths = appended_id.lengths; p = take(row,0,2); h = 1 + p; x = 2 * safe_index; y = h / 2; if gt(x,max_coordinate) + gt(y,max_coordinate) + gt(h,max_coordinate) { return err("tensor-city Safetensors coordinate budget exceeded") } else { 0 }; formats = concat(formats,0); groups = concat(groups,0); xs = concat(xs,x); ys = concat(ys,y); zs = concat(zs,0); widths = concat(widths,1); depths = concat(depths,1); heights = concat(heights,h); parameters = concat(parameters,p); byte_counts = concat(byte_counts,take(row,0,1) - take(row,0,0)); safe_index = safe_index + 1; output_index = output_index + 1 } else { 0 }; key_index = key_index + 1 };
-  gguf_index = 0; while lt(gguf_index,gguf.tensor_count) { name = decode_bytes(read_bytes(gguf.path,take(gguf.tensor_name_offsets,0,gguf_index),take(gguf.tensor_name_lengths,0,gguf_index))?); row = take(gguf.tensor_rows,0,gguf_index); id = u:summary_join(gguf_artifact,":tensor:",name); appended = u:city_append_text(name,names,name_lengths,max_label_bytes)?; names = appended.table; name_lengths = appended.lengths; name_depths = concat(name_depths,u:city_name_depth(name,max_hierarchy_depth)?); appended_id = u:city_append_text(id,ids,id_lengths,max_id_bytes)?; ids = appended_id.table; id_lengths = appended_id.lengths; p = take(row,0,1); h = 1 + p; x = 2 * gguf_index; y = h / 2; if gt(x,max_coordinate) + gt(y,max_coordinate) + gt(h,max_coordinate) { return err("tensor-city GGUF coordinate budget exceeded") } else { 0 }; formats = concat(formats,1); groups = concat(groups,1); xs = concat(xs,x); ys = concat(ys,y); zs = concat(zs,4); widths = concat(widths,1); depths = concat(depths,1); heights = concat(heights,h); parameters = concat(parameters,p); byte_counts = concat(byte_counts,take(row,0,3)); gguf_index = gguf_index + 1; output_index = output_index + 1 };
-  ir = {schema: "sw-ml-study.tensor-city",version: 1,provenance: {analyzer: "mlpl-bounded-tensor-city",sources: {safetensors: {artifact_id: safe_artifact,format: "safetensors",source: safe_path},gguf: {artifact_id: gguf_artifact,format: "gguf",source: gguf_path}}},tensor_columns: {count: total,name_bytes: reshape(names,[total,max_label_bytes]),name_lengths: name_lengths,name_depths: name_depths,id_bytes: reshape(ids,[total,max_id_bytes]),id_lengths: id_lengths,format_codes: formats,group_ids: groups,x: xs,y: ys,z: zs,widths: widths,depths: depths,heights: heights,parameters: parameters,byte_counts: byte_counts}};
-  u:tensor_city_validate(ir,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes)?; conservative = 1800 + total * (max_label_bytes + max_id_bytes + 240); if gt(conservative,max_output_bytes) { err("tensor-city conservative output bound exceeds budget") } else { json = to_json(ir,{tagged: 1})?; utf8_bytes = tally(tokenize_bytes(json)); if gt(utf8_bytes,max_output_bytes) { err("tensor-city encoded output exceeds budget") } else { decoded = parse_json(json,{max_depth: max_json_depth,max_bytes: max_output_bytes,max_elements: max_json_elements})?; u:tensor_city_validate(decoded,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes)?; if 1 - equal(decoded,ir) { err("tensor-city tagged JSON round trip changed layout") } else { ok({ir: ir,json: json,utf8_bytes: utf8_bytes}) } } }
-  } }
+def u:build_tensor_city(safe_path,safe_artifact,gguf_path,gguf_artifact,budgets) {
+  "Catalog two artifacts and construct deterministic tensor-city columns without payload reads.";
+  max_header_bytes = budgets.max_header_bytes;
+  max_elements = budgets.max_elements;
+  max_catalog_bytes = budgets.max_catalog_bytes;
+  max_metadata = budgets.max_metadata;
+  max_tensors = budgets.max_tensors;
+  max_string_bytes = budgets.max_string_bytes;
+  max_rank = budgets.max_rank;
+  max_parameters = budgets.max_parameters;
+  max_objects = budgets.max_objects;
+  max_tiles = budgets.max_tiles;
+  max_links = budgets.max_links;
+  max_hierarchy_depth = budgets.max_hierarchy_depth;
+  max_coordinate = budgets.max_coordinate;
+  max_label_bytes = budgets.max_label_bytes;
+  max_id_bytes = budgets.max_id_bytes;
+  max_iterations = budgets.max_iterations;
+  max_output_bytes = budgets.max_output_bytes;
+  max_json_depth = budgets.max_json_depth;
+  max_json_elements = budgets.max_json_elements;
+  u:summary_budget(max_tiles,1,"tensor-city tile budget")?;
+  u:summary_budget(max_iterations,1,"tensor-city iteration budget")?;
+  u:summary_budget(max_output_bytes,1,"tensor-city output budget")?;
+  u:summary_budget(max_json_depth,6,"tensor-city JSON depth budget")?;
+  u:summary_budget(max_json_elements,64,"tensor-city JSON element budget")?;
+  u:scene_label(safe_artifact,max_label_bytes)?;
+  u:scene_label(gguf_artifact,max_label_bytes)?;
+  safe = u:catalog_safetensors(safe_path,max_header_bytes,max_elements,max_parameters)?;
+  gguf = u:catalog_gguf(gguf_path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?;
+  total = safe.tensor_count + gguf.tensor_count;
+  if gt(total,max_tiles) + gt(total,max_iterations) + gt(total + 5,max_objects) {
+    err("tensor-city tile, iteration, or logical object budget exceeded")
+  } else {
+    names = fill([0],0);
+    name_lengths = fill([0],0);
+    name_depths = fill([0],0);
+    ids = fill([0],0);
+    id_lengths = fill([0],0);
+    formats = fill([0],0);
+    groups = fill([0],0);
+    xs = fill([0],0);
+    ys = fill([0],0);
+    zs = fill([0],0);
+    widths = fill([0],0);
+    depths = fill([0],0);
+    heights = fill([0],0);
+    parameters = fill([0],0);
+    byte_counts = fill([0],0);
+    output_index = 0;
+    safe_index = 0;
+    key_index = 0;
+    while lt(key_index,list_len(safe.header_keys)) {
+      name = list_get(safe.header_keys,key_index)?;
+      if 1 - equal(name,"__metadata__") {
+        row = take(safe.rows_by_name,0,safe_index);
+        id = u:summary_join(safe_artifact,":tensor:",name);
+        appended = u:city_append_text(name,names,name_lengths,max_label_bytes)?;
+        names = appended.table;
+        name_lengths = appended.lengths;
+        name_depths = concat(name_depths,u:city_name_depth(name,max_hierarchy_depth)?);
+        appended_id = u:city_append_text(id,ids,id_lengths,max_id_bytes)?;
+        ids = appended_id.table;
+        id_lengths = appended_id.lengths;
+        p = take(row,0,2);
+        h = 1 + p;
+        x = 2 * safe_index;
+        y = h / 2;
+        if gt(x,max_coordinate) + gt(y,max_coordinate) + gt(h,max_coordinate) {
+          return err("tensor-city Safetensors coordinate budget exceeded")
+        } else {
+          0
+        };
+        formats = concat(formats,0);
+        groups = concat(groups,0);
+        xs = concat(xs,x);
+        ys = concat(ys,y);
+        zs = concat(zs,0);
+        widths = concat(widths,1);
+        depths = concat(depths,1);
+        heights = concat(heights,h);
+        parameters = concat(parameters,p);
+        byte_counts = concat(byte_counts,take(row,0,1) - take(row,0,0));
+        safe_index = safe_index + 1;
+        output_index = output_index + 1
+      } else {
+        0
+      };
+      key_index = key_index + 1
+    };
+    gguf_index = 0;
+    while lt(gguf_index,gguf.tensor_count) {
+      name = decode_bytes(read_bytes(gguf.path,take(gguf.tensor_name_offsets,0,gguf_index),take(gguf.tensor_name_lengths,0,gguf_index))?);
+      row = take(gguf.tensor_rows,0,gguf_index);
+      id = u:summary_join(gguf_artifact,":tensor:",name);
+      appended = u:city_append_text(name,names,name_lengths,max_label_bytes)?;
+      names = appended.table;
+      name_lengths = appended.lengths;
+      name_depths = concat(name_depths,u:city_name_depth(name,max_hierarchy_depth)?);
+      appended_id = u:city_append_text(id,ids,id_lengths,max_id_bytes)?;
+      ids = appended_id.table;
+      id_lengths = appended_id.lengths;
+      p = take(row,0,1);
+      h = 1 + p;
+      x = 2 * gguf_index;
+      y = h / 2;
+      if gt(x,max_coordinate) + gt(y,max_coordinate) + gt(h,max_coordinate) {
+        return err("tensor-city GGUF coordinate budget exceeded")
+      } else {
+        0
+      };
+      formats = concat(formats,1);
+      groups = concat(groups,1);
+      xs = concat(xs,x);
+      ys = concat(ys,y);
+      zs = concat(zs,4);
+      widths = concat(widths,1);
+      depths = concat(depths,1);
+      heights = concat(heights,h);
+      parameters = concat(parameters,p);
+      byte_counts = concat(byte_counts,take(row,0,3));
+      gguf_index = gguf_index + 1;
+      output_index = output_index + 1
+    };
+    ir = {schema: "sw-ml-study.tensor-city",version: 1,provenance: {analyzer: "mlpl-bounded-tensor-city",sources: {safetensors: {artifact_id: safe_artifact,format: "safetensors",source: safe_path},gguf: {artifact_id: gguf_artifact,format: "gguf",source: gguf_path}}},tensor_columns: {count: total,name_bytes: reshape(names,[total,max_label_bytes]),name_lengths: name_lengths,name_depths: name_depths,id_bytes: reshape(ids,[total,max_id_bytes]),id_lengths: id_lengths,format_codes: formats,group_ids: groups,x: xs,y: ys,z: zs,widths: widths,depths: depths,heights: heights,parameters: parameters,byte_counts: byte_counts}};
+    u:tensor_city_validate(ir,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes)?;
+    conservative = 1800 + total * (max_label_bytes + max_id_bytes + 240);
+    if gt(conservative,max_output_bytes) {
+      err("tensor-city conservative output bound exceeds budget")
+    } else {
+      json = to_json(ir,{tagged: 1})?;
+      utf8_bytes = tally(tokenize_bytes(json));
+      if gt(utf8_bytes,max_output_bytes) {
+        err("tensor-city encoded output exceeds budget")
+      } else {
+        decoded = parse_json(json,{max_depth: max_json_depth,max_bytes: max_output_bytes,max_elements: max_json_elements})?;
+        u:tensor_city_validate(decoded,max_objects,max_tiles,max_links,max_hierarchy_depth,max_coordinate,max_label_bytes,max_id_bytes)?;
+        if 1 - equal(decoded,ir) {
+          err("tensor-city tagged JSON round trip changed layout")
+        } else {
+          ok({ir: ir,json: json,utf8_bytes: utf8_bytes})
+        }
+      }
+    }
+  }
+}

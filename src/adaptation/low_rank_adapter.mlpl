@@ -1,13 +1,166 @@
 include "linear_fine_tune.mlpl";
 
-def u:adapter_design(split,features,b) { "Build bias-augmented inputs and paired [y,-y] teaching targets."; examples=tally(split.ids); inputs=fill([0],0); targets=fill([0],0); row=0; while lt(row,examples) { inputs=concat(inputs,1); feature=0; while lt(feature,features) { inputs=concat(inputs,take(split.x,0,row*features+feature)); feature=feature+1 }; target=take(split.y,0,row); targets=concat(targets,[target,0-target]); row=row+1 }; if gt(tally(inputs)+tally(targets),b.max_adapter_elements) { err("adapter design element budget exceeded") } else { ok({inputs: reshape(inputs,[examples,features+1]),targets: reshape(targets,[examples,2]),examples: examples,input_width: features+1,outputs:2}) } }
-def u:adapter_delta(b_factor,a_factor,b) { "Materialize the bounded low-rank update B*A."; if 1-eq(rank(b_factor),2)+1-eq(rank(a_factor),2) { err("adapter factors must be rank-two matrices") } else { outputs=take(shape(b_factor),0,0); adapter_rank=take(shape(b_factor),0,1); a_rank=take(shape(a_factor),0,0); inputs=take(shape(a_factor),0,1); if 1-eq(adapter_rank,a_rank)+lt(adapter_rank,1)+gt(adapter_rank,b.max_adapter_rank)+gt(outputs*inputs,b.max_base_parameters)+gt(outputs*adapter_rank+adapter_rank*inputs,b.max_adapter_parameters) { err("adapter factor shape, rank, or parameter budget exceeded") } else { ok({delta: matmul(b_factor,a_factor),rank: adapter_rank,outputs: outputs,inputs: inputs,trainable_parameters: outputs*adapter_rank+adapter_rank*inputs,base_parameters: outputs*inputs}) } } }
-def u:adapter_predictions(inputs,base,b_factor,a_factor,b) { "Return merged and factorized low-rank predictions for parity evidence."; shaped=u:adapter_delta(b_factor,a_factor,b)?; if 1-equal(shape(base),[shaped.outputs,shaped.inputs])+1-eq(take(shape(inputs),0,1),shaped.inputs) { err("adapter base or input shape mismatch") } else { merged=base+shaped.delta; merged_predictions=matmul(inputs,transpose(merged)); factorized_predictions=matmul(inputs,transpose(base))+matmul(matmul(inputs,transpose(a_factor)),transpose(b_factor)); ok({merged: merged,delta: shaped.delta,merged_predictions: merged_predictions,factorized_predictions: factorized_predictions,rank: shaped.rank,trainable_parameters: shaped.trainable_parameters,base_parameters: shaped.base_parameters}) } }
-def u:adapter_loss(predictions,targets) { "Compute mean squared error over a multi-output teaching matrix."; if 1-equal(shape(predictions),shape(targets))+eq(tally(flatten(targets)),0) { err("adapter loss shape mismatch") } else { errors=predictions-targets; ok(reduce_add(errors*errors)/tally(flatten(errors))) } }
-def u:adapter_step(inputs,targets,base,b_factor,a_factor,b) { "Compute explicit factor gradients through delta=B*A."; predicted=u:adapter_predictions(inputs,base,b_factor,a_factor,b)?; errors=predicted.factorized_predictions-targets; examples=take(shape(inputs),0,0); outputs=take(shape(targets),0,1); gradient_delta=matmul(transpose(errors),inputs)*(2/(examples*outputs)); gradient_b=matmul(gradient_delta,transpose(a_factor)); gradient_a=matmul(transpose(b_factor),gradient_delta); norm=sqrt(reduce_add(gradient_b*gradient_b)+reduce_add(gradient_a*gradient_a)); if (1-eq(norm,norm))+gt(norm,b.max_gradient_norm) { err("adapter gradient is non-finite or over budget") } else { ok({loss: u:adapter_loss(predicted.factorized_predictions,targets)?,gradient_b: gradient_b,gradient_a: gradient_a,gradient_norm: norm,predictions: predicted}) } }
-def u:adapter_config(config,b) { "Validate bounded adapter gradient-descent controls."; if 1-equal(record_keys(config),["learning_rate","max_steps","tolerance"])+(1-eq(config.learning_rate,config.learning_rate))+lt(config.learning_rate,b.min_learning_rate)+gt(config.learning_rate,b.max_learning_rate)+(1-eq(config.max_steps,floor(config.max_steps)))+lt(config.max_steps,1)+gt(config.max_steps,b.max_steps)+(1-eq(config.tolerance,config.tolerance))+lt(config.tolerance,0)+gt(config.tolerance,b.max_tolerance) { err("adapter configuration is outside its budget") } else { ok(1) } }
+def u:adapter_design(split,features,b) {
+  "Build bias-augmented inputs and paired [y,-y] teaching targets.";
+  examples=tally(split.ids);
+  inputs=fill([0],0);
+  targets=fill([0],0);
+  row=0;
+  while lt(row,examples) {
+    inputs=concat(inputs,1);
+    feature=0;
+    while lt(feature,features) {
+      inputs=concat(inputs,take(split.x,0,row*features+feature));
+      feature=feature+1
+    };
+    target=take(split.y,0,row);
+    targets=concat(targets,[target,0-target]);
+    row=row+1
+  };
+  if gt(tally(inputs)+tally(targets),b.max_adapter_elements) {
+    err("adapter design element budget exceeded")
+  } else {
+    ok({inputs: reshape(inputs,[examples,features+1]),targets: reshape(targets,[examples,2]),examples: examples,input_width: features+1,outputs:2})
+  }
+}
+def u:adapter_delta(b_factor,a_factor,b) {
+  "Materialize the bounded low-rank update B*A.";
+  if 1-eq(rank(b_factor),2)+1-eq(rank(a_factor),2) {
+    err("adapter factors must be rank-two matrices")
+  } else {
+    outputs=take(shape(b_factor),0,0);
+    adapter_rank=take(shape(b_factor),0,1);
+    a_rank=take(shape(a_factor),0,0);
+    inputs=take(shape(a_factor),0,1);
+    if 1-eq(adapter_rank,a_rank)+lt(adapter_rank,1)+gt(adapter_rank,b.max_adapter_rank)+gt(outputs*inputs,b.max_base_parameters)+gt(outputs*adapter_rank+adapter_rank*inputs,b.max_adapter_parameters) {
+      err("adapter factor shape, rank, or parameter budget exceeded")
+    } else {
+      ok({delta: matmul(b_factor,a_factor),rank: adapter_rank,outputs: outputs,inputs: inputs,trainable_parameters: outputs*adapter_rank+adapter_rank*inputs,base_parameters: outputs*inputs})
+    }
+  }
+}
+def u:adapter_predictions(inputs,base,b_factor,a_factor,b) {
+  "Return merged and factorized low-rank predictions for parity evidence.";
+  shaped=u:adapter_delta(b_factor,a_factor,b)?;
+  if 1-equal(shape(base),[shaped.outputs,shaped.inputs])+1-eq(take(shape(inputs),0,1),shaped.inputs) {
+    err("adapter base or input shape mismatch")
+  } else {
+    merged=base+shaped.delta;
+    merged_predictions=matmul(inputs,transpose(merged));
+    factorized_predictions=matmul(inputs,transpose(base))+matmul(matmul(inputs,transpose(a_factor)),transpose(b_factor));
+    ok({merged: merged,delta: shaped.delta,merged_predictions: merged_predictions,factorized_predictions: factorized_predictions,rank: shaped.rank,trainable_parameters: shaped.trainable_parameters,base_parameters: shaped.base_parameters})
+  }
+}
+def u:adapter_loss(predictions,targets) {
+  "Compute mean squared error over a multi-output teaching matrix.";
+  if 1-equal(shape(predictions),shape(targets))+eq(tally(flatten(targets)),0) {
+    err("adapter loss shape mismatch")
+  } else {
+    errors=predictions-targets;
+    ok(reduce_add(errors*errors)/tally(flatten(errors)))
+  }
+}
+def u:adapter_step(inputs,targets,base,b_factor,a_factor,b) {
+  "Compute explicit factor gradients through delta=B*A.";
+  predicted=u:adapter_predictions(inputs,base,b_factor,a_factor,b)?;
+  errors=predicted.factorized_predictions-targets;
+  examples=take(shape(inputs),0,0);
+  outputs=take(shape(targets),0,1);
+  gradient_delta=matmul(transpose(errors),inputs)*(2/(examples*outputs));
+  gradient_b=matmul(gradient_delta,transpose(a_factor));
+  gradient_a=matmul(transpose(b_factor),gradient_delta);
+  norm=sqrt(reduce_add(gradient_b*gradient_b)+reduce_add(gradient_a*gradient_a));
+  if (1-eq(norm,norm))+gt(norm,b.max_gradient_norm) {
+    err("adapter gradient is non-finite or over budget")
+  } else {
+    ok({loss: u:adapter_loss(predicted.factorized_predictions,targets)?,gradient_b: gradient_b,gradient_a: gradient_a,gradient_norm: norm,predictions: predicted})
+  }
+}
+def u:adapter_config(config,b) {
+  "Validate bounded adapter gradient-descent controls.";
+  if 1-equal(record_keys(config),["learning_rate","max_steps","tolerance"])+(1-eq(config.learning_rate,config.learning_rate))+lt(config.learning_rate,b.min_learning_rate)+gt(config.learning_rate,b.max_learning_rate)+(1-eq(config.max_steps,floor(config.max_steps)))+lt(config.max_steps,1)+gt(config.max_steps,b.max_steps)+(1-eq(config.tolerance,config.tolerance))+lt(config.tolerance,0)+gt(config.tolerance,b.max_tolerance) {
+    err("adapter configuration is outside its budget")
+  } else {
+    ok(1)
+  }
+}
 
-def u:low_rank_fine_tune(path,base,initial_b,initial_a,config,b) { "Train only low-rank factors around a frozen base and prove merged/factorized parity."; u:adapter_config(config,b)?; bytes=read_bytes(path)?; if gt(tally(bytes),b.max_dataset_bytes) { err("adapter dataset byte budget exceeded") } else { dataset=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?; summary=u:adaptation_dataset(dataset,b)?; train_design=u:adapter_design(dataset.train,summary.features,b)?; eval_design=u:adapter_design(dataset.evaluation,summary.features,b)?; initial=u:adapter_predictions(train_design.inputs,base,initial_b,initial_a,b)?; if 1-equal(shape(base),[train_design.outputs,train_design.input_width]) { err("adapter frozen base shape mismatch") } else { base_fingerprint=u:adaptation_fingerprint(base,b)?; initial_adapter_fingerprint=u:adaptation_fingerprint(concat(flatten(initial_b),flatten(initial_a)),b)?; b_factor=initial_b; a_factor=initial_a; loss=u:adapter_loss(initial.factorized_predictions,train_design.targets)?; losses=concat(fill([0],0),loss); gradient_norms=fill([0],0); updates=0;
-  while lt(updates,config.max_steps)*gt(loss,config.tolerance) { if gt(updates,b.max_iterations-1) { return err("adapter iteration budget exceeded") } else { 0 }; step=u:adapter_step(train_design.inputs,train_design.targets,base,b_factor,a_factor,b)?; b_factor=b_factor-config.learning_rate*step.gradient_b; a_factor=a_factor-config.learning_rate*step.gradient_a; if gt(reduce(:max,abs(concat(flatten(b_factor),flatten(a_factor)))),b.max_abs_parameter) { return err("adapter parameter magnitude budget exceeded") } else { 0 }; updates=updates+1; predicted=u:adapter_predictions(train_design.inputs,base,b_factor,a_factor,b)?; loss=u:adapter_loss(predicted.factorized_predictions,train_design.targets)?; if (1-eq(loss,loss))+gt(loss,b.max_loss) { return err("adapter loss is non-finite or over budget") } else { losses=concat(losses,loss); gradient_norms=concat(gradient_norms,step.gradient_norm) } };
-  final=u:adapter_predictions(train_design.inputs,base,b_factor,a_factor,b)?; held=u:adapter_predictions(eval_design.inputs,base,b_factor,a_factor,b)?; held_loss=u:adapter_loss(held.factorized_predictions,eval_design.targets)?; parity=reduce(:max,abs(final.merged_predictions-final.factorized_predictions)); held_parity=reduce(:max,abs(held.merged_predictions-held.factorized_predictions)); final_base_fingerprint=u:adaptation_fingerprint(base,b)?; final_adapter_fingerprint=u:adaptation_fingerprint(concat(flatten(b_factor),flatten(a_factor)),b)?; if 1-equal(base_fingerprint,final_base_fingerprint)+equal(initial_adapter_fingerprint,final_adapter_fingerprint)+gt(parity,b.max_parity_error)+gt(held_parity,b.max_parity_error) { err("adapter frozen-base, update, or inference parity failure") } else { mode=u:adaptation_mode("fine-tuning",updates,0,0)?; reason=if lt(loss,config.tolerance)+eq(loss,config.tolerance) { "tolerance" } else { "max_steps" }; report={schema:"sw-ml-study.low-rank-adapter",version:1,task: summary.task,mode: mode,rank: final.rank,base: base,initial_b: initial_b,initial_a: initial_a,trained_b: b_factor,trained_a: a_factor,delta: final.delta,merged: final.merged,base_fingerprint: base_fingerprint,final_base_fingerprint: final_base_fingerprint,initial_adapter_fingerprint: initial_adapter_fingerprint,final_adapter_fingerprint: final_adapter_fingerprint,base_parameters: final.base_parameters,trainable_parameters: final.trainable_parameters,total_stored_parameters: final.base_parameters+final.trainable_parameters,parameter_reduction: final.base_parameters-final.trainable_parameters,updates: updates,stopping_reason: reason,learning_rate: config.learning_rate,train:{targets: train_design.targets,initial_predictions: initial.factorized_predictions,initial_loss: u:adapter_loss(initial.factorized_predictions,train_design.targets)?,final_predictions: final.factorized_predictions,final_loss: loss,losses: losses,gradient_norms: gradient_norms,merged_factorized_max_error: parity},evaluation:{targets: eval_design.targets,predictions: held.factorized_predictions,loss: held_loss,merged_factorized_max_error: held_parity},dataset: summary,boundary:{base:"frozen",adapter_gradients:"manual-mlpl",merge:"mlpl-matmul",production_lora_claim:0}}; json=to_json(report,{tagged:1})?; if gt(tally(losses),b.max_curve_points)+gt(tally(tokenize_bytes(json)),b.max_output_bytes) { err("adapter curve or report output budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; if 1-equal(decoded,report) { err("adapter report round trip changed") } else { ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))}) } } }
-  } } }
+def u:low_rank_fine_tune(path,base,initial_b,initial_a,config,b) {
+  "Train only low-rank factors around a frozen base and prove merged/factorized parity.";
+  u:adapter_config(config,b)?;
+  bytes=read_bytes(path)?;
+  if gt(tally(bytes),b.max_dataset_bytes) {
+    err("adapter dataset byte budget exceeded")
+  } else {
+    dataset=parse_json(decode_bytes(bytes),{max_depth: b.max_json_depth,max_bytes: b.max_dataset_bytes,max_elements: b.max_json_elements})?;
+    summary=u:adaptation_dataset(dataset,b)?;
+    train_design=u:adapter_design(dataset.train,summary.features,b)?;
+    eval_design=u:adapter_design(dataset.evaluation,summary.features,b)?;
+    initial=u:adapter_predictions(train_design.inputs,base,initial_b,initial_a,b)?;
+    if 1-equal(shape(base),[train_design.outputs,train_design.input_width]) {
+      err("adapter frozen base shape mismatch")
+    } else {
+      base_fingerprint=u:adaptation_fingerprint(base,b)?;
+      initial_adapter_fingerprint=u:adaptation_fingerprint(concat(flatten(initial_b),flatten(initial_a)),b)?;
+      b_factor=initial_b;
+      a_factor=initial_a;
+      loss=u:adapter_loss(initial.factorized_predictions,train_design.targets)?;
+      losses=concat(fill([0],0),loss);
+      gradient_norms=fill([0],0);
+      updates=0;
+      while lt(updates,config.max_steps)*gt(loss,config.tolerance) {
+        if gt(updates,b.max_iterations-1) {
+          return err("adapter iteration budget exceeded")
+        } else {
+          0
+        };
+        step=u:adapter_step(train_design.inputs,train_design.targets,base,b_factor,a_factor,b)?;
+        b_factor=b_factor-config.learning_rate*step.gradient_b;
+        a_factor=a_factor-config.learning_rate*step.gradient_a;
+        if gt(reduce(:max,abs(concat(flatten(b_factor),flatten(a_factor)))),b.max_abs_parameter) {
+          return err("adapter parameter magnitude budget exceeded")
+        } else {
+          0
+        };
+        updates=updates+1;
+        predicted=u:adapter_predictions(train_design.inputs,base,b_factor,a_factor,b)?;
+        loss=u:adapter_loss(predicted.factorized_predictions,train_design.targets)?;
+        if (1-eq(loss,loss))+gt(loss,b.max_loss) {
+          return err("adapter loss is non-finite or over budget")
+        } else {
+          losses=concat(losses,loss);
+          gradient_norms=concat(gradient_norms,step.gradient_norm)
+        }
+      };
+      final=u:adapter_predictions(train_design.inputs,base,b_factor,a_factor,b)?;
+      held=u:adapter_predictions(eval_design.inputs,base,b_factor,a_factor,b)?;
+      held_loss=u:adapter_loss(held.factorized_predictions,eval_design.targets)?;
+      parity=reduce(:max,abs(final.merged_predictions-final.factorized_predictions));
+      held_parity=reduce(:max,abs(held.merged_predictions-held.factorized_predictions));
+      final_base_fingerprint=u:adaptation_fingerprint(base,b)?;
+      final_adapter_fingerprint=u:adaptation_fingerprint(concat(flatten(b_factor),flatten(a_factor)),b)?;
+      if 1-equal(base_fingerprint,final_base_fingerprint)+equal(initial_adapter_fingerprint,final_adapter_fingerprint)+gt(parity,b.max_parity_error)+gt(held_parity,b.max_parity_error) {
+        err("adapter frozen-base, update, or inference parity failure")
+      } else {
+        mode=u:adaptation_mode("fine-tuning",updates,0,0)?;
+        reason=if lt(loss,config.tolerance)+eq(loss,config.tolerance) {
+          "tolerance"
+        } else {
+          "max_steps"
+        };
+        report={schema:"sw-ml-study.low-rank-adapter",version:1,task: summary.task,mode: mode,rank: final.rank,base: base,initial_b: initial_b,initial_a: initial_a,trained_b: b_factor,trained_a: a_factor,delta: final.delta,merged: final.merged,base_fingerprint: base_fingerprint,final_base_fingerprint: final_base_fingerprint,initial_adapter_fingerprint: initial_adapter_fingerprint,final_adapter_fingerprint: final_adapter_fingerprint,base_parameters: final.base_parameters,trainable_parameters: final.trainable_parameters,total_stored_parameters: final.base_parameters+final.trainable_parameters,parameter_reduction: final.base_parameters-final.trainable_parameters,updates: updates,stopping_reason: reason,learning_rate: config.learning_rate,train:{targets: train_design.targets,initial_predictions: initial.factorized_predictions,initial_loss: u:adapter_loss(initial.factorized_predictions,train_design.targets)?,final_predictions: final.factorized_predictions,final_loss: loss,losses: losses,gradient_norms: gradient_norms,merged_factorized_max_error: parity},evaluation:{targets: eval_design.targets,predictions: held.factorized_predictions,loss: held_loss,merged_factorized_max_error: held_parity},dataset: summary,boundary:{base:"frozen",adapter_gradients:"manual-mlpl",merge:"mlpl-matmul",production_lora_claim:0}};
+        json=to_json(report,{tagged:1})?;
+        if gt(tally(losses),b.max_curve_points)+gt(tally(tokenize_bytes(json)),b.max_output_bytes) {
+          err("adapter curve or report output budget exceeded")
+        } else {
+          decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+          if 1-equal(decoded,report) {
+            err("adapter report round trip changed")
+          } else {
+            ok({report: report,json: json,utf8_bytes: tally(tokenize_bytes(json))})
+          }
+        }
+      }
+    }
+  }
+}

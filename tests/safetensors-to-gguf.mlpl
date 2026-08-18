@@ -1,12 +1,28 @@
 include "../src/conversion/safetensors_to_gguf.mlpl";
-def u:wreq(v,m) { "Require a writer invariant."; if v { ok(1) } else { err(m) } }
-def u:wb(header_limit,elements,parameters,payload,output,strings,rank_limit,tensors,metadata,iterations) { "Return conversion writer budgets."; {max_header_bytes: header_limit,max_json_elements: elements,max_parameters: parameters,max_payload_bytes: payload,max_output_bytes: output,max_string_bytes: strings,max_rank: rank_limit,max_tensors: tensors,max_metadata: metadata,max_iterations: iterations} }
-b=u:wb(4096,256,1000000,64,512,64,4,1,2,1); out=".writer-roundtrip.gguf";
+def u:wreq(v,m) {
+  "Require a writer invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:wb(header_limit,elements,parameters,payload,output,strings,rank_limit,tensors,metadata,iterations) {
+  "Return conversion writer budgets.";
+  {max_header_bytes: header_limit,max_json_elements: elements,max_parameters: parameters,max_payload_bytes: payload,max_output_bytes: output,max_string_bytes: strings,max_rank: rank_limit,max_tensors: tensors,max_metadata: metadata,max_iterations: iterations}
+}
+b=u:wb(4096,256,1000000,64,512,64,4,1,2,1);
+out=".writer-roundtrip.gguf";
 i16=u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",out,b)?;
 u:wreq(equal(i16.values,[-32768,-2,32767])*equal([i16.type_id,i16.payload_bytes,i16.catalog_bytes,i16.file_bytes],[25,6,160,166]),"I16 writer read-back golden")?;
-u:wreq(equal(read_bytes(out,0,8)?,[71,71,85,70,3,0,0,0])*eq(i16.atomic_write*i16.self_validated,1),"GGUF header and validation evidence")?; remove_path(out)?;
-first=u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",b)?; second=u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",b)?; u:wreq(equal(first.bytes,second.bytes)*eq(tally(first.bytes),166),"deterministic complete artifact bytes")?;
-i8=u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i8_values",out,b)?; u:wreq(equal(i8.values,[-128,-1,127])*eq(i8.type_id,24)*eq(i8.payload_bytes,3),"I8 writer read-back golden")?; remove_path(out)?;
+u:wreq(equal(read_bytes(out,0,8)?,[71,71,85,70,3,0,0,0])*eq(i16.atomic_write*i16.self_validated,1),"GGUF header and validation evidence")?;
+remove_path(out)?;
+first=u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",b)?;
+second=u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",b)?;
+u:wreq(equal(first.bytes,second.bytes)*eq(tally(first.bytes),166),"deterministic complete artifact bytes")?;
+i8=u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i8_values",out,b)?;
+u:wreq(equal(i8.values,[-128,-1,127])*eq(i8.type_id,24)*eq(i8.payload_bytes,3),"I8 writer read-back golden")?;
+remove_path(out)?;
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","u8_values",b)),"unsigned dtype rejection")?;
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-catalog.safetensors","tensor_b",b)),"floating dtype rejection")?;
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",u:wb(4096,256,1000000,5,512,64,4,1,2,1))),"payload budget rejection")?;
@@ -15,5 +31,8 @@ u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safe
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",u:wb(4096,256,1000000,64,512,64,0,1,2,1))),"rank budget rejection")?;
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",u:wb(4096,256,1000000,64,512,64,4,0,2,1))),"tensor budget rejection")?;
 u:wreq(is_err(u:build_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",u:wb(4096,256,1000000,64,512,64,4,1,1,1))),"metadata budget rejection")?;
-write_atomic(out,[9])?; u:wreq(is_err(u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",out,u:wb(4096,256,1000000,64,100,64,4,1,2,1)))*equal(read_bytes(out)?,[9]),"pre-write failure preserves destination")?; remove_path(out)?;
-print("PASS self-validating Safetensors to GGUF writer"); ok(1)
+write_atomic(out,[9])?;
+u:wreq(is_err(u:write_single_tensor_gguf("fixtures/safetensors/valid-decode.safetensors","i16_values",out,u:wb(4096,256,1000000,64,100,64,4,1,2,1)))*equal(read_bytes(out)?,[9]),"pre-write failure preserves destination")?;
+remove_path(out)?;
+print("PASS self-validating Safetensors to GGUF writer");
+ok(1)

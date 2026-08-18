@@ -4,7 +4,9 @@ print("DEMO: selective bounded GGUF unquantized tensor decode");
 print("Scenario: choose the I16 tensor named ints from a mixed F32/Q8_0/I16/I8 file and read only its eight payload bytes.");
 print("Native boundary: file_size plus exact bounded read_bytes. MLPL work: catalog validation, exact name resolution, absolute offset derivation, little-endian assembly, and signed conversion.");
 print("Budgets: 4096 catalog bytes, 8 metadata entries, 4 tensors, rank 4, 1,000,000 parameters, and exactly 8 selected payload bytes.");
-print("Selected descriptor:"); print({name: decoded.name, ggml_type_id: decoded.type_id, parameters: decoded.parameters, file_offset: decoded.file_offset, byte_count: decoded.byte_count});
-print("Decoded values:"); print(decoded.values);
+print("Selected descriptor:");
+print({name: decoded.name, ggml_type_id: decoded.type_id, parameters: decoded.parameters, file_offset: decoded.file_offset, byte_count: decoded.byte_count});
+print("Decoded values:");
+print(decoded.values);
 print("Interpretation: the four I16 values span negative and positive boundaries; F32, Q8_0, and I8 payload ranges remain unread.");
 ok(1)

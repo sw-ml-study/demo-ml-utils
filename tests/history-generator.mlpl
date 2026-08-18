@@ -1,9 +1,25 @@
 include "../src/adaptation/history_generator.mlpl";
-def u:hgreq(v,m) { "Require one source-history invariant."; if v { ok(1) } else { err(m) } }
-def u:hgb(tasks,records,output) { "Return source-history budgets."; {max_arms:4,max_horizon:8,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons:8,min_reward:0,max_reward:1,max_history_records:8,max_dataset_bytes:2048,max_json_depth:10,max_json_elements:4096,max_output_bytes: output,max_generated_tasks: tasks,max_generated_records: records} }
-b=u:hgb(4,16,32768); built=u:source_histories_report("fixtures/adaptation/tiny-bandits.json",b)?; r=built.report;
+def u:hgreq(v,m) {
+  "Require one source-history invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:hgb(tasks,records,output) {
+  "Return source-history budgets.";
+  {max_arms:4,max_horizon:8,max_training_tasks:4,max_held_out_tasks:2,max_task_comparisons:8,min_reward:0,max_reward:1,max_history_records:8,max_dataset_bytes:2048,max_json_depth:10,max_json_elements:4096,max_output_bytes: output,max_generated_tasks: tasks,max_generated_records: records}
+}
+b=u:hgb(4,16,32768);
+built=u:source_histories_report("fixtures/adaptation/tiny-bandits.json",b)?;
+r=built.report;
 u:hgreq(equal(r.histories.task_401.history.actions,[0,1,0,0])*equal(r.histories.task_401.history.rewards,[1,0,1,1])*eq(r.histories.task_401.history.total_regret,1),"source task 401 golden")?;
 u:hgreq(equal(r.histories.task_402.history.actions,[0,1,1,1])*equal(r.histories.task_402.history.rewards,[0,1,1,1])*eq(r.histories.task_402.history.total_regret,1),"source task 402 golden")?;
-u:hgreq(equal(r.provenance.held_out_task_ids,[501])*eq(r.provenance.deployment_evaluation_included,0)*eq(r.summary.records,8)*eq(r.summary.total_reward,6)*eq(r.summary.total_regret,2),"separation and summary golden")?; u:hgreq(equal(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic tagged JSON")?;
-u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(1,16,32768))),"task budget rejection")?; u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(4,7,32768))),"record budget rejection")?; u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(4,16,100))),"output budget rejection")?;
-print("PASS source bandit history generation"); ok(1)
+u:hgreq(equal(r.provenance.held_out_task_ids,[501])*eq(r.provenance.deployment_evaluation_included,0)*eq(r.summary.records,8)*eq(r.summary.total_reward,6)*eq(r.summary.total_regret,2),"separation and summary golden")?;
+u:hgreq(equal(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",b)?.json,built.json),"deterministic tagged JSON")?;
+u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(1,16,32768))),"task budget rejection")?;
+u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(4,7,32768))),"record budget rejection")?;
+u:hgreq(is_err(u:source_histories_report("fixtures/adaptation/tiny-bandits.json",u:hgb(4,16,100))),"output budget rejection")?;
+print("PASS source bandit history generation");
+ok(1)

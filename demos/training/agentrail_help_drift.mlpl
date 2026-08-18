@@ -4,5 +4,7 @@ print("DEMO: compare live Agentrail help with the frozen training interface");
 print("Scenario: Agentrail may evolve after an adapter is trained. Capture its current command and option interface only at evaluation time; classify every command as trained, rejected out of scope, or unsupported by the frozen contract.");
 print("Native boundary: the shell captures bounded top-level and per-command help and extracts option names; MLPL enforces budgets and deterministically checks next, begin, and complete signatures. No model decides drift.");
 print("Budgets: 16384 top-level help bytes, 16384 bytes per subcommand, 131072 option-manifest bytes, 1024 version bytes, at most 64 live commands, three frozen trained commands, zero training writes.");
-print("Deterministic comparison:"); print(r);
-print("Interpretation: trained_commands are the three frozen workflow actions with intact option signatures; rejected_out_of_scope counts live commands the adapter was never taught; unsupported_trained_contracts counts missing commands or changed required options. Live help remains evaluation evidence only."); ok(1)
+print("Deterministic comparison:");
+print(r);
+print("Interpretation: trained_commands are the three frozen workflow actions with intact option signatures; rejected_out_of_scope counts live commands the adapter was never taught; unsupported_trained_contracts counts missing commands or changed required options. Live help remains evaluation evidence only.");
+ok(1)

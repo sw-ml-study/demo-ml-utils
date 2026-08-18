@@ -1,7 +1,15 @@
 include "../src/training/agentrail_small_data.mlpl";
-def u:sdreq(c,m) { if c { ok(1) } else { err(m) } }
+def u:sdreq(c,m) {
+  "Require one Stage 1 AgentRail dataset invariant.";
+  if c {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
 r=u:write_agentrail_small_data("tmp/agentrail-small-data")?;
 u:sdreq(equal(r.counts,[12,3,3]),"small-model split counts")?;
 u:sdreq(eq(r.leakage,0),"small-model ids must not leak across splits")?;
 u:sdreq(eq(r.max_prompt_bytes,384),"prompt budget contract")?;
-print("PASS Agentrail small-model dataset"); ok(1)
+print("PASS Agentrail small-model dataset");
+ok(1)

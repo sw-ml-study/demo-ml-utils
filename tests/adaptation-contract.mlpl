@@ -1,19 +1,34 @@
 include "../src/adaptation/contract.mlpl";
-def u:areq(v,m) { "Require one adaptation-contract invariant."; if v { ok(1) } else { err(m) } }
-def u:ab(examples,features,total,comparisons,dataset_bytes,output_bytes) { "Return adaptation-contract budgets."; {max_examples_per_split: examples,max_features: features,max_elements_per_split:32,max_total_examples: total,max_split_comparisons: comparisons,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes: dataset_bytes,max_json_depth:8,max_json_elements:512,max_output_bytes: output_bytes} }
-b=u:ab(8,4,16,64,2048,8192); built=u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",b)?; r=built.report;
+def u:areq(v,m) {
+  "Require one adaptation-contract invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:ab(examples,features,total,comparisons,dataset_bytes,output_bytes) {
+  "Return adaptation-contract budgets.";
+  {max_examples_per_split: examples,max_features: features,max_elements_per_split:32,max_total_examples: total,max_split_comparisons: comparisons,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes: dataset_bytes,max_json_depth:8,max_json_elements:512,max_output_bytes: output_bytes}
+}
+b=u:ab(8,4,16,64,2048,8192);
+built=u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",b)?;
+r=built.report;
 u:areq(equal([r.dataset.features,r.dataset.train_examples,r.dataset.context_examples,r.dataset.evaluation_examples,r.dataset.total_examples,r.dataset.split_comparisons,r.dataset.leakage_detected],[2,4,2,3,9,26,0]),"adaptation dataset summary golden")?;
 u:areq(eq(r.terminology.fine_tuning.parameter_updates,1)*eq(r.terminology.icl.labeled_context_only,1)*eq(r.terminology.icrl.reward_history_only,1),"adaptation terminology golden")?;
 u:areq(equal(r.parameter_fingerprint,"[0,0,0]")*eq(r.numeric.dot,11)*equal(r.numeric.matmul,reshape([4,4,10,8],[2,2]))*equal(r.numeric.softmax_row_sums,[1,1])*eq(r.numeric.sigmoid_zero,0.5)*eq(r.numeric.log_exp_one,1)*eq(r.numeric.seeded_repeated,1),"adaptation numeric and fingerprint golden")?;
 u:areq(is_err(u:adaptation_mode("fine-tuning",0,0,0)),"fine-tuning update evidence rejection")?;
 u:areq(is_err(u:adaptation_mode("icl",1,2,0)),"ICL deployment update rejection")?;
 u:areq(is_err(u:adaptation_mode("icrl",0,0,0)),"ICRL missing reward rejection")?;
-leaked={schema:"sw-ml-study.adaptation-dataset",version:1,task:"leaked",feature_count:2,train:{ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[1],x:[0,0],y:[0]}}; u:areq(is_err(u:adaptation_dataset(leaked,b)),"cross-split leakage rejection")?;
-duplicate={schema:"sw-ml-study.adaptation-dataset",version:1,task:"duplicate",feature_count:2,train:{ids:[1,1],x:[0,0,1,1],y:[0,1]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}}; u:areq(is_err(u:adaptation_dataset(duplicate,b)),"within-split duplicate rejection")?;
+leaked={schema:"sw-ml-study.adaptation-dataset",version:1,task:"leaked",feature_count:2,train:{ids:[1],x:[0,0],y:[0]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[1],x:[0,0],y:[0]}};
+u:areq(is_err(u:adaptation_dataset(leaked,b)),"cross-split leakage rejection")?;
+duplicate={schema:"sw-ml-study.adaptation-dataset",version:1,task:"duplicate",feature_count:2,train:{ids:[1,1],x:[0,0,1,1],y:[0,1]},context:{ids:[2],x:[0,0],y:[0]},evaluation:{ids:[3],x:[0,0],y:[0]}};
+u:areq(is_err(u:adaptation_dataset(duplicate,b)),"within-split duplicate rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(3,4,16,64,2048,8192))),"per-split example budget rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(8,1,16,64,2048,8192))),"feature budget rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(8,4,8,64,2048,8192))),"total example budget rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(8,4,16,7,2048,8192))),"split comparison budget rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(8,4,16,64,100,8192))),"dataset byte budget rejection")?;
 u:areq(is_err(u:adaptation_contract_report("fixtures/adaptation/tiny-regression.json",u:ab(8,4,16,64,2048,100))),"report byte budget rejection")?;
-print("PASS bounded adaptation contract"); ok(1)
+print("PASS bounded adaptation contract");
+ok(1)

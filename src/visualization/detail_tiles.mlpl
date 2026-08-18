@@ -1,27 +1,125 @@
 include "tensor_city.mlpl";
 
-def u:detail_histogram(values,bins,minimum,maximum,counts) { "Accumulate deterministic left-closed histogram bins, with maximum in the last bin.";
-  index = 0; output = counts; while lt(index,tally(values)) { value = take(values,0,index); bin = if eq(maximum,minimum) { 0 } else { if eq(value,maximum) { bins - 1 } else { floor((value - minimum) * bins / (maximum - minimum)) } }; output = scatter(output,bin,take(output,0,bin) + 1); index = index + 1 }; output
+def u:detail_histogram(values,bins,minimum,maximum,counts) {
+  "Accumulate deterministic left-closed histogram bins, with maximum in the last bin.";
+  index = 0;
+  output = counts;
+  while lt(index,tally(values)) {
+    value = take(values,0,index);
+    bin = if eq(maximum,minimum) {
+      0
+    } else {
+      if eq(value,maximum) {
+        bins - 1
+      } else {
+        floor((value - minimum) * bins / (maximum - minimum))
+      }
+    };
+    output = scatter(output,bin,take(output,0,bin) + 1);
+    index = index + 1
+  };
+  output
 }
-def u:detail_edges(minimum,maximum,bins) { "Construct bin boundary coordinates under explicit finite inputs."; if eq(minimum,maximum) { fill([bins + 1],minimum) } else { minimum + range(bins + 1) * (maximum - minimum) / bins } }
-def u:detail_samples(values,points) { "Select deterministic endpoint-inclusive strip samples.";
-  count = tally(values); if eq(count,0) { ok({indices: fill([0],0),values: fill([0],0)}) } else { actual = if lt(count,points) { count } else { points }; index = 0; indices = fill([0],0); sampled = fill([0],0); while lt(index,actual) { position = if eq(actual,1) { 0 } else { floor(index * (count - 1) / (actual - 1)) }; indices = concat(indices,position); sampled = concat(sampled,take(values,0,position)); index = index + 1 }; ok({indices: indices,values: sampled}) }
+def u:detail_edges(minimum,maximum,bins) {
+  "Construct bin boundary coordinates under explicit finite inputs.";
+  if eq(minimum,maximum) {
+    fill([bins + 1],minimum)
+  } else {
+    minimum + range(bins + 1) * (maximum - minimum) / bins
+  }
 }
-def u:detail_tile(parent_id,format,values,bins,points,lod,max_value) { "Build one distribution and surface-strip tile from bounded decoded values.";
-  if gt(tally(values),0) { minimum = reduce(:min,values); maximum = reduce(:max,values) } else { minimum = 0; maximum = 0 };
-  if gt(abs(minimum),max_value) + gt(abs(maximum),max_value) { err("detail tile value coordinate exceeds budget") } else { counts = u:detail_histogram(values,bins,minimum,maximum,fill([bins],0)); samples = u:detail_samples(values,points)?; ok({parent_id: parent_id,format: format,lod: lod,value_count: tally(values),minimum: minimum,maximum: maximum,bin_edges: u:detail_edges(minimum,maximum,bins),bin_counts: counts,sample_indices: samples.indices,sample_values: samples.values}) }
+def u:detail_samples(values,points) {
+  "Select deterministic endpoint-inclusive strip samples.";
+  count = tally(values);
+  if eq(count,0) {
+    ok({indices: fill([0],0),values: fill([0],0)})
+  } else {
+    actual = if lt(count,points) {
+      count
+    } else {
+      points
+    };
+    index = 0;
+    indices = fill([0],0);
+    sampled = fill([0],0);
+    while lt(index,actual) {
+      position = if eq(actual,1) {
+        0
+      } else {
+        floor(index * (count - 1) / (actual - 1))
+      };
+      indices = concat(indices,position);
+      sampled = concat(sampled,take(values,0,position));
+      index = index + 1
+    };
+    ok({indices: indices,values: sampled})
+  }
 }
-def u:detail_validate(ir,b) { "Validate distribution/surface tile column counts and stable parents.";
-  if 1 - equal(record_keys(ir),["gguf","provenance","safetensors","schema","version"]) { err("detail tile root schema mismatch") } else { if (1 - equal(ir.schema,"sw-ml-study.distribution-surfaces")) + (1 - eq(ir.version,1)) { err("detail tile version mismatch") } else {
-  if (1 - equal(ir.safetensors.parent_id,u:summary_join(ir.provenance.safetensors_artifact,":tensor:",ir.provenance.safetensors_name))) + (1 - equal(ir.gguf.parent_id,u:summary_join(ir.provenance.gguf_artifact,":tensor:",ir.provenance.gguf_name))) { err("detail tile stable parent mismatch") } else {
-  if gt(tally(ir.safetensors.bin_counts),b.max_bins) + gt(tally(ir.gguf.bin_counts),b.max_bins) + gt(tally(ir.safetensors.sample_values),b.max_surface_points) + gt(tally(ir.gguf.sample_values),b.max_surface_points) { err("detail tile bin or surface budget mismatch") } else { ok(1) }
-  } } }
+def u:detail_tile(parent_id,format,values,bins,points,lod,max_value) {
+  "Build one distribution and surface-strip tile from bounded decoded values.";
+  if gt(tally(values),0) {
+    minimum = reduce(:min,values);
+    maximum = reduce(:max,values)
+  } else {
+    minimum = 0;
+    maximum = 0
+  };
+  if gt(abs(minimum),max_value) + gt(abs(maximum),max_value) {
+    err("detail tile value coordinate exceeds budget")
+  } else {
+    counts = u:detail_histogram(values,bins,minimum,maximum,fill([bins],0));
+    samples = u:detail_samples(values,points)?;
+    ok({parent_id: parent_id,format: format,lod: lod,value_count: tally(values),minimum: minimum,maximum: maximum,bin_edges: u:detail_edges(minimum,maximum,bins),bin_counts: counts,sample_indices: samples.indices,sample_values: samples.values})
+  }
 }
-def u:build_detail_tiles(safe_path,safe_artifact,safe_name,gguf_path,gguf_artifact,gguf_name,b) { "Build bounded cross-format distribution and sampled-surface tiles.";
-  if lt(b.max_bins,1) + lt(b.max_surface_points,1) + lt(b.max_objects,5) + lt(b.max_iterations,2) + lt(b.max_json_depth,6) { err("invalid detail tile budget") } else {
-  safe = u:read_safetensors_tensor(safe_path,safe_name,b.max_header_bytes,b.max_elements,b.max_parameters,b.max_payload_bytes)?; gguf = u:read_gguf_q8_0(gguf_path,gguf_name,b.max_catalog_bytes,b.max_metadata,b.max_tensors,b.max_string_bytes,b.max_rank,b.max_parameters,b.max_payload_bytes,b.max_blocks,b.max_samples)?;
-  if gt(tally(safe.values),b.max_samples) + gt(tally(gguf.values),b.max_samples) { err("detail tile sample budget exceeded") } else {
-  safe_id = u:summary_join(safe_artifact,":tensor:",safe_name); gguf_id = u:summary_join(gguf_artifact,":tensor:",gguf_name); safe_tile = u:detail_tile(safe_id,"safetensors",safe.values,b.max_bins,b.max_surface_points,2,b.max_value)?; gguf_tile = u:detail_tile(gguf_id,"gguf",gguf.values,b.max_bins,b.max_surface_points,2,b.max_value)?;
-  ir = {schema:"sw-ml-study.distribution-surfaces",version:1,provenance:{analyzer:"mlpl-bounded-detail-tiles",safetensors_artifact: safe_artifact,safetensors_name: safe_name,gguf_artifact: gguf_artifact,gguf_name: gguf_name},safetensors: safe_tile,gguf: gguf_tile}; u:detail_validate(ir,b)?; json = to_json(ir,{tagged:1})?; if gt(tally(tokenize_bytes(json)),b.max_output_bytes) { err("detail tile output budget exceeded") } else { decoded = parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; u:detail_validate(decoded,b)?; if 1 - equal(decoded,ir) { err("detail tile JSON round trip changed IR") } else { ok({ir: ir,json: json,utf8_bytes: tally(tokenize_bytes(json))}) } }
-  } }
+def u:detail_validate(ir,b) {
+  "Validate distribution/surface tile column counts and stable parents.";
+  if 1 - equal(record_keys(ir),["gguf","provenance","safetensors","schema","version"]) {
+    err("detail tile root schema mismatch")
+  } else {
+    if (1 - equal(ir.schema,"sw-ml-study.distribution-surfaces")) + (1 - eq(ir.version,1)) {
+      err("detail tile version mismatch")
+    } else {
+      if (1 - equal(ir.safetensors.parent_id,u:summary_join(ir.provenance.safetensors_artifact,":tensor:",ir.provenance.safetensors_name))) + (1 - equal(ir.gguf.parent_id,u:summary_join(ir.provenance.gguf_artifact,":tensor:",ir.provenance.gguf_name))) {
+        err("detail tile stable parent mismatch")
+      } else {
+        if gt(tally(ir.safetensors.bin_counts),b.max_bins) + gt(tally(ir.gguf.bin_counts),b.max_bins) + gt(tally(ir.safetensors.sample_values),b.max_surface_points) + gt(tally(ir.gguf.sample_values),b.max_surface_points) {
+          err("detail tile bin or surface budget mismatch")
+        } else {
+          ok(1)
+        }
+      }
+    }
+  }
+}
+def u:build_detail_tiles(safe_path,safe_artifact,safe_name,gguf_path,gguf_artifact,gguf_name,b) {
+  "Build bounded cross-format distribution and sampled-surface tiles.";
+  if lt(b.max_bins,1) + lt(b.max_surface_points,1) + lt(b.max_objects,5) + lt(b.max_iterations,2) + lt(b.max_json_depth,6) {
+    err("invalid detail tile budget")
+  } else {
+    safe = u:read_safetensors_tensor(safe_path,safe_name,b.max_header_bytes,b.max_elements,b.max_parameters,b.max_payload_bytes)?;
+    gguf = u:read_gguf_q8_0(gguf_path,gguf_name,b.max_catalog_bytes,b.max_metadata,b.max_tensors,b.max_string_bytes,b.max_rank,b.max_parameters,b.max_payload_bytes,b.max_blocks,b.max_samples)?;
+    if gt(tally(safe.values),b.max_samples) + gt(tally(gguf.values),b.max_samples) {
+      err("detail tile sample budget exceeded")
+    } else {
+      safe_id = u:summary_join(safe_artifact,":tensor:",safe_name);
+      gguf_id = u:summary_join(gguf_artifact,":tensor:",gguf_name);
+      safe_tile = u:detail_tile(safe_id,"safetensors",safe.values,b.max_bins,b.max_surface_points,2,b.max_value)?;
+      gguf_tile = u:detail_tile(gguf_id,"gguf",gguf.values,b.max_bins,b.max_surface_points,2,b.max_value)?;
+      ir = {schema:"sw-ml-study.distribution-surfaces",version:1,provenance:{analyzer:"mlpl-bounded-detail-tiles",safetensors_artifact: safe_artifact,safetensors_name: safe_name,gguf_artifact: gguf_artifact,gguf_name: gguf_name},safetensors: safe_tile,gguf: gguf_tile};
+      u:detail_validate(ir,b)?;
+      json = to_json(ir,{tagged:1})?;
+      if gt(tally(tokenize_bytes(json)),b.max_output_bytes) {
+        err("detail tile output budget exceeded")
+      } else {
+        decoded = parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+        u:detail_validate(decoded,b)?;
+        if 1 - equal(decoded,ir) {
+          err("detail tile JSON round trip changed IR")
+        } else {
+          ok({ir: ir,json: json,utf8_bytes: tally(tokenize_bytes(json))})
+        }
+      }
+    }
+  }
 }

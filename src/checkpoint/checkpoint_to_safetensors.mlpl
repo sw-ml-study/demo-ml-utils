@@ -1,10 +1,121 @@
 include "tensor_metadata.mlpl";
 include "../formats/safetensors_slice.mlpl";
 
-def u:checkpoint_safe_uint(value,width,maximum) { "Encode one bounded exact unsigned integer in little-endian bytes."; if (1-eq(rank(value),0))+(1-eq(value,floor(value)))+lt(value,0)+gt(value,maximum) { err("Safetensors writer integer is outside its exact budget") } else { bytes=fill([0],0); remaining=value; index=0; while lt(index,width) { bytes=concat(bytes,mod(remaining,256)); remaining=floor(remaining/256); index=index+1 }; if gt(remaining,0) { err("Safetensors writer integer does not fit field width") } else { ok(bytes) } } }
-def u:checkpoint_text_concat(left,right) { "Concatenate two strings through their UTF-8 bytes."; decode_bytes(concat(tokenize_bytes(left),tokenize_bytes(right))) }
-def u:checkpoint_header_entry(name,dtype,shape,start,ending) { "Encode one dynamic Safetensors header entry with generic JSON escaping."; key=to_json(name)?; info=to_json({dtype: dtype,shape: shape,data_offsets:[start,ending]})?; u:checkpoint_text_concat(u:checkpoint_text_concat(key,":"),info) }
+def u:checkpoint_safe_uint(value,width,maximum) {
+  "Encode one bounded exact unsigned integer in little-endian bytes.";
+  if (1-eq(rank(value),0))+(1-eq(value,floor(value)))+lt(value,0)+gt(value,maximum) {
+    err("Safetensors writer integer is outside its exact budget")
+  } else {
+    bytes=fill([0],0);
+    remaining=value;
+    index=0;
+    while lt(index,width) {
+      bytes=concat(bytes,mod(remaining,256));
+      remaining=floor(remaining/256);
+      index=index+1
+    };
+    if gt(remaining,0) {
+      err("Safetensors writer integer does not fit field width")
+    } else {
+      ok(bytes)
+    }
+  }
+}
+def u:checkpoint_text_concat(left,right) {
+  "Concatenate two strings through their UTF-8 bytes.";
+  decode_bytes(concat(tokenize_bytes(left),tokenize_bytes(right)))
+}
+def u:checkpoint_header_entry(name,dtype,shape,start,ending) {
+  "Encode one dynamic Safetensors header entry with generic JSON escaping.";
+  key=to_json(name)?;
+  info=to_json({dtype: dtype,shape: shape,data_offsets:[start,ending]})?;
+  u:checkpoint_text_concat(u:checkpoint_text_concat(key,":"),info)
+}
 
-def u:build_checkpoint_safetensors(path,b) { "Build deterministic Safetensors bytes from approved checkpoint ranges without invoking a deserializer."; recovered=u:checkpoint_tensor_metadata(path,b)?; report=recovered.report; if lt(report.tensor_count,1) { err("checkpoint extraction requires at least one tensor") } else { header="{"; payload=fill([0],0); tensor=0; storage_bytes_read=0; while lt(tensor,report.tensor_count) { name=u:tensor_catalog_text(report,tensor,"tensor"); dtype=if eq(take(report.dtype_ids,0,tensor),1) { "I8" } else { "I16" }; row=take(reshape(report.shapes,[report.tensor_count,report.shape_width]),0,tensor); shape=compress(lt(range(report.shape_width),take(report.ranks,0,tensor)),row); count=take(report.byte_counts,0,tensor); source=read_bytes(path,take(report.storage_file_offsets,0,tensor),count)?; if 1-eq(tally(source),count)+gt(storage_bytes_read+count,b.max_total_storage_bytes) { return err("checkpoint extraction storage read is short or over budget") } else { 0 }; start=tally(payload); ending=start+count; entry=u:checkpoint_header_entry(name,dtype,shape,start,ending); if gt(tensor,0) { header=u:checkpoint_text_concat(header,",") } else { 0 }; header=u:checkpoint_text_concat(header,entry); payload=concat(payload,source); storage_bytes_read=storage_bytes_read+count; tensor=tensor+1 }; header=u:checkpoint_text_concat(header,"}"); raw_header=tokenize_bytes(header); padding=mod(8-mod(tally(raw_header),8),8); padded=concat(raw_header,fill([padding],32)); if gt(tally(padded),b.max_safetensors_header_bytes)+gt(8+tally(padded)+tally(payload),b.max_output_file_bytes) { err("Safetensors header or output file budget exceeded") } else { bytes=concat(u:checkpoint_safe_uint(tally(padded),8,b.max_safetensors_header_bytes)?,concat(padded,payload)); ok({bytes: bytes,header_bytes: tally(padded),payload_bytes: tally(payload),tensor_count: report.tensor_count,parameter_count: reduce_add(report.parameters),storage_bytes_read: storage_bytes_read,source_report: report}) } } }
+def u:build_checkpoint_safetensors(path,b) {
+  "Build deterministic Safetensors bytes from approved checkpoint ranges without invoking a deserializer.";
+  recovered=u:checkpoint_tensor_metadata(path,b)?;
+  report=recovered.report;
+  if lt(report.tensor_count,1) {
+    err("checkpoint extraction requires at least one tensor")
+  } else {
+    header="{";
+    payload=fill([0],0);
+    tensor=0;
+    storage_bytes_read=0;
+    while lt(tensor,report.tensor_count) {
+      name=u:tensor_catalog_text(report,tensor,"tensor");
+      dtype=if eq(take(report.dtype_ids,0,tensor),1) {
+        "I8"
+      } else {
+        "I16"
+      };
+      row=take(reshape(report.shapes,[report.tensor_count,report.shape_width]),0,tensor);
+      shape=compress(lt(range(report.shape_width),take(report.ranks,0,tensor)),row);
+      count=take(report.byte_counts,0,tensor);
+      source=read_bytes(path,take(report.storage_file_offsets,0,tensor),count)?;
+      if 1-eq(tally(source),count)+gt(storage_bytes_read+count,b.max_total_storage_bytes) {
+        return err("checkpoint extraction storage read is short or over budget")
+      } else {
+        0
+      };
+      start=tally(payload);
+      ending=start+count;
+      entry=u:checkpoint_header_entry(name,dtype,shape,start,ending);
+      if gt(tensor,0) {
+        header=u:checkpoint_text_concat(header,",")
+      } else {
+        0
+      };
+      header=u:checkpoint_text_concat(header,entry);
+      payload=concat(payload,source);
+      storage_bytes_read=storage_bytes_read+count;
+      tensor=tensor+1
+    };
+    header=u:checkpoint_text_concat(header,"}");
+    raw_header=tokenize_bytes(header);
+    padding=mod(8-mod(tally(raw_header),8),8);
+    padded=concat(raw_header,fill([padding],32));
+    if gt(tally(padded),b.max_safetensors_header_bytes)+gt(8+tally(padded)+tally(payload),b.max_output_file_bytes) {
+      err("Safetensors header or output file budget exceeded")
+    } else {
+      bytes=concat(u:checkpoint_safe_uint(tally(padded),8,b.max_safetensors_header_bytes)?,concat(padded,payload));
+      ok({bytes: bytes,header_bytes: tally(padded),payload_bytes: tally(payload),tensor_count: report.tensor_count,parameter_count: reduce_add(report.parameters),storage_bytes_read: storage_bytes_read,source_report: report})
+    }
+  }
+}
 
-def u:write_checkpoint_safetensors(input_path,output_path,b) { "Atomically write approved checkpoint tensors to Safetensors and validate every decoded tensor after read-back."; built=u:build_checkpoint_safetensors(input_path,b)?; write_atomic(output_path,built.bytes)?; catalog=u:catalog_safetensors(output_path,b.max_safetensors_header_bytes,b.max_safetensors_json_elements,b.max_parameters)?; if 1-eq(catalog.tensor_count,built.tensor_count)+1-eq(catalog.parameter_count,built.parameter_count)+1-eq(catalog.tensor_bytes,built.payload_bytes) { err("checkpoint Safetensors catalog self-validation mismatch") } else { tensor=0; values=fill([0],0); while lt(tensor,built.tensor_count) { name=u:tensor_catalog_text(built.source_report,tensor,"tensor"); decoded=u:read_safetensors_tensor(output_path,name,b.max_safetensors_header_bytes,b.max_safetensors_json_elements,b.max_parameters,b.max_storage_bytes)?; dtype=if eq(take(built.source_report.dtype_ids,0,tensor),1) { "I8" } else { "I16" }; source_bytes=read_bytes(input_path,take(built.source_report.storage_file_offsets,0,tensor),take(built.source_report.byte_counts,0,tensor))?; source_values=u:decode_slice_values(source_bytes,dtype,if equal(dtype,"I8") { 1 } else { 2 },0,fill([0],0)); if 1-equal(decoded.values,source_values) { return err("checkpoint Safetensors tensor read-back mismatch") } else { values=concat(values,decoded.values) }; tensor=tensor+1 }; ok({path: output_path,file_bytes: file_size(output_path)?,header_bytes: built.header_bytes,payload_bytes: built.payload_bytes,tensor_count: built.tensor_count,parameter_count: built.parameter_count,storage_bytes_read: built.storage_bytes_read+built.payload_bytes,values: values,atomic_write:1,self_validated:1,execution:{global_resolution:0,callable_invocation:0,object_construction:0,extension_resolution:0,persistence_resolution:0}}) } }
+def u:write_checkpoint_safetensors(input_path,output_path,b) {
+  "Atomically write approved checkpoint tensors to Safetensors and validate every decoded tensor after read-back.";
+  built=u:build_checkpoint_safetensors(input_path,b)?;
+  write_atomic(output_path,built.bytes)?;
+  catalog=u:catalog_safetensors(output_path,b.max_safetensors_header_bytes,b.max_safetensors_json_elements,b.max_parameters)?;
+  if 1-eq(catalog.tensor_count,built.tensor_count)+1-eq(catalog.parameter_count,built.parameter_count)+1-eq(catalog.tensor_bytes,built.payload_bytes) {
+    err("checkpoint Safetensors catalog self-validation mismatch")
+  } else {
+    tensor=0;
+    values=fill([0],0);
+    while lt(tensor,built.tensor_count) {
+      name=u:tensor_catalog_text(built.source_report,tensor,"tensor");
+      decoded=u:read_safetensors_tensor(output_path,name,b.max_safetensors_header_bytes,b.max_safetensors_json_elements,b.max_parameters,b.max_storage_bytes)?;
+      dtype=if eq(take(built.source_report.dtype_ids,0,tensor),1) {
+        "I8"
+      } else {
+        "I16"
+      };
+      source_bytes=read_bytes(input_path,take(built.source_report.storage_file_offsets,0,tensor),take(built.source_report.byte_counts,0,tensor))?;
+      source_values=u:decode_slice_values(source_bytes,dtype,if equal(dtype,"I8") {
+          1
+        } else {
+          2
+        },0,fill([0],0));
+      if 1-equal(decoded.values,source_values) {
+        return err("checkpoint Safetensors tensor read-back mismatch")
+      } else {
+        values=concat(values,decoded.values)
+      };
+      tensor=tensor+1
+    };
+    ok({path: output_path,file_bytes: file_size(output_path)?,header_bytes: built.header_bytes,payload_bytes: built.payload_bytes,tensor_count: built.tensor_count,parameter_count: built.parameter_count,storage_bytes_read: built.storage_bytes_read+built.payload_bytes,values: values,atomic_write:1,self_validated:1,execution:{global_resolution:0,callable_invocation:0,object_construction:0,extension_resolution:0,persistence_resolution:0}})
+  }
+}

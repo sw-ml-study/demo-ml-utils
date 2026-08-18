@@ -1,31 +1,149 @@
 include "gguf_q8_0.mlpl";
 
-def u:gguf_statistics_empty() { "Return the merge identity for GGUF Welford statistics."; {count: 0, minimum: 0, maximum: 0, sum: 0, mean: 0, m2: 0} }
-def u:gguf_statistics_add(state,value) { "Add one sampled value with the Welford recurrence.";
-  count = state.count + 1; delta = value - state.mean; mean = state.mean + delta / count; delta2 = value - mean;
-  {count: count, minimum: if eq(state.count,0) + lt(value,state.minimum) { value } else { state.minimum }, maximum: if eq(state.count,0) + gt(value,state.maximum) { value } else { state.maximum }, sum: state.sum + value, mean: mean, m2: state.m2 + delta * delta2}
+def u:gguf_statistics_empty() {
+  "Return the merge identity for GGUF Welford statistics.";
+  {count: 0, minimum: 0, maximum: 0, sum: 0, mean: 0, m2: 0}
 }
-def u:gguf_statistics_merge(left,right) { "Merge independent GGUF Welford states.";
-  if eq(left.count,0) { right } else { if eq(right.count,0) { left } else { count = left.count + right.count; delta = right.mean - left.mean; {count: count, minimum: if lt(left.minimum,right.minimum) { left.minimum } else { right.minimum }, maximum: if gt(left.maximum,right.maximum) { left.maximum } else { right.maximum }, sum: left.sum + right.sum, mean: left.mean + delta * right.count / count, m2: left.m2 + right.m2 + delta * delta * left.count * right.count / count} } }
+def u:gguf_statistics_add(state,value) {
+  "Add one sampled value with the Welford recurrence.";
+  count = state.count + 1;
+  delta = value - state.mean;
+  mean = state.mean + delta / count;
+  delta2 = value - mean;
+  {count: count, minimum: if eq(state.count,0) + lt(value,state.minimum) {
+      value
+    } else {
+      state.minimum
+    }, maximum: if eq(state.count,0) + gt(value,state.maximum) {
+      value
+    } else {
+      state.maximum
+    }, sum: state.sum + value, mean: mean, m2: state.m2 + delta * delta2}
 }
-def u:gguf_statistics_result(state) { "Return six population-statistics fields."; {count: state.count, minimum: state.minimum, maximum: state.maximum, sum: state.sum, mean: state.mean, variance: if eq(state.count,0) { 0 } else { state.m2 / state.count }} }
-def u:gguf_statistics_sample(values,global_start,stride,state) { "Fold deterministic global-stride samples from one decoded chunk.";
-  index = 0; output = state; while lt(index,tally(values)) { if eq(mod(global_start + index,stride),0) { output = u:gguf_statistics_add(output,take(values,0,index)) } else { 0 }; index = index + 1 }; output
+def u:gguf_statistics_merge(left,right) {
+  "Merge independent GGUF Welford states.";
+  if eq(left.count,0) {
+    right
+  } else {
+    if eq(right.count,0) {
+      left
+    } else {
+      count = left.count + right.count;
+      delta = right.mean - left.mean;
+      {count: count, minimum: if lt(left.minimum,right.minimum) {
+          left.minimum
+        } else {
+          right.minimum
+        }, maximum: if gt(left.maximum,right.maximum) {
+          left.maximum
+        } else {
+          right.maximum
+        }, sum: left.sum + right.sum, mean: left.mean + delta * right.count / count, m2: left.m2 + right.m2 + delta * delta * left.count * right.count / count}
+    }
+  }
+}
+def u:gguf_statistics_result(state) {
+  "Return six population-statistics fields.";
+  {count: state.count, minimum: state.minimum, maximum: state.maximum, sum: state.sum, mean: state.mean, variance: if eq(state.count,0) {
+      0
+    } else {
+      state.m2 / state.count
+    }}
+}
+def u:gguf_statistics_sample(values,global_start,stride,state) {
+  "Fold deterministic global-stride samples from one decoded chunk.";
+  index = 0;
+  output = state;
+  while lt(index,tally(values)) {
+    if eq(mod(global_start + index,stride),0) {
+      output = u:gguf_statistics_add(output,take(values,0,index))
+    } else {
+      0
+    };
+    index = index + 1
+  };
+  output
 }
 
-def u:gguf_tensor_statistics(path,name,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters,chunk_bytes,max_blocks,sample_stride,max_samples,max_iterations,max_output_fields) { "Compute chunk-bounded sampled statistics for I8, I16, or Q8_0.";
+def u:gguf_tensor_statistics(path,name,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters,chunk_bytes,max_blocks,sample_stride,max_samples,max_iterations,max_output_fields) {
+  "Compute chunk-bounded sampled statistics for I8, I16, or Q8_0.";
   invalid = (1 - eq(rank(chunk_bytes),0)) + (1 - eq(chunk_bytes,floor(chunk_bytes))) + lt(chunk_bytes,1) + (1 - eq(rank(max_blocks),0)) + (1 - eq(max_blocks,floor(max_blocks))) + lt(max_blocks,0) + (1 - eq(rank(sample_stride),0)) + (1 - eq(sample_stride,floor(sample_stride))) + lt(sample_stride,1) + (1 - eq(rank(max_samples),0)) + (1 - eq(max_samples,floor(max_samples))) + lt(max_samples,0) + (1 - eq(rank(max_iterations),0)) + (1 - eq(max_iterations,floor(max_iterations))) + lt(max_iterations,0) + (1 - eq(rank(max_output_fields),0)) + (1 - eq(max_output_fields,floor(max_output_fields))) + lt(max_output_fields,9);
-  if invalid { err("invalid GGUF statistics budget") } else {
-  catalog = u:catalog_gguf(path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?; index = u:gguf_find_tensor(catalog,name)?; row = take(catalog.tensor_rows,0,index); type_id = take(row,0,2); parameters = take(row,0,1); byte_count = take(row,0,3);
-  if (1 - eq(type_id,8)) * (1 - eq(type_id,24)) * (1 - eq(type_id,25)) { err("GGUF statistics supports only Q8_0, I8, and I16") } else {
-  unit_bytes = if eq(type_id,8) { 34 } else { if eq(type_id,25) { 2 } else { 1 } }; unit_values = if eq(type_id,8) { 32 } else { 1 };
-  if lt(chunk_bytes,unit_bytes) { err("GGUF statistics chunk cannot hold one complete decode unit") } else { aligned_chunk = floor(chunk_bytes / unit_bytes) * unit_bytes; iterations = if eq(byte_count,0) { 0 } else { floor((byte_count + aligned_chunk - 1) / aligned_chunk) }; blocks = if eq(type_id,8) { parameters / 32 } else { 0 }; samples = if eq(parameters,0) { 0 } else { floor((parameters - 1) / sample_stride) + 1 };
-  if gt(iterations,max_iterations) + gt(blocks,max_blocks) + gt(samples,max_samples) { err("GGUF statistics iteration, block, or sample budget exceeded") } else {
-  file_offset = catalog.catalog_bytes + take(row,0,0); offset = 0; decoded_start = 0; state = u:gguf_statistics_empty(); completed = 0;
-  while lt(offset,byte_count) { remaining = byte_count - offset; length = if lt(remaining,aligned_chunk) { remaining } else { aligned_chunk }; bytes = read_bytes(path,file_offset + offset,length)?; if 1 - eq(tally(bytes),length) { return err("GGUF statistics payload read was short") } else { 0 };
-    values = if eq(type_id,8) { u:gguf_decode_q8_0(bytes,length / 34,(length / 34) * 32)?.values } else { u:gguf_decode_signed(bytes,unit_bytes) };
-    partial = u:gguf_statistics_sample(values,decoded_start,sample_stride,u:gguf_statistics_empty()); state = u:gguf_statistics_merge(state,partial); decoded_start = decoded_start + tally(values); offset = offset + length; completed = completed + 1
-  };
-  ok({statistics: u:gguf_statistics_result(state), iterations: completed, sampled_values: state.count, decoded_values: decoded_start})
-  } } } }
+  if invalid {
+    err("invalid GGUF statistics budget")
+  } else {
+    catalog = u:catalog_gguf(path,max_catalog_bytes,max_metadata,max_tensors,max_string_bytes,max_rank,max_parameters)?;
+    index = u:gguf_find_tensor(catalog,name)?;
+    row = take(catalog.tensor_rows,0,index);
+    type_id = take(row,0,2);
+    parameters = take(row,0,1);
+    byte_count = take(row,0,3);
+    if (1 - eq(type_id,8)) * (1 - eq(type_id,24)) * (1 - eq(type_id,25)) {
+      err("GGUF statistics supports only Q8_0, I8, and I16")
+    } else {
+      unit_bytes = if eq(type_id,8) {
+        34
+      } else {
+        if eq(type_id,25) {
+          2
+        } else {
+          1
+        }
+      };
+      unit_values = if eq(type_id,8) {
+        32
+      } else {
+        1
+      };
+      if lt(chunk_bytes,unit_bytes) {
+        err("GGUF statistics chunk cannot hold one complete decode unit")
+      } else {
+        aligned_chunk = floor(chunk_bytes / unit_bytes) * unit_bytes;
+        iterations = if eq(byte_count,0) {
+          0
+        } else {
+          floor((byte_count + aligned_chunk - 1) / aligned_chunk)
+        };
+        blocks = if eq(type_id,8) {
+          parameters / 32
+        } else {
+          0
+        };
+        samples = if eq(parameters,0) {
+          0
+        } else {
+          floor((parameters - 1) / sample_stride) + 1
+        };
+        if gt(iterations,max_iterations) + gt(blocks,max_blocks) + gt(samples,max_samples) {
+          err("GGUF statistics iteration, block, or sample budget exceeded")
+        } else {
+          file_offset = catalog.catalog_bytes + take(row,0,0);
+          offset = 0;
+          decoded_start = 0;
+          state = u:gguf_statistics_empty();
+          completed = 0;
+          while lt(offset,byte_count) {
+            remaining = byte_count - offset;
+            length = if lt(remaining,aligned_chunk) {
+              remaining
+            } else {
+              aligned_chunk
+            };
+            bytes = read_bytes(path,file_offset + offset,length)?;
+            if 1 - eq(tally(bytes),length) {
+              return err("GGUF statistics payload read was short")
+            } else {
+              0
+            };
+            values = if eq(type_id,8) { u:gguf_decode_q8_0(bytes,length / 34,(length / 34) * 32)?.values } else { u:gguf_decode_signed(bytes,unit_bytes) };
+            partial = u:gguf_statistics_sample(values,decoded_start,sample_stride,u:gguf_statistics_empty());
+            state = u:gguf_statistics_merge(state,partial);
+            decoded_start = decoded_start + tally(values);
+            offset = offset + length;
+            completed = completed + 1
+          };
+          ok({statistics: u:gguf_statistics_result(state), iterations: completed, sampled_values: state.count, decoded_values: decoded_start})
+        }
+      }
+    }
+  }
 }

@@ -1,13 +1,30 @@
 include "../src/experiments/split_lift.mlpl";
-def u:slr(c,m) { "Require one Split/Lift golden."; if c { ok(1) } else { err(m) } }
-def u:sld() { "Return the deterministic two-region teaching dataset."; {train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[12,18]}} }
-def u:slb(rows,evals,groups,comparisons) { "Return Split/Lift work budgets."; {max_train_rows: rows,max_eval_rows: evals,max_groups: groups,max_rows_per_group: rows,max_id_comparisons: comparisons} }
-b=u:slb(8,4,4,64); r=u:split_lift_report(u:sld(),[1,2],b)?;
+def u:slr(c,m) {
+  "Require one Split/Lift golden.";
+  if c {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:sld() {
+  "Return the deterministic two-region teaching dataset.";
+  {train:{ids:[101,102,201,202],groups:[1,1,2,2],inputs:[0,2,0,2],targets:[2,4,8,10]},evaluation:{ids:[103,203],groups:[1,2],inputs:[10,10],targets:[12,18]}}
+}
+def u:slb(rows,evals,groups,comparisons) {
+  "Return Split/Lift work budgets.";
+  {max_train_rows: rows,max_eval_rows: evals,max_groups: groups,max_rows_per_group: rows,max_id_comparisons: comparisons}
+}
+b=u:slb(8,4,4,64);
+r=u:split_lift_report(u:sld(),[1,2],b)?;
 u:slr(equal(r.global.predictions,[15,15])*eq(r.global.offset,5)*eq(r.global.mse,9),"global baseline golden")?;
 u:slr(equal(r.factored.parameters.offsets,[2,8])*equal(r.factored.predictions,[12,18])*eq(r.factored.mse,0),"lifted group golden")?;
 u:slr(eq(r.parity,1)*eq(r.split.leakage_detected,0)*equal(r.provenance.train_ids,[101,102,201,202])*equal(r.provenance.evaluation_ids,[103,203]),"parity and provenance golden")?;
-leaked=u:sld(); leaked={train: leaked.train,evaluation: {ids:[102,203],groups: leaked.evaluation.groups,inputs: leaked.evaluation.inputs,targets: leaked.evaluation.targets}}; u:slr(is_err(u:split_lift_report(leaked,[1,2],b)),"leakage rejection")?;
+leaked=u:sld();
+leaked={train: leaked.train,evaluation: {ids:[102,203],groups: leaked.evaluation.groups,inputs: leaked.evaluation.inputs,targets: leaked.evaluation.targets}};
+u:slr(is_err(u:split_lift_report(leaked,[1,2],b)),"leakage rejection")?;
 u:slr(is_err(u:split_lift_report(u:sld(),[1,3],b)),"empty group rejection")?;
 u:slr(is_err(u:split_lift_report(u:sld(),[1,2],u:slb(3,4,4,64))),"train row budget rejection")?;
 u:slr(is_err(u:split_lift_report(u:sld(),[1,2],u:slb(8,4,4,2))),"comparison budget rejection")?;
-print("PASS bounded Split/Lift baseline"); ok(1)
+print("PASS bounded Split/Lift baseline");
+ok(1)

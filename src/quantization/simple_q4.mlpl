@@ -1,8 +1,96 @@
 include "symmetric_roundtrip.mlpl";
 
-def u:simple_q4_decode(bytes,b) { "Decode complete 18-byte teaching Q4 blocks with interleaved nibbles.";
-  if (1-eq(rank(bytes),1))+(1-eq(mod(tally(bytes),18),0))+gt(tally(bytes)/18,b.max_blocks)+gt((tally(bytes)/18)*32,b.max_output_values)+gt((tally(bytes)/18)*32,b.max_iterations) { err("simple Q4 decode shape or budget exceeded") } else { index=0; while lt(index,tally(bytes)) { byte=take(bytes,0,index); if (1-eq(byte,floor(byte)))+lt(byte,0)+gt(byte,255) { return err("simple Q4 payload contains a non-byte") } else { 0 }; index=index+1 }; block=0; values=fill([0],0); scales=fill([0],0); while lt(block,tally(bytes)/18) { base=block*18; scale=u:gguf_fp16([take(bytes,0,base),take(bytes,0,base+1)])?; scales=concat(scales,scale); packed=0; while lt(packed,16) { byte=take(bytes,0,base+2+packed); low=mod(byte,16)-8; high=floor(byte/16)-8; values=concat(values,concat(low*scale,high*scale)); packed=packed+1 }; block=block+1 }; ok({blocks: block,scales: scales,values: values}) }
+def u:simple_q4_decode(bytes,b) {
+  "Decode complete 18-byte teaching Q4 blocks with interleaved nibbles.";
+  if (1-eq(rank(bytes),1))+(1-eq(mod(tally(bytes),18),0))+gt(tally(bytes)/18,b.max_blocks)+gt((tally(bytes)/18)*32,b.max_output_values)+gt((tally(bytes)/18)*32,b.max_iterations) {
+    err("simple Q4 decode shape or budget exceeded")
+  } else {
+    index=0;
+    while lt(index,tally(bytes)) {
+      byte=take(bytes,0,index);
+      if (1-eq(byte,floor(byte)))+lt(byte,0)+gt(byte,255) {
+        return err("simple Q4 payload contains a non-byte")
+      } else {
+        0
+      };
+      index=index+1
+    };
+    block=0;
+    values=fill([0],0);
+    scales=fill([0],0);
+    while lt(block,tally(bytes)/18) {
+      base=block*18;
+      scale=u:gguf_fp16([take(bytes,0,base),take(bytes,0,base+1)])?;
+      scales=concat(scales,scale);
+      packed=0;
+      while lt(packed,16) {
+        byte=take(bytes,0,base+2+packed);
+        low=mod(byte,16)-8;
+        high=floor(byte/16)-8;
+        values=concat(values,concat(low*scale,high*scale));
+        packed=packed+1
+      };
+      block=block+1
+    };
+    ok({blocks: block,scales: scales,values: values})
+  }
 }
-def u:simple_q4_encode(values,b) { "Encode complete 32-value teaching Q4 blocks with explicit interleaved nibble layout.";
-  u:numeric_valid_vector(values,b)?; blocks=tally(values)/32; if (1-eq(mod(tally(values),32),0))+gt(blocks,b.max_blocks)+gt(blocks*18,b.max_output_bytes) { err("simple Q4 encode shape, block, or byte budget exceeded") } else { block=0; payload=fill([0],0); positions=range(tally(values)); while lt(block,blocks) { begin=block*32; selected=compress(gt(positions,begin-1)*lt(positions,begin+32),values); maximum=reduce(:max,abs(selected)); scale=if eq(maximum,0) { 0 } else { maximum/7 }; scale_bytes=u:fp16_encode_finite(scale,b.max_scale_iterations)?; stored_scale=u:gguf_fp16(scale_bytes)?; packed=fill([0],0); pair=0; while lt(pair,16) { first=if eq(stored_scale,0) { 0 } else { u:round_away(take(selected,0,pair*2)/stored_scale) }; second=if eq(stored_scale,0) { 0 } else { u:round_away(take(selected,0,pair*2+1)/stored_scale) }; if lt(first,-7) { first=-7 } else { if gt(first,7) { first=7 } else { 0 } }; if lt(second,-7) { second=-7 } else { if gt(second,7) { second=7 } else { 0 } }; packed=concat(packed,(first+8)+16*(second+8)); pair=pair+1 }; payload=concat(payload,concat(scale_bytes,packed)); block=block+1 }; decoded=u:simple_q4_decode(payload,b)?; metrics=u:numeric_error_metrics(values,decoded.values,b)?; ok({bytes: payload,scales: decoded.scales,reconstructed: decoded.values,metrics: metrics,blocks: decoded.blocks,layout:"fp16-scale + 16 interleaved low-even/high-odd nibble bytes"}) }
+def u:simple_q4_encode(values,b) {
+  "Encode complete 32-value teaching Q4 blocks with explicit interleaved nibble layout.";
+  u:numeric_valid_vector(values,b)?;
+  blocks=tally(values)/32;
+  if (1-eq(mod(tally(values),32),0))+gt(blocks,b.max_blocks)+gt(blocks*18,b.max_output_bytes) {
+    err("simple Q4 encode shape, block, or byte budget exceeded")
+  } else {
+    block=0;
+    payload=fill([0],0);
+    positions=range(tally(values));
+    while lt(block,blocks) {
+      begin=block*32;
+      selected=compress(gt(positions,begin-1)*lt(positions,begin+32),values);
+      maximum=reduce(:max,abs(selected));
+      scale=if eq(maximum,0) {
+        0
+      } else {
+        maximum/7
+      };
+      scale_bytes=u:fp16_encode_finite(scale,b.max_scale_iterations)?;
+      stored_scale=u:gguf_fp16(scale_bytes)?;
+      packed=fill([0],0);
+      pair=0;
+      while lt(pair,16) {
+        first=if eq(stored_scale,0) {
+          0
+        } else { u:round_away(take(selected,0,pair*2)/stored_scale) };
+        second=if eq(stored_scale,0) {
+          0
+        } else { u:round_away(take(selected,0,pair*2+1)/stored_scale) };
+        if lt(first,-7) {
+          first=-7
+        } else {
+          if gt(first,7) {
+            first=7
+          } else {
+            0
+          }
+        };
+        if lt(second,-7) {
+          second=-7
+        } else {
+          if gt(second,7) {
+            second=7
+          } else {
+            0
+          }
+        };
+        packed=concat(packed,(first+8)+16*(second+8));
+        pair=pair+1
+      };
+      payload=concat(payload,concat(scale_bytes,packed));
+      block=block+1
+    };
+    decoded=u:simple_q4_decode(payload,b)?;
+    metrics=u:numeric_error_metrics(values,decoded.values,b)?;
+    ok({bytes: payload,scales: decoded.scales,reconstructed: decoded.values,metrics: metrics,blocks: decoded.blocks,layout:"fp16-scale + 16 interleaved low-even/high-odd nibble bytes"})
+  }
 }

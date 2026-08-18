@@ -1,12 +1,30 @@
 include "../src/adaptation/icl_controls.mlpl";
-def u:iccreq(v,m) { "Require one ICL control invariant."; if v { ok(1) } else { err(m) } }
-def u:iccb(work,context,comparisons,output) { "Return ICL control budgets."; {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples: context,max_query_examples:4,max_query_elements:32,max_context_query_comparisons: comparisons,max_abs_prediction:1000,max_association_work: work,max_abs_similarity:10,max_abs_contribution:100} }
-b=u:iccb(64,4,32,32768); built=u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?; r=built.report;
+def u:iccreq(v,m) {
+  "Require one ICL control invariant.";
+  if v {
+    ok(1)
+  } else {
+    err(m)
+  }
+}
+def u:iccb(work,context,comparisons,output) {
+  "Return ICL control budgets.";
+  {max_examples_per_split:8,max_features:4,max_elements_per_split:32,max_total_examples:16,max_split_comparisons:64,max_abs_value:100,max_parameters:16,max_fingerprint_elements:16,max_fingerprint_bytes:256,max_dataset_bytes:2048,max_json_depth:12,max_json_elements:8192,max_output_bytes: output,max_context_examples: context,max_query_examples:4,max_query_elements:32,max_context_query_comparisons: comparisons,max_abs_prediction:1000,max_association_work: work,max_abs_similarity:10,max_abs_contribution:100}
+}
+b=u:iccb(64,4,32,32768);
+built=u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?;
+r=built.report;
 u:iccreq(equal(r.canonical.predictions,[5,7,11])*equal(r.order_reversed.predictions,r.canonical.predictions),"order invariant golden")?;
 u:iccreq(equal(r.zero_vector_distractor.predictions,r.canonical.predictions)*equal(take(r.zero_vector_distractor.contributions,1,2),[0,0,0]),"distractor golden")?;
 u:iccreq(equal(r.truncated_one_shot.predictions,[5,1,5])*equal(r.empty_context.predictions,[1,1,1]),"truncation and empty golden")?;
 u:iccreq(gt(r.contradictory_feature.mse,r.canonical.mse)*equal(r.contradictory_feature.predictions,[-11,7,-5]),"contradiction harm golden")?;
 u:iccreq(equal(r.deployment.fingerprint_before,r.deployment.fingerprint_after)*eq(r.deployment.updates,0),"controls frozen fingerprint")?;
-base=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?.report.record; duplicate=u:icl_control_record(base,[201,201],base.context.x,base.context.labels); leakage=u:icl_control_record(base,[301,202],base.context.x,base.context.labels); u:iccreq(is_err(u:icl_record_validate(duplicate,b))*is_err(u:icl_record_validate(leakage,b)),"duplicate and query leakage rejection")?;
-u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(17,4,32,32768))),"work budget exhaustion")?; u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(64,2,32,32768))),"context budget exhaustion")?; u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(64,4,8,32768))),"comparison budget exhaustion")?;
-print("PASS ICL context controls"); ok(1)
+base=u:icl_contract_report("fixtures/adaptation/tiny-regression.json",[1,0,0],b)?.report.record;
+duplicate=u:icl_control_record(base,[201,201],base.context.x,base.context.labels);
+leakage=u:icl_control_record(base,[301,202],base.context.x,base.context.labels);
+u:iccreq(is_err(u:icl_record_validate(duplicate,b))*is_err(u:icl_record_validate(leakage,b)),"duplicate and query leakage rejection")?;
+u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(17,4,32,32768))),"work budget exhaustion")?;
+u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(64,2,32,32768))),"context budget exhaustion")?;
+u:iccreq(is_err(u:icl_controls_report("fixtures/adaptation/tiny-regression.json",[1,0,0],u:iccb(64,4,8,32768))),"comparison budget exhaustion")?;
+print("PASS ICL context controls");
+ok(1)

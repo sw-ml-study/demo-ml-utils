@@ -1,15 +1,105 @@
 include "low_rank_adapter.mlpl";
 
-def u:curve_steps(count,b) { "Build bounded zero-based curve coordinates."; if lt(count,1)+gt(count,b.max_curve_points) { err("adaptation IR curve point budget exceeded") } else { values=fill([0],0); index=0; while lt(index,count) { values=concat(values,index); index=index+1 }; ok(values) } }
-def u:curve_finite(values,limit) { "Validate a non-empty finite numeric evidence vector."; flat=flatten(values); if lt(tally(flat),1) { err("adaptation IR evidence must be non-empty") } else { index=0; while lt(index,tally(flat)) { value=take(flat,0,index); if (1-eq(value,value))+gt(abs(value),limit) { return err("adaptation IR evidence is non-finite or over budget") } else { 0 }; index=index+1 }; ok(tally(flat)) } }
-def u:curve_run_validate(run,b) { "Headlessly validate one renderer-neutral adaptation run."; if 1-equal(record_keys(run),["baseline","curve","id","predictions","provenance","strategy","update"]) { err("adaptation IR run schema mismatch") } else { if (1-equal(run.strategy,"full"))*(1-equal(run.strategy,"low-rank")) { err("adaptation IR strategy mismatch") } else { if 1-equal(record_keys(run.curve),["gradient_norms","loss_steps","losses"]) { err("adaptation IR curve schema mismatch") } else { points=u:curve_finite(run.curve.losses,b.max_abs_value)?; gradients=u:curve_finite(run.curve.gradient_norms,b.max_abs_value)?; if 1-eq(points,tally(run.curve.loss_steps))+1-eq(gradients,points-1)+gt(points,b.max_curve_points) { err("adaptation IR curve alignment mismatch") } else { index=0; while lt(index,points) { if 1-eq(take(run.curve.loss_steps,0,index),index) { return err("adaptation IR curve steps are not canonical") } else { 0 }; index=index+1 }; u:curve_finite(run.predictions.targets,b.max_abs_value)?; u:curve_finite(run.predictions.final,b.max_abs_value)?; u:curve_finite(run.baseline.predictions,b.max_abs_value)?; u:curve_finite(run.update.initial,b.max_abs_value)?; u:curve_finite(run.update.final,b.max_abs_value)?; if 1-eq(tally(flatten(run.predictions.targets)),tally(flatten(run.predictions.final)))+1-eq(tally(flatten(run.predictions.targets)),tally(flatten(run.baseline.predictions))) { err("adaptation IR prediction alignment mismatch") } else { ok(1) } } } } } }
-def u:adaptation_curve_validate(ir,b) { "Headlessly validate adaptation curve IR version 1 and its bounded evidence."; if 1-equal(record_keys(ir),["provenance","runs","schema","version"]) { err("adaptation IR root schema mismatch") } else { if 1-equal(ir.schema,"sw-ml-study.adaptation-curve-ir")+1-eq(ir.version,1)+1-equal(record_keys(ir.runs),["full","low_rank"])+1-equal(record_keys(ir.provenance),["analyzer","dataset","task"]) { err("adaptation IR version, runs, or provenance mismatch") } else { if 1-equal(ir.runs.full.id,"full-fine-tuning")+1-equal(ir.runs.low_rank.id,"low-rank-fine-tuning")+1-equal(ir.runs.full.provenance.task,ir.provenance.task)+1-equal(ir.runs.low_rank.provenance.task,ir.provenance.task) { err("adaptation IR stable run ID or task mismatch") } else { u:curve_run_validate(ir.runs.full,b)?; u:curve_run_validate(ir.runs.low_rank,b)?; ok(1) } } } }
+def u:curve_steps(count,b) {
+  "Build bounded zero-based curve coordinates.";
+  if lt(count,1)+gt(count,b.max_curve_points) {
+    err("adaptation IR curve point budget exceeded")
+  } else {
+    values=fill([0],0);
+    index=0;
+    while lt(index,count) {
+      values=concat(values,index);
+      index=index+1
+    };
+    ok(values)
+  }
+}
+def u:curve_finite(values,limit) {
+  "Validate a non-empty finite numeric evidence vector.";
+  flat=flatten(values);
+  if lt(tally(flat),1) {
+    err("adaptation IR evidence must be non-empty")
+  } else {
+    index=0;
+    while lt(index,tally(flat)) {
+      value=take(flat,0,index);
+      if (1-eq(value,value))+gt(abs(value),limit) {
+        return err("adaptation IR evidence is non-finite or over budget")
+      } else {
+        0
+      };
+      index=index+1
+    };
+    ok(tally(flat))
+  }
+}
+def u:curve_run_validate(run,b) {
+  "Headlessly validate one renderer-neutral adaptation run.";
+  if 1-equal(record_keys(run),["baseline","curve","id","predictions","provenance","strategy","update"]) {
+    err("adaptation IR run schema mismatch")
+  } else {
+    if (1-equal(run.strategy,"full"))*(1-equal(run.strategy,"low-rank")) {
+      err("adaptation IR strategy mismatch")
+    } else {
+      if 1-equal(record_keys(run.curve),["gradient_norms","loss_steps","losses"]) {
+        err("adaptation IR curve schema mismatch")
+      } else {
+        points=u:curve_finite(run.curve.losses,b.max_abs_value)?;
+        gradients=u:curve_finite(run.curve.gradient_norms,b.max_abs_value)?;
+        if 1-eq(points,tally(run.curve.loss_steps))+1-eq(gradients,points-1)+gt(points,b.max_curve_points) {
+          err("adaptation IR curve alignment mismatch")
+        } else {
+          index=0;
+          while lt(index,points) {
+            if 1-eq(take(run.curve.loss_steps,0,index),index) {
+              return err("adaptation IR curve steps are not canonical")
+            } else {
+              0
+            };
+            index=index+1
+          };
+          u:curve_finite(run.predictions.targets,b.max_abs_value)?;
+          u:curve_finite(run.predictions.final,b.max_abs_value)?;
+          u:curve_finite(run.baseline.predictions,b.max_abs_value)?;
+          u:curve_finite(run.update.initial,b.max_abs_value)?;
+          u:curve_finite(run.update.final,b.max_abs_value)?;
+          if 1-eq(tally(flatten(run.predictions.targets)),tally(flatten(run.predictions.final)))+1-eq(tally(flatten(run.predictions.targets)),tally(flatten(run.baseline.predictions))) {
+            err("adaptation IR prediction alignment mismatch")
+          } else {
+            ok(1)
+          }
+        }
+      }
+    }
+  }
+}
+def u:adaptation_curve_validate(ir,b) {
+  "Headlessly validate adaptation curve IR version 1 and its bounded evidence.";
+  if 1-equal(record_keys(ir),["provenance","runs","schema","version"]) {
+    err("adaptation IR root schema mismatch")
+  } else {
+    if 1-equal(ir.schema,"sw-ml-study.adaptation-curve-ir")+1-eq(ir.version,1)+1-equal(record_keys(ir.runs),["full","low_rank"])+1-equal(record_keys(ir.provenance),["analyzer","dataset","task"]) {
+      err("adaptation IR version, runs, or provenance mismatch")
+    } else {
+      if 1-equal(ir.runs.full.id,"full-fine-tuning")+1-equal(ir.runs.low_rank.id,"low-rank-fine-tuning")+1-equal(ir.runs.full.provenance.task,ir.provenance.task)+1-equal(ir.runs.low_rank.provenance.task,ir.provenance.task) {
+        err("adaptation IR stable run ID or task mismatch")
+      } else { u:curve_run_validate(ir.runs.full,b)?; u:curve_run_validate(ir.runs.low_rank,b)?; ok(1) }
+    }
+  }
+}
 
-def u:adaptation_curve_ir(full,low,b) { "Normalize full and low-rank fine-tuning reports into deterministic renderer-neutral evidence.";
-  fr=full.report; lr=low.report;
-  if 1-equal(fr.task,lr.task)+1-equal(fr.dataset,lr.dataset) { err("adaptation IR source reports describe different datasets") } else {
-    full_steps=u:curve_steps(tally(fr.train.losses),b)?; low_steps=u:curve_steps(tally(lr.train.losses),b)?;
-    low_baseline=fill(shape(lr.evaluation.targets),0); low_targets=flatten(lr.evaluation.targets); low_baseline_loss=reduce_add(low_targets*low_targets)/tally(low_targets);
+def u:adaptation_curve_ir(full,low,b) {
+  "Normalize full and low-rank fine-tuning reports into deterministic renderer-neutral evidence.";
+  fr=full.report;
+  lr=low.report;
+  if 1-equal(fr.task,lr.task)+1-equal(fr.dataset,lr.dataset) {
+    err("adaptation IR source reports describe different datasets")
+  } else {
+    full_steps=u:curve_steps(tally(fr.train.losses),b)?;
+    low_steps=u:curve_steps(tally(lr.train.losses),b)?;
+    low_baseline=fill(shape(lr.evaluation.targets),0);
+    low_targets=flatten(lr.evaluation.targets);
+    low_baseline_loss=reduce_add(low_targets*low_targets)/tally(low_targets);
     full_run={id:"full-fine-tuning",strategy:"full",
       curve:{loss_steps: full_steps,losses: fr.train.losses,gradient_norms: fr.train.gradient_norms},
       update:{kind:"dense",initial: fr.initial_parameters,final: fr.final_parameters,delta: fr.final_parameters-fr.initial_parameters,trainable_parameters: tally(fr.final_parameters),initial_fingerprint: fr.initial_fingerprint,final_fingerprint: fr.final_fingerprint},
@@ -23,7 +113,19 @@ def u:adaptation_curve_ir(full,low,b) { "Normalize full and low-rank fine-tuning
       baseline:{kind:"zero-frozen-base",predictions: low_baseline,loss: low_baseline_loss},
       provenance:{source_schema: lr.schema,source_version: lr.version,task: lr.task,optimizer:"manual-factor-gradient-descent",updates: lr.updates}};
     ir={schema:"sw-ml-study.adaptation-curve-ir",version:1,provenance:{analyzer:"mlpl-adaptation-evidence-normalizer",dataset:"fixtures/adaptation/tiny-regression.json",task: fr.task},runs:{full: full_run,low_rank: low_run}};
-    u:adaptation_curve_validate(ir,b)?; json=to_json(ir,{tagged:1})?; bytes=tally(tokenize_bytes(json));
-    if gt(bytes,b.max_output_bytes) { err("adaptation IR output byte budget exceeded") } else { decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?; u:adaptation_curve_validate(decoded,b)?; if 1-equal(decoded,ir) { err("adaptation IR tagged JSON round trip changed evidence") } else { ok({ir: ir,json: json,utf8_bytes: bytes}) } }
+    u:adaptation_curve_validate(ir,b)?;
+    json=to_json(ir,{tagged:1})?;
+    bytes=tally(tokenize_bytes(json));
+    if gt(bytes,b.max_output_bytes) {
+      err("adaptation IR output byte budget exceeded")
+    } else {
+      decoded=parse_json(json,{max_depth: b.max_json_depth,max_bytes: b.max_output_bytes,max_elements: b.max_json_elements})?;
+      u:adaptation_curve_validate(decoded,b)?;
+      if 1-equal(decoded,ir) {
+        err("adaptation IR tagged JSON round trip changed evidence")
+      } else {
+        ok({ir: ir,json: json,utf8_bytes: bytes})
+      }
+    }
   }
 }
