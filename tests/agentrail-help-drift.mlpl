@@ -6,4 +6,9 @@ u:dhreq(eq(r.missing_required,0)*eq(r.live_command_count,22)*eq(r.added_out_of_s
 u:dhreq(eq(r.training_contamination,0)*equal(r.authority,"deterministic manifest comparison"),"drift authority boundary")?;
 missing=u:agentrail_help_drift("fixtures/training/agentrail-help/missing-complete.txt",22,4096)?;
 u:dhreq(eq(missing.missing_required,1)*equal(missing.required_present,[1,1,0]),"breaking missing-command detection")?;
+scope=u:agentrail_help_scope("fixtures/training/agentrail-help/live-commands.txt","fixtures/training/agentrail-help/live-options.txt",22,4096,4096)?;
+u:dhreq(equal([scope.live_command_count,scope.trained_commands,scope.rejected_out_of_scope,scope.unsupported_trained_contracts],[22,3,19,0])*equal(scope.trained_option_signatures,[1,1,1]),"complete command-scope classification")?;
+changed=u:agentrail_help_scope("fixtures/training/agentrail-help/live-commands.txt","fixtures/training/agentrail-help/missing-complete-summary-option.txt",22,4096,4096)?;
+u:dhreq(eq(changed.breaking_drift,1)*eq(changed.unsupported_trained_contracts,1),"trained option removal breaking drift")?;
+u:dhreq(is_err(u:agentrail_help_scope("fixtures/training/agentrail-help/live-commands.txt","fixtures/training/agentrail-help/live-options.txt",22,4096,32)),"option manifest byte budget rejection")?;
 print("PASS Agentrail live-help drift comparison"); ok(1)

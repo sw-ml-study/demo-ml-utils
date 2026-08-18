@@ -10,11 +10,19 @@ agentrail_bin=${AGENTRAIL_BIN:-$(command -v agentrail || true)}
 [ "$(wc -c < "$out/version.txt")" -le 1024 ] || { echo "agentrail version output exceeds budget" >&2; exit 1; }
 [ "$(wc -c < "$out/help.txt")" -le 16384 ] || { echo "agentrail help output exceeds budget" >&2; exit 1; }
 awk 'BEGIN { print "" } /^Commands:/ { inside=1; next } /^Options:/ { inside=0 } inside && /^  [a-z]/ { name=$1; print name }' "$out/help.txt" > "$out/commands.txt"
+: > "$out/options.txt"
+sed -n '2,$p' "$out/commands.txt" | while IFS= read -r command; do
+  if [ "$command" = help ]; then "$agentrail_bin" --help > "$out/help-$command.txt"; else "$agentrail_bin" "$command" --help > "$out/help-$command.txt"; fi
+  [ "$(wc -c < "$out/help-$command.txt")" -le 16384 ] || { echo "agentrail $command help exceeds budget" >&2; exit 1; }
+  awk -v command="$command" '/^  +-/ { for (i=1;i<=NF;i++) if ($i ~ /^-/) { option=$i; gsub(/,/,"",option); print command "|" option } }' "$out/help-$command.txt" >> "$out/options.txt"
+done
+[ "$(wc -c < "$out/options.txt")" -le 131072 ] || { echo "agentrail option manifest exceeds budget" >&2; exit 1; }
 mlpl=$("$repo_root/scripts/select-mlpl")
 test_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-help-drift.mlpl")
 printf '%s\n' "$test_output" | grep -Fqx 'PASS Agentrail live-help drift comparison'
 printf '%s\n' "Live Agentrail version:"; sed -n '1p' "$out/version.txt"
 printf '%s\n' "Live commands (evaluation-only; not training data):"; sed -n '2,$p' "$out/commands.txt"
+printf '%s\n' "Live option signatures captured: $(wc -l < "$out/options.txt" | tr -d ' ')"
 "$mlpl" --source-dir "$repo_root" "$repo_root/demos/training/agentrail_help_drift.mlpl"
 if [ "${1:-}" = "--with-model" ]; then
   printf '%s\n' "MODEL EVALUATION (advisory; does not affect the drift verdict):"

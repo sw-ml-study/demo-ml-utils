@@ -1,6 +1,6 @@
-number = 6
+number = 5
 slug = "live-command-scope-evaluation"
-status = "pending"
+status = "in-progress"
 description = "Expand live Agentrail manifest comparison to command option signatures and ex..."
 role = "validation"
 context_files = []

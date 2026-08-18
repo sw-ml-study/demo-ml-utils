@@ -1,4 +1,4 @@
-number = 5
+number = 6
 slug = "multi-seed-model-evaluation"
 status = "in-progress"
 description = "Run base and accepted 7B adapter over the expanded frozen held-out suite acro..."
