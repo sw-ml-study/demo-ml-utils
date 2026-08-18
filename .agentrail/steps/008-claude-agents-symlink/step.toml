@@ -1,8 +1,9 @@
 number = 8
 slug = "claude-agents-symlink"
-status = "in-progress"
+status = "completed"
 description = "Create CLAUDE.md as a relative symbolic link to the authoritative AGENTS.md, ..."
 role = "production"
 context_files = []
 created_at = "2026-08-18T10:03:47"
-commits = []
+completed_at = "2026-08-18T10:05:48"
+commits = ["bab756dd7ffc5ad359e00ef8d2d820b82da95ac8"]

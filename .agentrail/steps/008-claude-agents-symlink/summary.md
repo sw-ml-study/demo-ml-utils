@@ -1,0 +1,1 @@
+Created CLAUDE.md as a relative symbolic link to the authoritative AGENTS.md, updated repository instructions to prohibit duplicated or independently edited instruction content, and extended the style gate to require the exact symlink target. Full just check passes.
