@@ -1,0 +1,8 @@
+number = 8
+slug = "claude-agents-symlink"
+status = "in-progress"
+description = "Create CLAUDE.md as a relative symbolic link to the authoritative AGENTS.md, ..."
+role = "production"
+context_files = []
+created_at = "2026-08-18T10:03:47"
+commits = []

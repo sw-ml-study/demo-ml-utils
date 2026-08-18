@@ -11,6 +11,14 @@ formatter=${MLPL_FMT:-$repo_root/../sw-mlpl/scripts/mlpl-fmt.sh}
 
 grep -Fq 'Every user-defined function in every `.mlpl` file must begin its body with a' "$repo_root/AGENTS.md"
 grep -Fq 'every push, run `scripts/check-mlpl-style`' "$repo_root/AGENTS.md"
+[ -L "$repo_root/CLAUDE.md" ] || {
+  echo "CLAUDE.md must be a symbolic link to AGENTS.md" >&2
+  exit 1
+}
+[ "$(readlink "$repo_root/CLAUDE.md")" = AGENTS.md ] || {
+  echo "CLAUDE.md must use the relative target AGENTS.md" >&2
+  exit 1
+}
 
 git -C "$repo_root" ls-files -z '*.mlpl' |
   xargs -0 "$formatter" --check

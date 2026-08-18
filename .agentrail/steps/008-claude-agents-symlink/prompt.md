@@ -1,0 +1,1 @@
+Create CLAUDE.md as a relative symbolic link to the authoritative AGENTS.md, update the repository instruction text and validation to describe the alias accurately, validate, commit, and push.

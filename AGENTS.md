@@ -230,9 +230,10 @@ a safety net for what is not yet committed.
 
 This repository follows the AgentRail saga/step process used by adjacent
 `demo-algorithms`, `demo-memory`, and `sw-mlpl`. The generated shared briefing
-installed by `agentrail instructions apply` is mandatory. This repository uses
-`AGENTS.md` as its single instruction target; do not create a duplicate
-`CLAUDE.md` merely for symmetry with another repository.
+installed by `agentrail instructions apply` is mandatory. `AGENTS.md` is the
+single authoritative instruction source. `CLAUDE.md` must remain a relative
+symbolic link to `AGENTS.md`; never replace it with duplicated instruction
+content or edit it independently.
 
 ## Project rules
 
