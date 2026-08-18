@@ -2,18 +2,18 @@ def u:gguf_le(bytes, index, width, multiplier, total, maximum) { "Decode a bound
   if eq(index, width) { ok(total) } else { byte = take(bytes, 0, index); allowed = floor((maximum - total) / multiplier); if gt(byte, allowed) { err("GGUF integer exceeds configured exact budget") } else { u:gguf_le(bytes, index + 1, width, multiplier * 256, total + byte * multiplier, maximum) } }
 }
 
-def u:gguf_le8_at(bytes, index, maximum) { "Decode one buffered u64 with constant stack depth and an exact configured ceiling.";
-  value=take(bytes,0,index)+take(bytes,0,index+1)*256+take(bytes,0,index+2)*65536+take(bytes,0,index+3)*16777216+take(bytes,0,index+4)*4294967296+take(bytes,0,index+5)*1099511627776+take(bytes,0,index+6)*281474976710656+take(bytes,0,index+7)*72057594037927936;
-  if gt(value,maximum) { err("GGUF integer exceeds configured exact budget") } else { ok(value) }
-}
-
 def u:gguf_read(state, length) { "Read one exact bounded field and advance the catalog cursor.";
   if (1 - eq(length, floor(length))) + lt(length, 0) + gt(state.cursor + length, state.max_catalog_bytes) { err("GGUF catalog byte budget exceeded") } else {
   if gt(state.cursor + length, state.file_size) { err("GGUF structure is truncated") } else { bytes = read_bytes(state.path, state.cursor, length)?; if 1 - eq(tally(bytes), length) { err("GGUF bounded read was short") } else { ok({path: state.path, file_size: state.file_size, cursor: state.cursor + length, max_catalog_bytes: state.max_catalog_bytes, bytes: bytes}) } }
   }
 }
 
-def u:gguf_uint(state, width, maximum) { "Read a bounded unsigned little-endian scalar."; next = u:gguf_read(state, width)?; value = u:gguf_le(next.bytes, 0, width, 1, 0, maximum)?; ok({state: {path: next.path, file_size: next.file_size, cursor: next.cursor, max_catalog_bytes: next.max_catalog_bytes}, value: value}) }
+def u:gguf_uint(state, width, maximum) { "Read an unsigned scalar through the packed-byte path and enforce the exact configured ceiling.";
+  if gt(state.cursor+width,state.max_catalog_bytes) { err("GGUF catalog byte budget exceeded") } else { if gt(state.cursor+width,state.file_size) { err("GGUF structure is truncated") } else {
+  bytes=read_bytes_packed(state.path,state.cursor,width)?; value=if eq(width,1) { read_u8(bytes,0) } else { if eq(width,2) { read_u16_le(bytes,0) } else { if eq(width,4) { read_u32_le(bytes,0) } else { if eq(width,8) { read_u64_le(bytes,0) } else { return err("unsupported GGUF integer width") } } } };
+  if gt(value,maximum) { err("GGUF integer exceeds configured exact budget") } else { ok({state: {path: state.path,file_size: state.file_size,cursor: state.cursor+width,max_catalog_bytes: state.max_catalog_bytes},value: value}) }
+  } }
+}
 
 def u:gguf_string(state, maximum) { "Read one budgeted GGUF u64-length UTF-8 string.";
   length_value = u:gguf_uint(state, 8, maximum)?; next = u:gguf_read(length_value.state, length_value.value)?;
@@ -27,9 +27,9 @@ def u:gguf_shape(state, dimensions, index, product, maximum_parameters, values) 
   }
 }
 
-def u:gguf_name_duplicate(name, table, lengths, count, width) { "Check an exact padded byte-name table without hashes or native maps.";
-  candidate = tokenize_bytes(name); index = 0; duplicate = 0;
-  while lt(index, count) { row = take(reshape(table, [count,width]), 0, index); length = take(lengths, 0, index); prior = compress(lt(range(width), length), row); if equal(candidate, prior) { duplicate = 1 } else { 0 }; index = index + 1 };
+def u:gguf_name_duplicate(path,name,offsets,lengths,count) { "Check prior names exactly with bounded lazy file reads.";
+  candidate=tokenize_bytes(name); index=0; duplicate=0;
+  while lt(index,count) { length=take(lengths,0,index); if eq(length,tally(candidate)) { prior=read_bytes(path,take(offsets,0,index),length)?; if equal(candidate,prior) { duplicate=1 } else { 0 } } else { 0 }; index=index+1 };
   duplicate
 }
 
@@ -49,28 +49,15 @@ def u:gguf_scalar_value(state, type_id, max_string_bytes, maximum_scalar) { "Con
 }
 
 def u:gguf_skip_chunks(state, remaining) { "Advance over bounded metadata payload in fixed-size reads.";
-  while gt(remaining,0) { amount=if gt(remaining,65536) { 65536 } else { remaining }; next=u:gguf_read(state,amount)?; state={path: next.path,file_size: next.file_size,cursor: next.cursor,max_catalog_bytes: next.max_catalog_bytes}; remaining=remaining-amount };
+  while gt(remaining,0) { amount=if gt(remaining,65536) { 65536 } else { remaining }; if gt(state.cursor+amount,state.max_catalog_bytes) { return err("GGUF catalog byte budget exceeded") } else { if gt(state.cursor+amount,state.file_size) { return err("GGUF structure is truncated") } else { bytes=read_bytes_packed(state.path,state.cursor,amount)?; if 1-eq(size_bytes(bytes),amount) { return err("GGUF bounded read was short") } else { state={path: state.path,file_size: state.file_size,cursor: state.cursor+amount,max_catalog_bytes: state.max_catalog_bytes} } } }; remaining=remaining-amount };
   ok(state)
-}
-
-def u:gguf_skip_string_array(state, count, max_string_bytes) { "Validate string-array framing with bounded lookahead instead of one file read per token.";
-  cursor=state.cursor; buffer=fill([0],0); buffer_start=cursor; index=0;
-  while lt(index,count) {
-    offset=cursor-buffer_start;
-    if lt(tally(buffer)-offset,8) { available=state.max_catalog_bytes-cursor; file_available=state.file_size-cursor; if gt(available,file_available) { available=file_available } else { 0 }; amount=if gt(available,4096) { 4096 } else { available }; if lt(amount,8) { return err("GGUF string array is truncated") } else { buffer=read_bytes(state.path,cursor,amount)?; buffer_start=cursor; offset=0 } } else { 0 };
-    length=take(buffer,0,offset)+take(buffer,0,offset+1)*256+take(buffer,0,offset+2)*65536+take(buffer,0,offset+3)*16777216+take(buffer,0,offset+4)*4294967296+take(buffer,0,offset+5)*1099511627776+take(buffer,0,offset+6)*281474976710656+take(buffer,0,offset+7)*72057594037927936;
-    if gt(length,max_string_bytes) { return err("GGUF integer exceeds configured exact budget") } else { cursor=cursor+8 };
-    if gt(cursor+length,state.max_catalog_bytes) { return err("GGUF catalog byte budget exceeded") } else { if gt(cursor+length,state.file_size) { return err("GGUF structure is truncated") } else { cursor=cursor+length } };
-    index=index+1
-  };
-  ok({path: state.path,file_size: state.file_size,cursor: cursor,max_catalog_bytes: state.max_catalog_bytes})
 }
 
 def u:gguf_array_value(state, max_string_bytes, maximum_elements) { "Consume one bounded, non-nested GGUF metadata array and preserve the exact cursor.";
   element_type = u:gguf_uint(state,4,12)?;
   if eq(element_type.value,9) { err("nested GGUF metadata arrays are unsupported") } else {
   length_value = u:gguf_uint(element_type.state,8,maximum_elements)?; length = length_value.value; state = length_value.state; payload_start=state.cursor;
-  if eq(element_type.value,8) { state=u:gguf_skip_string_array(state,length,max_string_bytes)?; ok({state: state,element_type: element_type.value,length: length,payload_bytes: state.cursor-payload_start}) } else {
+  if eq(element_type.value,8) { scanned=scan_length_prefixed(state.path,state.cursor,length,8,max_string_bytes,state.max_catalog_bytes-state.cursor,65536)?; state={path: state.path,file_size: state.file_size,cursor: scanned.next_offset,max_catalog_bytes: state.max_catalog_bytes}; ok({state: state,element_type: element_type.value,length: length,payload_bytes: scanned.bytes_read}) } else {
   if eq(element_type.value,0)+eq(element_type.value,1)+eq(element_type.value,7) { width=1 } else { if eq(element_type.value,2)+eq(element_type.value,3) { width=2 } else { if eq(element_type.value,4)+eq(element_type.value,5)+eq(element_type.value,6) { width=4 } else { if eq(element_type.value,10)+eq(element_type.value,11)+eq(element_type.value,12) { width=8 } else { return err("unsupported GGUF metadata array element type") } } } };
   if gt(length,floor(9007199254740991/width)) { err("GGUF metadata array byte extent exceeds exact range") } else { bytes=length*width; skipped=u:gguf_skip_chunks(state,bytes)?; ok({state: skipped,element_type: element_type.value,length: length,payload_bytes: bytes}) }
   } }
@@ -103,34 +90,34 @@ def u:catalog_gguf(path, max_catalog_bytes, max_metadata, max_tensors, max_strin
   state = {path: magic.path, file_size: magic.file_size, cursor: magic.cursor, max_catalog_bytes: magic.max_catalog_bytes}; version = u:gguf_uint(state, 4, 3)?;
   if 1 - eq(version.value, 3) { err("only GGUF v3 is supported") } else {
   tensors = u:gguf_uint(version.state, 8, max_tensors)?; metadata = u:gguf_uint(tensors.state, 8, max_metadata)?;
-  state = metadata.state; metadata_index = 0; architecture = ""; alignment = 32; seen_architecture = 0; seen_alignment = 0; metadata_names = fill([0],0); metadata_lengths = fill([0],0); metadata_type_counts = fill([13],0); metadata_array_rows=fill([0],0); array_count=0; array_elements=0; array_payload_bytes=0; array_element_type_counts=fill([13],0);
+  state = metadata.state; metadata_index = 0; architecture = ""; alignment = 32; seen_architecture = 0; seen_alignment = 0; max_key_bytes=if gt(max_string_bytes,256) { 256 } else { max_string_bytes }; metadata_offsets = fill([0],0); metadata_lengths = fill([0],0); metadata_type_counts = fill([13],0); metadata_array_rows=fill([0],0); array_count=0; array_elements=0; array_payload_bytes=0; array_element_type_counts=fill([13],0);
   while lt(metadata_index, metadata.value) {
-    key = u:gguf_string(state, max_string_bytes)?; type_value = u:gguf_uint(key.state, 4, 12)?;
-    if lt(key.length,1) + u:gguf_name_duplicate(key.text, metadata_names, metadata_lengths, metadata_index, max_string_bytes) { return err("GGUF metadata key is empty or duplicate") } else { 0 };
+    key_offset=state.cursor+8; key = u:gguf_string(state, max_key_bytes)?; type_value = u:gguf_uint(key.state, 4, 12)?;
+    if lt(key.length,1) + u:gguf_name_duplicate(state.path,key.text,metadata_offsets,metadata_lengths,metadata_index) { return err("GGUF metadata key is empty or duplicate") } else { 0 };
     if eq(type_value.value,9) { remaining=max_parameters-array_elements; array=u:gguf_array_value(type_value.state,max_string_bytes,remaining)?; state=array.state; array_count=array_count+1; array_elements=array_elements+array.length; array_payload_bytes=array_payload_bytes+array.payload_bytes; array_element_type_counts=scatter(array_element_type_counts,array.element_type,take(array_element_type_counts,0,array.element_type)+1); metadata_array_rows=concat(metadata_array_rows,[array.element_type,array.length,array.payload_bytes]); scalar={numeric:0,text:""} } else { scalar = u:gguf_scalar_value(type_value.state, type_value.value, max_string_bytes, max_parameters)?; state = scalar.state; metadata_array_rows=concat(metadata_array_rows,[-1,0,0]) };
     if equal(key.text, "general.architecture") { if 1 - eq(type_value.value,8) { return err("GGUF architecture metadata must be a string") } else { architecture = scalar.text; seen_architecture = 1 } } else { 0 };
     if equal(key.text, "general.alignment") { if 1 - eq(type_value.value,4) { return err("GGUF alignment metadata must be u32") } else { alignment = scalar.numeric; seen_alignment = 1 } } else { 0 };
-    appended = u:gguf_append_name(key.text, metadata_names, metadata_lengths, max_string_bytes); metadata_names = appended.table; metadata_lengths = appended.lengths; metadata_type_counts = scatter(metadata_type_counts, type_value.value, take(metadata_type_counts,0,type_value.value) + 1);
+    metadata_offsets=concat(metadata_offsets,key_offset); metadata_lengths=concat(metadata_lengths,key.length); metadata_type_counts = scatter(metadata_type_counts, type_value.value, take(metadata_type_counts,0,type_value.value) + 1);
     metadata_index = metadata_index + 1
   };
   if (1 - seen_architecture) + lt(tally(tokenize_bytes(architecture)), 1) { err("GGUF general.architecture is required") } else {
   if lt(alignment, 8) + (1 - eq(mod(alignment, 8), 0)) { err("GGUF alignment must be a positive multiple of eight") } else {
-  tensor_names = fill([0],0); tensor_name_lengths = fill([0],0); rows = fill([0],0); tensor_index = 0;
+  tensor_name_offsets = fill([0],0); tensor_name_lengths = fill([0],0); rows = fill([0],0); tensor_index = 0;
   while lt(tensor_index, tensors.value) {
-    name = u:gguf_string(state, 64)?; dimensions = u:gguf_uint(name.state, 4, max_rank)?;
-    if lt(name.length,1) + u:gguf_name_duplicate(name.text, tensor_names, tensor_name_lengths, tensor_index, 64) { return err("GGUF tensor name is empty or duplicate") } else { 0 };
+    name_offset=state.cursor+8; name = u:gguf_string(state, 64)?; dimensions = u:gguf_uint(name.state, 4, max_rank)?;
+    if lt(name.length,1) + u:gguf_name_duplicate(state.path,name.text,tensor_name_offsets,tensor_name_lengths,tensor_index) { return err("GGUF tensor name is empty or duplicate") } else { 0 };
     if lt(dimensions.value, 1) { return err("GGUF tensor rank must be positive") } else { 0 };
     shaped = u:gguf_shape(dimensions.state, dimensions.value, 0, 1, max_parameters, fill([0],0))?;
     type_read = u:gguf_uint(shaped.state, 4, 39)?; offset_read = u:gguf_uint(type_read.state, 8, 9007199254740991)?;
     if 1 - u:gguf_type_active(type_read.value) { return err("GGUF tensor type ID is removed or unknown") } else { 0 };
     if 1 - eq(mod(offset_read.value, alignment), 0) { return err("GGUF tensor offset is not aligned") } else { 0 };
     known_bytes = u:gguf_known_tensor_bytes(type_read.value, shaped.parameters, max_parameters)?;
-    appended = u:gguf_append_name(name.text, tensor_names, tensor_name_lengths, 64); tensor_names = appended.table; tensor_name_lengths = appended.lengths;
+    tensor_name_offsets=concat(tensor_name_offsets,name_offset); tensor_name_lengths=concat(tensor_name_lengths,name.length);
     rows = concat(rows, [offset_read.value,shaped.parameters,type_read.value,known_bytes]); state = offset_read.state; tensor_index = tensor_index + 1
   };
   data_start = state.cursor + mod(alignment - mod(state.cursor, alignment), alignment); padding = u:gguf_read(state, data_start - state.cursor)?;
   if 1 - equal(padding.bytes, fill([tally(padding.bytes)], 0)) { err("GGUF catalog padding must be zero") } else {
   table = reshape(rows,[tensors.value,4]); ordered = if eq(tensors.value,0) { table } else { gather_rows(table, grade_up(take(table,1,0))) }; data_bytes = size - data_start; u:gguf_layout(ordered,0,data_bytes)?;
-  ok({version: 3, metadata_count: metadata.value, tensor_count: tensors.value, architecture: architecture, alignment: alignment, catalog_bytes: data_start, data_bytes: data_bytes, metadata_name_bytes: metadata_names, metadata_name_lengths: metadata_lengths, metadata_type_counts: metadata_type_counts, metadata_array_rows: reshape(metadata_array_rows,[metadata.value,3]), array_count: array_count, array_elements: array_elements,array_payload_bytes: array_payload_bytes, array_element_type_counts: array_element_type_counts, tensor_name_bytes: tensor_names, tensor_name_lengths: tensor_name_lengths, tensor_rows: table})
+  ok({path: path,version: 3,metadata_count: metadata.value,tensor_count: tensors.value,architecture: architecture,alignment: alignment,catalog_bytes: data_start,data_bytes: data_bytes,metadata_name_offsets: metadata_offsets,metadata_name_lengths: metadata_lengths,metadata_type_counts: metadata_type_counts,metadata_array_rows: reshape(metadata_array_rows,[metadata.value,3]),array_count: array_count,array_elements: array_elements,array_payload_bytes: array_payload_bytes,array_element_type_counts: array_element_type_counts,tensor_name_offsets: tensor_name_offsets,tensor_name_lengths: tensor_name_lengths,tensor_rows: table})
   } } } } } }
 }

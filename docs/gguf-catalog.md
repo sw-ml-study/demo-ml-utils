@@ -22,10 +22,10 @@ with every metadata key; scalar keys use `[-1,0,0]`. This lets a consumer
 associate tokenizer keys with their bounded array framing and proves the
 cursor reaches the tensor directory exactly. The catalog does not retain token
 strings or decode F32 scores: it validates their framing and skips numeric
-payloads in chunks of at most 65,536 bytes. String framing uses a 4096-byte
-lookahead buffer. Its final read may include up to 4095 bytes beyond the
-logical array cursor, but those bytes are neither interpreted nor used to
-advance the cursor.
+payloads in chunks of at most 65,536 bytes. String framing delegates to the
+native `scan_length_prefixed` fold, which retains no token payloads, uses
+constant native stack, and returns the exact logical cursor and aggregate byte
+counts.
 
 F32, I64, and F64 top-level scalar fields are also consumed at their exact
 fixed widths so ordinary llama.cpp metadata cannot desynchronize the tensor
@@ -37,9 +37,8 @@ from the pinned specification remain catalog-visible. `known_bytes` is `-1`
 when this project has not established the type's block-size rule, explicitly
 meaning “cataloged, extent unknown.” Simple F32/F16/BF16, signed integer, and
 complete Q8_0 block extents are computed, sorted by offset for layout validation, and rejected if they
-overlap or exceed the data buffer. Tensor payloads are never decoded; only the
-explicitly bounded string-array lookahead can request bytes beyond its logical
-metadata cursor.
+overlap or exceed the data buffer. Tensor payloads are never decoded or read by
+the metadata scanner.
 
 Native code supplies generic sandboxed `file_size` and exact bounded
 `read_bytes`. MLPL owns little-endian decoding, cursor movement, format/type
@@ -47,11 +46,15 @@ policy, metadata parsing, alignment, shape arithmetic, descriptor validation,
 and catalog construction. No external GGUF parser is used.
 
 For M metadata items, A total array elements, T tensors, R total dimensions,
-S maximum string width, and K catalog bytes, parsing is O(K + A + R), exact padded-name duplicate checks
-are O(M²S + T²S), and tensor ordering is O(T log T). Retained memory is O(MS +
-TS + T + R + largest field read). Current teaching budgets cap catalog reads
+S maximum string width, and K catalog bytes, parsing is O(K + A + R), exact
+lazy name duplicate checks are O(M²S + T²S), and tensor ordering is O(T log
+T). The catalog retains file offsets and lengths rather than padded name-byte
+matrices; consumers decode one name with one bounded range read. Retained
+memory is O(M + T + R + largest field read). Current teaching budgets cap catalog reads
 at 4096 bytes, metadata at 8, tensors at 4, strings at 256 bytes, rank at 4,
-and the shared parameter/array-element ceiling at one million. Because byte values are f64-backed, u64 fields
+and the shared parameter/array-element ceiling at one million. Metadata keys
+have a separate 256-byte ceiling. Packed bounded reads avoid f64 expansion for
+fixed-width scalar and skipped numeric-array bytes. u64 fields
 outside configured exact bounds fail closed.
 
 Big-endian v3, nested arrays, decoded array values, floating and signed-64
@@ -84,11 +87,12 @@ and takes materially longer than the tiny demo because token-string framing is
 validated in MLPL. It is deterministic and
 requires the model path to be inside the selected sw-MLPL filesystem sandbox.
 
-The follow-up constant-frame decoder removed eight recursive interpreter calls
-per token length. On 2026-08-17, host-level `/usr/bin/time -l` completed the
-same model under a 16 MiB stack in 5.14 seconds, but measured 505,102,336 bytes
-maximum RSS. Latency and stack use are fixed; retained memory is not. The
-opt-in recipe keeps a 131,072 KiB ceiling and intentionally fails until the
-generic bounded stream contract in
-[upstream-contract.md](upstream-contract.md#bounded-length-prefixed-stream-traversal)
-exists. Raising that ceiling is not acceptance.
+The initial constant-frame MLPL decoder reduced latency but still measured
+505,102,336 bytes maximum RSS. sw-MLPL commit `b4691193` then shipped the
+generic native scanner, and `be724494` shipped packed bounded reads and offset
+scanning requested in
+[upstream-contract.md](upstream-contract.md#bounded-length-prefixed-stream-traversal).
+`just gguf-real-array-acceptance` enforces 30 seconds, 131,072 KiB RSS, and a
+16 MiB stack. On 2026-08-17, SmolLM2 Q8_0 completed in one second at 54,592
+KiB peak RSS while reaching 272 tensor descriptors after 147,209 tokenizer
+array elements.

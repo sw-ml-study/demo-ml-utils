@@ -7,29 +7,24 @@ max_seconds=${GGUF_MAX_SECONDS:-30}
 max_rss_kib=${GGUF_MAX_RSS_KIB:-131072}
 local_model="$repo_root/tmp/gguf-real-array-acceptance.gguf"
 output="$repo_root/tmp/gguf-real-array-acceptance.txt"
+metrics="$repo_root/tmp/gguf-real-array-acceptance.metrics"
 
 [ -f "$model" ] || { echo "SKIP real GGUF acceptance: model not found at $model" >&2; exit 77; }
-rss_probe=$(/bin/ps -o rss= -p $$ 2>/dev/null | tr -d ' ' || true)
-[ -n "$rss_probe" ] || { echo "SKIP real GGUF acceptance: process RSS metrics are unavailable" >&2; exit 77; }
-
 mkdir -p "$repo_root/tmp"
-trap 'rm -f "$local_model" "$output"' EXIT HUP INT TERM
+trap 'rm -f "$local_model" "$output" "$metrics"' EXIT HUP INT TERM
 cp "$model" "$local_model"
 mlpl=$("$repo_root/scripts/select-mlpl")
 start=$(date +%s)
 ulimit -s 16384
-"$mlpl" --source-dir "$repo_root" "$repo_root/probes/gguf-real-array-probe.mlpl" -- "$local_model" > "$output" &
-pid=$!
-peak=0
-samples=0
-while kill -0 "$pid" 2>/dev/null; do
-  rss=$(/bin/ps -o rss= -p "$pid" 2>/dev/null | tr -d ' ' || true)
-  if [ -n "$rss" ] && [ "$rss" -gt "$peak" ]; then peak=$rss; fi
-  samples=$((samples + 1))
-  sleep 0.05
-done
-wait "$pid"
+set +e
+/usr/bin/time -l -o "$metrics" "$mlpl" --source-dir "$repo_root" "$repo_root/probes/gguf-real-array-probe.mlpl" -- "$local_model" > "$output"
+status=$?
+set -e
+[ "$status" -eq 0 ] || { echo "real GGUF probe failed with status $status" >&2; cat "$metrics" >&2; exit "$status"; }
 elapsed=$(($(date +%s) - start))
+peak_bytes=$(awk '/maximum resident set size/ { print $1 }' "$metrics")
+[ -n "$peak_bytes" ] || { echo "SKIP real GGUF acceptance: maximum RSS metrics are unavailable" >&2; exit 77; }
+peak=$((peak_bytes / 1024))
 
 grep -Fq 'architecture: llama' "$output"
 grep -Fq 'array_elements: 147209' "$output"
@@ -43,5 +38,5 @@ echo "Scenario: reach the SmolLM2 llama.cpp tensor directory after skipping 147,
 echo "Native boundary: bounded range reads and process RSS sampling; MLPL owns framing, cursor movement, budgets, and tensor descriptors."
 echo "Budgets: 16 MiB process stack, ${max_seconds}s latency, ${max_rss_kib} KiB peak RSS, 64 MiB catalog ceiling, 4 KiB string lookahead, and 64 KiB numeric chunks."
 cat "$output"
-echo "Evidence: elapsed_seconds=$elapsed peak_rss_kib=$peak rss_samples=$samples"
+echo "Evidence: elapsed_seconds=$elapsed peak_rss_kib=$peak measurement=time-l"
 echo "Interpretation: the parser keeps constant call depth and retains no tokenizer payloads, but must also satisfy the RSS ceiling; increasing the applet stack or memory budget is not acceptance."

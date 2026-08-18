@@ -7,7 +7,8 @@ This deliberately small decoder supports only GGML I8 (type 24) and I16 (type
 the default test gate.
 
 `u:read_gguf_tensor` first builds the fully validated bounded catalog, resolves
-the requested tensor name exactly from its retained byte table, and checks its
+the requested tensor name exactly through its retained source offset and
+length, and checks its
 known extent against the caller's payload-read budget. Only then does it derive
 the absolute offset from the aligned tensor-data start and issue one exact
 `read_bytes` call for the selected range. Unsupported F32 descriptors fail
@@ -18,8 +19,8 @@ catalog validation, exact name resolution, dtype policy, budget enforcement,
 offset arithmetic, little-endian assembly, and signed conversion. No external
 GGUF parser or numeric decoder participates in the demo.
 
-For catalog size K, tensor count T, maximum padded name width S, and selected
-payload size B, the additional selection and decode work is O(TS + B), with
+For catalog size K, tensor count T, maximum name width S, and selected payload
+size B, the additional selection and decode work is O(TS + B), with
 O(B) retained payload/output memory beyond the catalog. The teaching fixture
 caps catalog reads at 4096 bytes, metadata at 8 entries, tensors at 4, rank at
 4, parameters at one million, and the selected payload at exactly 8 bytes.

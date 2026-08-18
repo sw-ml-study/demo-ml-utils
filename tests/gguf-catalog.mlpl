@@ -2,12 +2,10 @@ include "../src/formats/gguf_catalog.mlpl";
 def u:gguf_fixture(name) { "Catalog one GGUF fixture with teaching budgets."; u:catalog_gguf(name, 4096, 8, 4, 256, 4, 1000000) }
 def u:require_gguf(value, message) { "Require a GGUF test invariant."; if value { ok(1) } else { err(message) } }
 
-u:require_gguf(eq(u:gguf_le8_at([255,15,0,0,0,0,0,0],0,4095)?,4095),"constant-stack buffered u64 decode")?;
-u:require_gguf(is_err(u:gguf_le8_at([0,16,0,0,0,0,0,0],0,4095)),"buffered u64 ceiling rejection")?;
-
 catalog = u:gguf_fixture("fixtures/gguf/valid-small.gguf")?;
 u:require_gguf(equal([catalog.version,catalog.metadata_count,catalog.tensor_count,catalog.alignment,catalog.data_bytes], [3,2,1,32,16]), "GGUF catalog aggregates")?;
 u:require_gguf(equal(catalog.architecture, "demo") * equal(catalog.tensor_name_lengths, [6]) * equal(catalog.tensor_rows, reshape([0,4,0,16],[1,4])), "GGUF foundation tensor row")?;
+u:require_gguf(equal(decode_bytes(read_bytes(catalog.path,take(catalog.tensor_name_offsets,0,0),take(catalog.tensor_name_lengths,0,0))?),"weight"),"lazy tensor-name range")?;
 
 expanded = u:gguf_fixture("fixtures/gguf/valid-catalog.gguf")?;
 u:require_gguf(equal([expanded.metadata_count,expanded.tensor_count,expanded.data_bytes], [4,4,132]), "expanded GGUF aggregates")?;

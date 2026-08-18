@@ -86,13 +86,14 @@ version strings.
 
 ### Bounded length-prefixed stream traversal
 
-Real GGUF tokenizer metadata demonstrates a missing native streaming contract.
+Real GGUF tokenizer metadata demonstrated a missing native streaming contract.
 MLPL can correctly traverse u64-length-prefixed strings with bounded reads, but
 147,209 array elements still create per-iteration interpreter values. The
 constant-frame implementation completes under a 16 MiB stack in 5.14 seconds,
 yet reaches 505,102,336 bytes maximum RSS on the local SmolLM2 Q8_0 file.
 
-A general primitive—not a GGUF-specific parser—is needed:
+sw-MLPL commit `b4691193` shipped the general primitive, and `be724494`
+followed with packed bounded reads and the offset-collecting variant:
 
 ```text
 scan_length_prefixed(path, offset, count,
@@ -102,15 +103,16 @@ scan_length_prefixed(path, offset, count,
   | err(message)
 ```
 
-It must use constant native stack and O(chunk_bytes) retained memory, retain no
+It uses constant native stack and O(chunk_bytes) retained memory, retains no
 payloads, return the exact logical offset despite lookahead, enforce sandbox
 and arithmetic checks, and provide interpreter/server/compiler parity. A Rust
 native extension may provide the same scalar-record contract if this stays out
-of core. Until one route exists, the 128 MiB real-file acceptance intentionally
-fails; raising stack or memory ceilings is not acceptance.
+of core. This repository consumes the shipped builtin directly and keeps the
+128 MiB real-file acceptance as executable regression evidence.
 
-- First-class typed byte arrays and zero-copy reinterpretation would reduce
-  f64 storage overhead but are not required for bounded correctness.
+- `read_bytes_packed` now removes f64 expansion from scalar and chunk reads.
+  Catalog names are retained as source offsets and lengths and decoded lazily,
+  eliminating repeated growth of padded name matrices.
 - A general stream/fold abstraction would improve repeated tensor-region
   statistics; bounded reads already permit an explicit fixed-memory loop.
 - User-defined function parameters currently reject string-list values, so the

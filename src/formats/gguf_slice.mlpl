@@ -1,8 +1,9 @@
 include "gguf_catalog.mlpl";
 
-def u:gguf_find_tensor(catalog, name) { "Resolve one tensor name exactly against padded catalog bytes.";
-  candidate = tokenize_bytes(name); index = 0; found = -1; table = reshape(catalog.tensor_name_bytes,[catalog.tensor_count,64]);
-  while lt(index,catalog.tensor_count) { length = take(catalog.tensor_name_lengths,0,index); prior = compress(lt(range(64),length),take(table,0,index)); if equal(candidate,prior) { found = index } else { 0 }; index = index + 1 };
+def u:gguf_tensor_name(catalog,index) { "Decode one catalog name lazily from its bounded source range."; ok(decode_bytes(read_bytes(catalog.path,take(catalog.tensor_name_offsets,0,index),take(catalog.tensor_name_lengths,0,index))?)) }
+def u:gguf_find_tensor(catalog, name) { "Resolve one tensor name exactly through bounded lazy reads.";
+  index = 0; found = -1;
+  while lt(index,catalog.tensor_count) { if equal(name,u:gguf_tensor_name(catalog,index)?) { found=index } else { 0 }; index=index+1 };
   if lt(found,0) { err("GGUF tensor name was not found") } else { ok(found) }
 }
 
