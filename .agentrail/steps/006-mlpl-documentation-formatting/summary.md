@@ -1,0 +1,1 @@
+Applied ../sw-mlpl/scripts/mlpl-fmt.sh to all 151 tracked MLPL files, added docstrings to the nine previously undocumented functions so all 338 definitions are documented, and added scripts/check-mlpl-style to enforce canonical formatting and docstrings in just check. Formatting-sensitive validation and the full pre-commit gate pass.
