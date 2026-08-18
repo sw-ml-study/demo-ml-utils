@@ -1,0 +1,1 @@
+Adopted deployed sw-MLPL native length-prefixed scanning and packed bounded reads; replaced retained padded GGUF name matrices with exact lazy offset/length ranges; updated slice and tensor-city consumers; fixture, full just check, and real SmolLM2 Q8_0 acceptance pass at 1 second and 54,592 KiB RSS for 147,209 array elements and 272 tensors.

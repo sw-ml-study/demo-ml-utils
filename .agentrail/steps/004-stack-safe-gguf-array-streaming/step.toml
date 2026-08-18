@@ -1,8 +1,9 @@
 number = 4
 slug = "stack-safe-gguf-array-streaming"
-status = "in-progress"
+status = "completed"
 description = "Replace slow or stack-growing GGUF metadata-array traversal with stack-safe b..."
 role = "production"
 context_files = []
 created_at = "2026-08-17T16:02:16"
-commits = []
+completed_at = "2026-08-17T17:36:35"
+commits = ["331083777039c711867126fcfd84beb5e9370e6a"]
