@@ -1,0 +1,1 @@
+Reordered the saga to defer unavailable multi-seed Qwen evaluation, then expanded bounded live AgentRail evaluation across all 22 commands and 87 captured option-signature lines. Frozen next/begin/complete signatures pass; classification is 3 trained, 19 rejected out of scope, zero unsupported, zero training contamination, and zero model authority.

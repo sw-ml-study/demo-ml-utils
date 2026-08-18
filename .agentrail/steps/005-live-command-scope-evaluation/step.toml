@@ -1,8 +1,9 @@
 number = 5
 slug = "live-command-scope-evaluation"
-status = "in-progress"
+status = "completed"
 description = "Expand live Agentrail manifest comparison to command option signatures and ex..."
 role = "validation"
 context_files = []
 created_at = "2026-08-10T18:22:15"
-commits = []
+completed_at = "2026-08-18T08:10:17"
+commits = ["3b24a0806b4d678b4b01b0e8adbd6cb2d8f0fb8e"]
