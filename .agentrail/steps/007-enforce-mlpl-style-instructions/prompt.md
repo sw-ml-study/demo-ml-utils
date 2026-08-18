@@ -1,0 +1,1 @@
+Update the repository agent instructions so every user-defined MLPL function requires a docstring and every tracked .mlpl file must pass the canonical formatter before every commit and push; preserve the single AGENTS.md instruction target and validate the policy.

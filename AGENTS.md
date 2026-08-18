@@ -242,6 +242,13 @@ installed by `agentrail instructions apply` is mandatory. This repository uses
 - Use TDD for executable behavior and keep every scoped validation gate green.
 - Keep MLPL functions small, pure, and single-purpose. Separate decisions from
   effects; thin runners own filesystem, process, and external-tool effects.
+- Every user-defined function in every `.mlpl` file must begin its body with a
+  documentation string that states its purpose; undocumented user-defined
+  functions are not permitted.
+- Format every tracked `.mlpl` file with
+  `../sw-mlpl/scripts/mlpl-fmt.sh` before committing. Before every commit and
+  every push, run `scripts/check-mlpl-style`; do not commit or push unless its
+  canonical formatting and function-docstring checks pass.
 - Use a repository `justfile` as the preferred entry point once executable
   validation exists; keep recipes thin and delegate to scripts.
 - Update the demo catalog, documentation, and capability/upstream contract in

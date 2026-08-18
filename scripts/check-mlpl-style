@@ -9,6 +9,9 @@ formatter=${MLPL_FMT:-$repo_root/../sw-mlpl/scripts/mlpl-fmt.sh}
   exit 1
 }
 
+grep -Fq 'Every user-defined function in every `.mlpl` file must begin its body with a' "$repo_root/AGENTS.md"
+grep -Fq 'every push, run `scripts/check-mlpl-style`' "$repo_root/AGENTS.md"
+
 git -C "$repo_root" ls-files -z '*.mlpl' |
   xargs -0 "$formatter" --check
 
