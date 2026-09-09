@@ -2,7 +2,12 @@
 
 ## Status
 
-Partially shipped. C5 and C1 are verified fixed; C2, C3, and C4 remain open. Five gaps are
+Partially shipped. C5 and C1 are verified fixed. C2 is **demoted from a blocker
+to `ERGONOMICS_ONLY`** (see below). C3 and C4 remain open.
+
+`just array-capabilities` reports the live state, and the same check runs in the
+default gate. `catalog/probes.tsv` declares each probe's expected result, so a
+capability change fails the gate rather than passing silently. Five gaps are
 pinned by executable probes against the configured binary.
 
 Baseline when the gaps were promoted:
@@ -38,11 +43,15 @@ Probe state at this pin: C5 and C1 exit zero, C2/C3/C4 exit nonzero, and
 `probes/convolution-reference.mlpl` exits zero.
 
 That bump was premature and was backed down. The dev channel rebuilt the same
-content as `0.21.0` commit `f4485823`, re-verified here with an identical probe
-state — C5 and C1 zero, C2/C3/C4 nonzero, reference zero. `476e9bf4` is
-retained above as the commit on which C1 was first observed; `f4485823` is the
-current build carrying it. The version string is deliberately omitted from both
-pins: the commit is the identity.
+content as commit `f4485823`, re-verified here with an identical probe state.
+`476e9bf4` is retained above as the commit on which C1 was first observed;
+`f4485823` is the build all measurements in this record were taken on.
+
+Upstream separately named `d93592d7` as the commit to pin. The binary available
+here resolves to `f4485823`, so this record pins what it actually observed and
+measured. The two should be reconciled the next time the local build is
+refreshed; probe state is the authority, and `just array-capabilities` reports
+it.
 
 Upstream reported the C5 fix as commit `c85cff0d`. The locally built binary
 resolves to `274c9133`, which is a later build carrying the fix. This record
@@ -148,10 +157,41 @@ The same abstraction serves cellular automata, finite-difference stencils,
 moving-window statistics, and signal processing, so this is not a CNN
 convenience.
 
-## C2 — trailing-axis rank broadcasting
+## C2 — trailing-axis rank broadcasting — DEMOTED TO `ERGONOMICS_ONLY`
 
-Probe: `probes/rank-broadcast.mlpl`. Current behavior:
+Probe: `probes/rank-broadcast.mlpl`, still exits nonzero. Current behavior:
 `error: mul: expected [2, 2, 3, 3], got [3, 3]`.
+
+### Correction: the original cost analysis was wrong
+
+This record first measured C2's cost using a `table`-tiling workaround and
+reported a 172x runtime gap against native `conv2d` plus 1,036,800 replicated
+f64 cells. Both figures were properties of that particular workaround, not of
+the language. Upstream pointed out the im2col spelling, which needs no
+broadcasting at all:
+
+```mlpl
+cols = reshape(windows(x, [kh, kw]), [oy * ox, c * kh * kw]);
+y    = matmul(cols, reshape(kernel, [c * kh * kw]))
+```
+
+Measured on build `f4485823`, `[8, 32, 32]` input against `[16, 8, 3, 3]`
+filters:
+
+| Form | Time | Replicated cells | Agreement with `conv2d` |
+|---|---|---|---|
+| `table`-tiling | 211.3 ms | 1,036,800 | 1.42e-13 |
+| `matmul` im2col | 1.198 ms | 0 | exact |
+| native `conv2d` | 1.230 ms | — | — |
+
+The array path is at parity with the native builtin and is exact rather than
+tolerance-bounded, because `matmul` contracts in one pass instead of
+accumulating through three reductions.
+
+C2 is therefore not a blocker and never was. It remains worth shipping so the
+*mechanical transliteration* rung can be spelled directly, but no rung is
+gated on it and no performance claim depends on it. The demo's headline
+performance story is parity with `conv2d`, not a teaching-path deficit.
 
 Scalar broadcasting works. Rank broadcasting does not: elementwise operators
 require identical shapes. The convolution's shared kernel must therefore be
@@ -162,14 +202,13 @@ during prototyping is an outer product:
 tiled = reshape(table(:mul, ones([oh * ow]), flatten(k)), [oh, ow, c, kh, kw])
 ```
 
-This is unreadable, and it is not free. Measured on this binary, an
-`[8, 32, 32]` input with `[16, 8, 3, 3]` filters materializes 1,036,800 f64
-cells of replicated kernel — 8.3 MB — purely to satisfy a shape rule, against
-64,800 cells of actual patch data. Total runtime was 211.8 ms against 1.2 ms
-for native `conv2d` on the same values, a 172x gap of which the replication is
-a large part.
+This is unreadable, and on an `[8, 32, 32]` input with `[16, 8, 3, 3]` filters
+it materializes 1,036,800 f64 cells of replicated kernel — 8.3 MB — purely to
+satisfy a shape rule. But it is one way to write the product, not the only one,
+and the correction above shows the im2col spelling avoids the replication
+entirely. The cost belongs to this idiom, not to the missing broadcast.
 
-Required behavior: NumPy/PyTorch-style trailing-axis broadcasting for
+Desired behavior: NumPy/PyTorch-style trailing-axis broadcasting for
 elementwise operators, where a size-1 or absent leading axis expands. The
 contract must state how axis labels combine when ranks differ, since a labeled
 `[out_y, out_x, channel, kernel_y, kernel_x]` meeting a labeled
@@ -257,10 +296,10 @@ identity, and `reshape_labeled` already covers the deliberate case.
 - No CNN-specific builtin. `conv2d` already exists and the demo uses it as an
   independent oracle, not as an implementation. Adding `conv3d`, padding
   helpers, or layer sugar would defeat the demo's purpose.
-- No native performance work. The 172x gap against `conv2d` is reported as a
-  measured teaching-path limit under `PERFORMANCE_ONLY`, and the demo states it
-  rather than hiding it. C2 would close part of the gap as a side effect; that
-  is not the reason to ship C2.
+- No native performance work, and no `PERFORMANCE_ONLY` item at all. The
+  array-expressed convolution already matches `conv2d` on the measured case
+  when written as an im2col `matmul`. An earlier draft of this record claimed
+  a 172x deficit; that figure described one workaround and has been withdrawn.
 - No autograd extension. The demo is forward-only. Whether `windows` is
   differentiable is an upstream design question, not a downstream requirement.
 
@@ -269,13 +308,15 @@ identity, and `reshape_labeled` already covers the deliberate case.
 | Gap | Probe | Expected once shipped |
 |---|---|---|
 | C1 | `probes/sliding-windows.mlpl` | **Met at `7f2c4e99`**; matches the `rotate`/`compress` reference construction exactly |
-| C2 | `probes/rank-broadcast.mlpl` | Exits zero; product equals the `table`-tiled reference |
+| C2 | `probes/rank-broadcast.mlpl` | Exits zero; product equals the im2col `matmul` reference. Ergonomic only: no rung is gated on it |
 | C3 | `probes/multi-axis-reduce.mlpl` | Exits zero; equals nested single-axis reduction |
 | C4 | `probes/named-axis-reduce.mlpl` | Exits zero; equals the integer-axis form |
 | C5 | `probes/compress-label-preservation.mlpl` | **Met at `274c9133`**; labels match `rotate` |
 
 C2, C3, and C4 currently exit nonzero, so an upstream implementation announces
-itself by changing the gate. C5 and C1 have flipped.
+itself by changing the gate. C5 and C1 have flipped. `catalog/probes.tsv`
+encodes each expectation and `scripts/check-capability-probes` enforces it in
+the default gate, so a flip cannot pass unnoticed in either direction.
 
 ## Upstream phased delivery
 
@@ -288,7 +329,7 @@ named rungs are rewritten in the same step.
 | 1 | `476e9bf4` | C5 | `compress-label-preservation` | Labeled-axis trimming stops needing a `relabel` after every `compress` | **shipped** |
 | 2 | `476e9bf4` | C1 | `sliding-windows` | `u:conv_windows` (25 lines) collapses to one `windows` call | **shipped** |
 | 3 | next | C3, C4 | `multi-axis-reduce`, `named-axis-reduce` | Three nested integer-axis reduces collapse to one named-axis reduction | open |
-| 4 | later | C2 | `rank-broadcast` | The `table`-tiled kernel replication disappears | open |
+| 4 | later | C2 | `rank-broadcast` | The transliteration rung spells its product directly | open, ergonomic |
 
 The demo's headline line needs C1, C2, C3, and C4 together, so it reaches its
 target spelling only once Phase 4 lands, not before:
@@ -327,41 +368,38 @@ what a given binary can do.
 `just capabilities` and is not the right home for these pins; it is re-pinned
 once at Saga 13 step 1, when the C1-C4 probes gain catalog entries.
 
-### C2 is a readability gate, not a capability gate
+### Resolved: rung 4 ships now
 
-Upstream advised staging the demo as reduce-only patch sums until C2 ships,
-on the grounds that `kernel * windows(...)` will not broadcast before then.
-The broadcast is genuinely unavailable, but the conclusion does not follow:
-the weighted multi-channel convolution runs today, using native `windows` plus
-the `table`-tiling workaround this record already documents under C2.
-
-Verified on commits `7f2c4e99` and `476e9bf4`: a `[2, 5, 5]` input against
-`[3, 2, 2, 2]` filters reproduces `conv2d` with max absolute difference 0,
-using `windows` for the patches and tiling for the kernel.
-
-The distinction that matters is scale. C1 removed the 25-line window
-construction, which was the scaffolding the demo could not tolerate. What C2
-removes is one remaining line:
-
-```mlpl
-tiled = reshape(table(:mul, ones([oh * ow]), flatten(k)), [oh, ow, c, kh, kw])
-```
-
-One documented, commented line is an acceptable exhibit in a demo whose
-subject is the distance between notation and code. Twenty-five lines of
-`rotate`/`compress`/`concat`/`transpose_axes` was not. Rung 4 therefore ships
-at `476e9bf4` with that line marked as the C2 placeholder, rather than waiting
-for Phase 4.
+Upstream twice advised staging the demo as reduce-only patch sums until C2
+shipped. That advice is withdrawn and the position is settled: the weighted
+convolution runs today, and the im2col spelling above makes it exact and as
+fast as the native builtin.
 
 This matters for sequencing. Rung 4, the paper's triple sum, is the demo's
-payload; rungs 1-3 exist to reach it. Deferring the kernel multiply to Phase 4
-would ship a box-filter demo and postpone the equation the demo is named for.
-The staging is therefore by spelling, not by capability: every rung including
-rung 4 ships now with the documented workaround, and C2 replaces the tiling
-line when it lands. The frozen axis order is what keeps that a one-line change.
+payload; rungs 1-3 exist to reach it. A reduce-only staging would have shipped
+a box-filter demo and postponed the equation the demo is named for.
 
-Moving averages and patch sums remain worth showing, but as rung 2 and rung 3
-material in their own right, not as a substitute for rung 4.
+The ladder now ends better than planned, because both spellings are real and
+verifiably equal:
+
+| Rung | Spelling | Status |
+|---|---|---|
+| Mechanical transliteration | nested `reduce` per summation | runs today; C2/C3/C4 improve how it reads |
+| Array collapse | one reduction over three axes | needs C3/C4 to spell directly |
+| Optimized implementation | `matmul` over im2col columns | runs today, exact, native-speed |
+| Native oracle | `conv2d` | independent check |
+
+That is exactly the progression the research note asked for — paper equation,
+literal implementation, array-oriented simplification, optimized
+implementation — with every step checked against the next.
+
+### Ownership boundary — resolved
+
+Upstream and this repository have agreed: `demo-ml-utils` owns the
+`demos/cnn/` sources and their documentation, and the live site renders them
+through a vendored, sync-checked copy rather than a second implementation. One
+set of goldens, one attribution. A short `windows` example such as the moving
+average remains upstream's, as the primitive's own documentation.
 
 ### Phases outside this record
 

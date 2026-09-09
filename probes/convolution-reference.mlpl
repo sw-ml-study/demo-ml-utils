@@ -86,4 +86,34 @@ oracle_flt = reshape(conv2d(reshape(x_flt, [1, 2, 6, 6]), w_flt, 1, 0), [2, 4, 4
 drift = reduce(:max, abs(mine_flt - oracle_flt));
 u:require(lt(drift, 0.000000001), "float parity with conv2d must stay inside the documented tolerance");
 
-print("convolution reference: hand-checked -6, exact integer conv2d parity, float drift", drift)
+# The im2col spelling needs no rank broadcasting and contracts in one pass, so
+# it agrees with the oracle exactly rather than to a tolerance. Both spellings
+# compute the same thing; C2 changes how the first one reads, not what it does.
+def u:conv_im2col(x, weights) {
+  "Convolve by reshaping windows into columns and contracting with matmul, the spelling that needs no rank broadcasting.";
+  out_channels = take(shape(weights), 0, 0);
+  channels = take(shape(weights), 0, 1);
+  kh = take(shape(weights), 0, 2);
+  kw = take(shape(weights), 0, 3);
+  patches = windows(x, [kh, kw]);
+  out_h = take(shape(patches), 0, 0);
+  out_w = take(shape(patches), 0, 1);
+  columns = reshape(patches, [out_h * out_w, channels * kh * kw]);
+  out = fill([0, out_h, out_w], 0);
+  r = 0;
+  while lt(r, out_channels) {
+    flat = reshape(take(weights, 0, r), [channels * kh * kw]);
+    out = concat(out, reshape(matmul(columns, flat), [1, out_h, out_w]), 0);
+    r = r + 1
+  };
+  out
+}
+
+im2col_int = u:conv_im2col(x_int, w_int);
+u:require(eq(reduce(:max, abs(im2col_int - oracle_int)), 0), "im2col multi-channel parity with conv2d must be exact");
+
+im2col_flt = u:conv_im2col(x_flt, w_flt);
+u:require(eq(reduce(:max, abs(im2col_flt - oracle_flt)), 0), "im2col float parity with conv2d must be exact, not merely inside tolerance");
+
+print("convolution reference: hand-checked -6, exact integer conv2d parity, float drift", drift);
+print("im2col spelling agrees with conv2d exactly on both integer and float cases")

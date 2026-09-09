@@ -330,6 +330,18 @@ version walkback.
 | `476e9bf4` | 0.22.0 | Released carrying C5 + C1; **bump later identified as premature and withdrawn** | C5, C1 zero |
 | `f4485823` | 0.21.0 | Dev-channel rebuild of identical content, nightly bundle `611565424bb13b08` | C5, C1 zero |
 
+Upstream separately named `d93592d7` as the pin. The build available here is
+`f4485823`, so all measurements and pins record that; the two reconcile on the
+next local refresh, with probe state as the authority.
+
+Two positions were settled after the table above. C2 is demoted from a blocker
+to `ERGONOMICS_ONLY`: the im2col `matmul` spelling needs no rank broadcasting,
+matches native `conv2d` on the measured case, and is exact rather than
+tolerance-bounded, so no rung is gated on C2. Ownership is settled too — this
+repository owns the `demos/cnn/` sources and documentation, and the upstream
+live site renders them through a vendored, sync-checked copy rather than a
+second implementation.
+
 The walkback changed no behavior. `476e9bf4` and `f4485823` produce an
 identical probe state, and no downstream documentation needed editing when the
 version was rolled back, because every capability claim in this repository

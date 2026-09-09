@@ -1,0 +1,7 @@
+id	path	gap	expectation	meaning	state
+c1-sliding-windows	probes/sliding-windows.mlpl	C1	pass	General sliding-window rearrangement is available	shipped
+c2-rank-broadcast	probes/rank-broadcast.mlpl	C2	fail	Trailing-axis rank broadcasting for elementwise operators	open
+c3-multi-axis-reduce	probes/multi-axis-reduce.mlpl	C3	fail	Higher-order reduce over a vector of axes	open
+c4-named-axis-reduce	probes/named-axis-reduce.mlpl	C4	fail	Higher-order reduce accepts a labeled axis name	open
+c5-compress-labels	probes/compress-label-preservation.mlpl	C5	pass	compress preserves axis labels as rotate does	shipped
+convolution-reference	probes/convolution-reference.mlpl	none	pass	Known-good convolution against the conv2d oracle	shipped

@@ -1,6 +1,6 @@
-number = 11
+number = 9
 slug = "convolution-capability-probes"
-status = "pending"
+status = "in-progress"
 description = "Pin the array-expressiveness capability surface for the convolution-from-equa..."
 role = "production"
 context_files = []

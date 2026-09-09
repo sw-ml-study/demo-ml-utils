@@ -1,0 +1,56 @@
+#!/bin/sh
+# Report which array-expressiveness gaps are shipped in the configured binary.
+# Each probe in catalog/probes.tsv declares whether it is expected to pass or
+# fail. A probe that disagrees with its expectation means upstream capability
+# changed, and the blocker record must be reconciled in the same step.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+catalog="$repo_root/catalog/probes.tsv"
+
+[ -f "$catalog" ] || {
+  echo "probe catalog missing: $catalog" >&2
+  exit 1
+}
+
+commit=$("$mlpl" --version | awk '/^ *Commit:/ { print $2 }')
+echo "Array-expressiveness probes against build ${commit:-unknown}"
+
+drift=0
+while IFS='	' read -r id path gap expectation meaning state; do
+  [ "$id" = "id" ] && continue
+  [ -n "$id" ] || continue
+
+  [ -f "$repo_root/$path" ] || {
+    echo "  MISSING  $id -> $path" >&2
+    drift=1
+    continue
+  }
+
+  if "$mlpl" --source-dir "$repo_root" "$repo_root/$path" >/dev/null 2>&1; then
+    observed=pass
+  else
+    observed=fail
+  fi
+
+  if [ "$observed" = "$expectation" ]; then
+    case "$observed" in
+      pass) echo "  shipped  $gap  $id" ;;
+      *) echo "  open     $gap  $id" ;;
+    esac
+  else
+    echo "  DRIFT    $gap  $id: expected $expectation, observed $observed" >&2
+    echo "           $meaning" >&2
+    drift=1
+  fi
+done < "$catalog"
+
+if [ "$drift" -ne 0 ]; then
+  echo "Probe state disagrees with catalog/probes.tsv." >&2
+  echo "Upstream capability changed: reconcile docs/sw-mlpl-blocker.md," >&2
+  echo "re-pin the observed build commit, and rewrite the affected rungs." >&2
+  exit 1
+fi
+
+echo "PASS array-expressiveness probes"

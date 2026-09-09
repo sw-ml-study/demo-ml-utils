@@ -64,6 +64,10 @@ trained-help-engram:
 capabilities:
     ./scripts/run-capability-probe
 
+# Report which array-expressiveness gaps (C1-C5) the configured binary ships.
+array-capabilities:
+    ./scripts/check-capability-probes
+
 # Probe callable composition, mapping laws, and the tiny fit/predict contract.
 lefts-capabilities:
     ./scripts/run-lefts-capability-contract

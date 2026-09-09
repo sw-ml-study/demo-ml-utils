@@ -55,6 +55,31 @@ does not satisfy the remaining gaps. Large-file tensor statistics can now be
 built from repeated bounded reads. The bounded arbitrary-name Safetensors
 catalog is now runnable.
 
+## Array-expressiveness consequences
+
+Observed on build `f4485823` via `just array-capabilities`, which runs in the
+default gate. These are array-semantics observations, distinct from the
+binary-format capabilities above, and they are pinned by build commit rather
+than version string: version labels moved independently of content twice while
+this surface was being established (see
+[the blocker record](sw-mlpl-blocker.md)).
+
+| Capability | Observed contract | Consequence |
+|---|---|---|
+| Sliding windows | `windows(x, sizes)` emits `[out_y, out_x, C, kh, kw]` | A `[channel, kernel_y, kernel_x]` kernel aligns by trailing position with no `transpose_axes`; upstream pins the order with a test |
+| Axis labels through filtering | `compress` preserves labels as `rotate` does | Labeled trimming needs no `relabel` |
+| Rank broadcasting | Absent: elementwise operators require identical shapes | Ergonomic only. The im2col `matmul` spelling needs no broadcast |
+| Multi-axis reduction | Absent: `reduce` takes one scalar axis | Nested single-axis reduces are required |
+| Named-axis reduction | `reduce_add(x, "name")` accepts a label; `reduce(:add, x, "name")` does not | The quoted-operator form cannot use axis names |
+| Convolution oracle | `conv2d(input, filters, stride, padding)` | An independent check for MLPL-expressed convolution |
+
+Measured on `[8, 32, 32]` input against `[16, 8, 3, 3]` filters: the im2col
+`matmul` path runs in 1.198 ms against native `conv2d` at 1.230 ms and agrees
+exactly, while a `table`-tiling formulation of the same result takes 211.3 ms,
+replicates 1,036,800 cells, and agrees only to 1.42e-13. Array-expressed
+convolution is therefore at parity with the native builtin; the slow figure
+belongs to one workaround, not to the language.
+
 ## Adaptation consequences
 
 `just adaptation-contract` additionally pins deterministic seeded `random`,

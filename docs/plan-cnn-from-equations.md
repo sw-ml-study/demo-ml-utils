@@ -47,11 +47,18 @@ A `[2,5,5]` input against `[3,2,2,2]` filters reproduces `conv2d` exactly
 filters agrees to 1.42e-13. The float residual is float accumulation order, and
 the demo reports it as a tolerance rather than claiming bit-exactness.
 
-The demo must also state plainly what it costs. On the same `[8,32,32]` case
-the MLPL path took 211.8 ms against 1.2 ms for `conv2d`, a 172x gap, and
-materialized 1,036,800 f64 cells of replicated kernel against 64,800 cells of
-real patch data. That is a teaching path, not an implementation, and the output
-says so.
+An earlier draft of this plan reported a 172x runtime gap and 1,036,800 cells
+of replicated kernel. Both figures came from a `table`-tiling workaround and
+were wrong about the language. The im2col spelling —
+`matmul(reshape(windows(x, [kh, kw]), [oy * ox, c * kh * kw]), flatten(kernel))`
+— runs in 1.198 ms against native `conv2d` at 1.230 ms on the same
+`[8, 32, 32]` case, replicates nothing, and agrees exactly rather than to a
+tolerance.
+
+The demo therefore has no performance apology to make. It reports the cost of
+each spelling honestly, including the slow one, because the difference between
+them is itself instructive: three chained reductions accumulate differently
+from one `matmul` contraction, which is why only the latter is bit-exact.
 
 ## Rendering the mathematics
 
@@ -207,8 +214,10 @@ prerequisites, and none of them may be claimed until they are runnable.
 
 ### What this demo must not claim
 
-- It is not a CNN implementation, a training path, or a performance story. The
-  measured 172x gap against `conv2d` is stated in the output.
+- It is not a CNN implementation or a training path. It is also not a
+  performance claim in either direction: the im2col rung matches `conv2d` on
+  the measured case, which is reported as one measurement on one shape, not as
+  a general benchmark.
 - It does not claim `conv2d` is unnecessary. It uses it as the oracle.
 - It does not claim large-input support. Budgets are teaching-scale and the
   memory cost of the broadcast workaround is reported, not hidden.
