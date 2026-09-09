@@ -1,0 +1,4 @@
+# reduce_add(x, "name") accepts a labeled axis but higher-order reduce does not,
+# so a named-axis convolution cannot be written with a quoted operator.
+patches : [out_y, out_x, kernel_y, kernel_x] = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
+reduce(:add, patches, "kernel_x")

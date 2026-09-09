@@ -1,0 +1,4 @@
+# The three nested summations are one reduction over three axes. Higher-order
+# reduce accepts a single scalar axis only, so the insight cannot be spelled.
+patches = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
+reduce(:add, patches, [2, 3])

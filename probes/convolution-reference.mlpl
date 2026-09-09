@@ -1,0 +1,89 @@
+# Reference construction for the convolution blocker record. Every gap in
+# docs/sw-mlpl-blocker.md is a place where this file is harder to read than the
+# equation it implements; this probe exists so the "expected once shipped"
+# column of that record is checkable against a known-good result.
+#
+# Zhao, Wang, Wang & Liu (2018) §2.1:
+#   y[r,x,y] = SUM_q SUM_u SUM_v W[r,q,u,v] * X[q,x+u,y+v]
+#
+# Exits zero on the current binary. The native conv2d builtin is an independent
+# oracle here, not an implementation.
+
+def u:conv_windows(x, kh, kw) {
+  "Build a [out_y, out_x, channel, kernel_y, kernel_x] sliding-window tensor from a [channel, image_y, image_x] input, standing in for the missing general windows primitive (C1).";
+  channels = take(shape(x), 0, 0);
+  height = take(shape(x), 0, 1);
+  width = take(shape(x), 0, 2);
+  out_h = height - kh + 1;
+  out_w = width - kw + 1;
+  row_mask = lt(range(height), out_h);
+  col_mask = lt(range(width), out_w);
+  stacked = fill([0, channels, out_h, out_w], 0);
+  u = 0;
+  while lt(u, kh) {
+    v = 0;
+    while lt(v, kw) {
+      shifted = rotate(rotate(x, u, 1), v, 2);
+      trimmed = compress(col_mask, compress(row_mask, shifted, 1), 2);
+      stacked = concat(stacked, reshape(trimmed, [1, channels, out_h, out_w]), 0);
+      v = v + 1
+    };
+    u = u + 1
+  };
+  transpose_axes(reshape(stacked, [kh, kw, channels, out_h, out_w]), [3, 4, 2, 0, 1])
+}
+
+def u:conv_forward(x, weights) {
+  "Convolve a [channel, image_y, image_x] input with [out_channel, channel, kernel_y, kernel_x] filters by window, multiply, and reduce, showing the replication (C2) and nested-reduction (C3) workarounds.";
+  out_channels = take(shape(weights), 0, 0);
+  channels = take(shape(weights), 0, 1);
+  kh = take(shape(weights), 0, 2);
+  kw = take(shape(weights), 0, 3);
+  patches = u:conv_windows(x, kh, kw);
+  out_h = take(shape(patches), 0, 0);
+  out_w = take(shape(patches), 0, 1);
+  out = fill([0, out_h, out_w], 0);
+  r = 0;
+  while lt(r, out_channels) {
+    kernel = take(weights, 0, r);
+    tiled = reshape(table(:mul, ones([out_h * out_w]), flatten(kernel)), [out_h, out_w, channels, kh, kw]);
+    plane = reduce(:add, reduce(:add, reduce(:add, patches * tiled, 4), 3), 2);
+    out = concat(out, reshape(plane, [1, out_h, out_w]), 0);
+    r = r + 1
+  };
+  out
+}
+
+def u:require(condition, message) {
+  "Exit nonzero with a message unless the condition holds.";
+  if condition {
+    0
+  } else {
+    print("convolution reference failed:", message);
+    exit(1)
+  }
+}
+
+# The hand-checked case from docs/research.txt: the 4x4 ramp against a vertical
+# edge kernel gives -6 at every valid output position.
+image = reshape(range(16) + 1, [1, 4, 4]);
+edge = reshape([1, 0, 0 - 1, 1, 0, 0 - 1, 1, 0, 0 - 1], [1, 1, 3, 3]);
+hand = u:conv_forward(image, edge);
+u:require(eq(reduce(:max, abs(hand + 6)), 0), "the hand-checked 4x4 ramp must give -6 everywhere");
+
+# Integer multi-channel parity against the native oracle is exact.
+x_int = reshape(range(50) + 1, [2, 5, 5]);
+w_int = (reshape(range(24), [3, 2, 2, 2]) * 0.5) - 3;
+mine_int = u:conv_forward(x_int, w_int);
+oracle_int = reshape(conv2d(reshape(x_int, [1, 2, 5, 5]), w_int, 1, 0), [3, 4, 4]);
+u:require(eq(reduce(:max, abs(mine_int - oracle_int)), 0), "integer multi-channel parity with conv2d must be exact");
+
+# Float parity is bounded by accumulation order, not claimed to be bit-exact.
+x_flt = (reshape(range(2 * 6 * 6) + 1, [2, 6, 6])) / 1000;
+w_flt = (reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3]) * 0.001) - 0.5;
+mine_flt = u:conv_forward(x_flt, w_flt);
+oracle_flt = reshape(conv2d(reshape(x_flt, [1, 2, 6, 6]), w_flt, 1, 0), [2, 4, 4]);
+drift = reduce(:max, abs(mine_flt - oracle_flt));
+u:require(lt(drift, 0.000000001), "float parity with conv2d must stay inside the documented tolerance");
+
+print("convolution reference: hand-checked -6, exact integer conv2d parity, float drift", drift)

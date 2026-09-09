@@ -1,0 +1,4 @@
+# patchify (non-overlapping ViT patches), shift_pairs_x (non-overlapping LM
+# blocks), and conv2d (fused convolution) are all special cases of one general
+# sliding-window rearrangement, which has no public spelling.
+windows(reshape(range(16), [4, 4]), [3, 3])

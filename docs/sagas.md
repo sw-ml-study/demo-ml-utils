@@ -282,6 +282,39 @@ help-drift-aware behavior. GLM-5.x is an external teacher because its roughly
 745B-parameter MoE is not a 12 GiB local candidate. See the
 [distillation plan](plan-agentrail-distillation.md).
 
+## Saga 13 — `convolution-from-equations` (planned)
+
+Carry one published convolution equation down to executable MLPL and back up to
+the native `conv2d` oracle, showing at each rung that the mathematics and the
+code are the same object. Rungs run dot product, 1-D convolution, 2-D
+convolution, the Zhao et al. multi-channel triple sum, and a full layer with
+bias and activation. Each rung shows the equation, the mechanical
+transliteration with one nested `reduce` per sigma, and the array-oriented
+collapse to a single reduction over three axes.
+
+1. `convolution-capability-probes` — pin C1-C5 with probes and catalog entries;
+   record measured broadcast-replication and runtime costs.
+2. `reduction-ladder` — rungs 1-3 with hand-checked goldens and both spellings.
+3. `multichannel-convolution` — rung 4 against the `conv2d` oracle, with the
+   axis-label version and an explicit float tolerance policy.
+4. `convolution-layer` — rung 5 with bias and activation, plus `pool2d`
+   agreement if the shape arithmetic stays honest.
+5. `formula-provenance` — `@formula` round-trip, terminal and IR rendering, and
+   a scene-IR formula field consumed by `viewer/`.
+6. `cnn-acceptance` — adversarial shapes, budget failures, attribution,
+   limitations, catalog and documentation updates, and the reconciliation rule
+   that rewrites each rung as C1-C5 land.
+
+Gate: open. The demo was prototyped end to end on build `7a9c4ceb` and
+reproduces `conv2d` exactly on integers and to 1.42e-13 on floats, so no
+upstream capability is required to start. Capability claims here pin the build
+commit rather than the version string; see the blocker record for why. Five verified
+`LANGUAGE_EXPRESSIVENESS_GAP` items block the *readable* spelling and are
+recorded in [the blocker record](sw-mlpl-blocker.md); they govern how each rung
+is rewritten, not whether the saga can begin. Positioning against
+`demo-linear-algebra`, `demo-ml-microscope`, and the existing demos here is
+argued in [the plan](plan-cnn-from-equations.md).
+
 ## Cross-saga rules
 
 - Do not modify `../sw-mlpl` inside these sagas.

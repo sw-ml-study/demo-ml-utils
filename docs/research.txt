@@ -1,0 +1,319 @@
+there is a paper that describes CNN as a mathematical formula (with nested sums?). Can you find this and see how it can be translated to mlpl source code (see also: 
+sw-ml-study/sw-mlpl)
+
+You’re remembering a fairly standard “CNN convolution written out as mathematics” formulation, and I found a paper with almost exactly the form you described: three nested summations.
+
+A particularly clean candidate is Zhao, Wang, Wang & Liu, “A Faster Algorithm for Reducing the Computational Complexity of Convolutional Neural Networks” (2018). In §2.1 they define one convolutional-layer output as
+
+$$ y_{r,x,y} = \sum_{q=1}^{Q} \sum_{u=1}^{M_w} \sum_{v=1}^{N_w} w_{r,q,u,v}\; x_{q,x+u,y+v} $$
+
+where \(q\) ranges over input feature maps/channels, \(u,v\) range over the kernel, \(r\) selects the output feature map, and \(x,y\) select the output position.
+
+That is interesting for sw-MLPL specifically, because it exposes CNN convolution as the sort of array operation + reduction that MLPL is intended to express directly.
+
+1. The mathematical operation
+
+Ignoring bias and activation for a moment, the equation says:
+
+for each output channel r
+  for each output position x,y
+    sum over input channel q
+      sum over kernel row u
+        sum over kernel column v
+          W[r,q,u,v] * X[q,x+u,y+v]
+
+So conceptually:
+
+$$ Y[r,x,y] = \operatorname{sum} \left( W[r,:,:,:]\; *\; \text{patches}(X,x,y) \right) $$
+
+The nested sums are not really three different concepts. They are a single reduction over three axes.
+
+That observation is where an array language becomes particularly attractive.
+
+2. Literal MLPL translation
+
+Current MLPL already has the important abstraction:
+
+reduce(:add, x, axis)
+
+and its arithmetic operators are element-wise over arrays. The current language reference explicitly describes higher-order reduction and array-valued arithmetic.
+
+So if we already have the corresponding input patch:
+
+patch shape = [Q, Mw, Nw]
+kernel shape = [Q, Mw, Nw]
+
+then the mathematical heart of the convolution is essentially:
+
+products = kernel * patch
+
+s1 = reduce(:add, products, 2)
+s2 = reduce(:add, s1, 1)
+y  = reduce(:add, s2, 0)
+
+That is almost a direct transliteration of
+
+$$ \sum_q\sum_u\sum_v W_{q,u,v}X_{q,u,v}. $$
+
+Or, if MLPL gains/allows an “all axes” reduction idiom:
+
+y = reduce(:add, kernel * patch)
+
+That is arguably the more mathematically revealing expression.
+
+The paper writes:
+
+$$ \sum_q\sum_u\sum_v w_{r,q,u,v}x_{q,x+u,y+v} $$
+
+and MLPL says:
+
+reduce(:add, kernel * patch)
+
+Those are the same conceptual operation.
+
+3. Why this is a good sw-MLPL demonstration
+
+This is actually stronger than implementing:
+
+torch.nn.Conv2d(...)
+
+because the PyTorch spelling tells the reader what library object to instantiate, while the MLPL spelling can show what the CNN mathematically does.
+
+That fits your educational goal unusually well.
+
+You could present the progression as:
+
+Mathematical definition
+$$ y_{r,x,y} = \sum_q \sum_u \sum_v w_{r,q,u,v}x_{q,x+u,y+v} $$
+Mechanical MLPL translation
+weighted = kernel * patch
+over_v   = reduce(:add, weighted, 2)
+over_u   = reduce(:add, over_v, 1)
+result   = reduce(:add, over_u, 0)
+Array-language insight
+result = reduce(:add, kernel * patch)
+
+That last step teaches something important:
+
+the three nested mathematical summations are just reduction over the dimensions of an array.
+
+That is very much an APL/J/BQN-ish way of understanding the equation.
+
+4. A tiny concrete example
+
+Suppose we deliberately start with one channel and a 3×3 kernel.
+
+image = [
+  [1, 2, 3, 4],
+  [5, 6, 7, 8],
+  [9, 10, 11, 12],
+  [13, 14, 15, 16]
+]
+
+kernel = [
+  [1, 0, -1],
+  [1, 0, -1],
+  [1, 0, -1]
+]
+
+For the upper-left output cell, the image patch is
+
+patch = [
+  [1, 2, 3],
+  [5, 6, 7],
+  [9, 10, 11]
+]
+
+Then:
+
+weighted = patch * kernel
+
+produces conceptually:
+
+[
+ [ 1, 0, -3],
+ [ 5, 0, -7],
+ [ 9, 0,-11]
+]
+
+and
+
+reduce(:add, reduce(:add, weighted, 1), 0)
+
+gives
+
+-6
+
+which is exactly
+
+$$ \sum_u\sum_v X[x+u,y+v]W[u,v]. $$
+
+So even before implementing an entire CNN, MLPL can demonstrate the primitive operation underlying a convolutional layer.
+
+5. The interesting missing operation is patch extraction
+
+The multiplication and reduction side looks quite natural in present MLPL. The less obvious part is this expression from the paper:
+
+$$ x_{q,x+u,y+v}. $$
+
+In conventional imperative code, you write explicit indexing loops.
+
+In an array language, I would avoid making the canonical educational implementation three nested scalar loops.
+
+Instead, MLPL wants a primitive or library abstraction equivalent to something like:
+
+windows(image, [3, 3])
+
+with a result whose conceptual shape is
+
+[output_y, output_x, channel, kernel_y, kernel_x]
+
+Then the entire convolution becomes something structurally like:
+
+patches = windows(input, [kh, kw])
+weighted = patches * kernel
+output = reduce(:add,
+         reduce(:add,
+         reduce(:add, weighted, kernel_x_axis),
+                              kernel_y_axis),
+                              channel_axis)
+
+And once axis-aware multi-axis reduction exists:
+
+output = reduce_axes(
+    :add,
+    windows(input, [kh, kw]) * kernel,
+    ["channel", "kernel_y", "kernel_x"]
+)
+
+That is very close to the paper's equation.
+
+6. Axis labels could make this exceptionally readable
+
+Your current MLPL already supports labeled axes, with labels propagating through element-wise operations, matrix multiplication and reductions.
+
+That means I would strongly consider expressing the demo using shapes like:
+
+X : [channel, image_y, image_x] = ...
+W : [output_channel, channel, kernel_y, kernel_x] = ...
+
+and perhaps have window extraction yield:
+
+[output_y,
+ output_x,
+ channel,
+ kernel_y,
+ kernel_x]
+
+Then the paper's equation becomes almost self-documenting:
+
+products =
+    patches * W
+
+Y =
+    reduce(:add,
+      reduce(:add,
+        reduce(:add,
+          products,
+          "kernel_x"),
+        "kernel_y"),
+      "channel")
+
+This is one place where named-axis reduction could actually be clearer than the mathematical notation.
+
+You no longer need to remember what \(q,u,v\) mean.
+
+The source literally says:
+
+sum over kernel_x
+sum over kernel_y
+sum over channel
+7. There's an even better conceptual ladder
+
+I would not make the demo jump directly to a full CNN.
+
+I'd teach it in five transformations.
+
+Step 1 — dot product
+$$ y=\sum_i w_i x_i $$
+y = reduce(:add, w * x)
+Step 2 — 1-D convolution
+$$ y_x=\sum_u w_u x_{x+u} $$
+y = reduce(:add, kernel * window)
+Step 3 — 2-D convolution
+$$ y_{x,y} = \sum_u\sum_v w_{u,v}x_{x+u,y+v} $$
+y = reduce(:add, kernel * patch)
+Step 4 — multi-channel convolution
+$$ y_{r,x,y} = \sum_q\sum_u\sum_v w_{r,q,u,v}x_{q,x+u,y+v} $$
+y = reduce(:add, kernels_for_r * patch)
+
+over [channel,kernel_y,kernel_x].
+
+Step 5 — CNN layer
+
+Add bias and activation:
+
+$$ Y = \sigma(W*X+b) $$
+
+Conceptually:
+
+Y = relu(convolve(X, W) + b)
+
+Now someone can see that convolve() isn't magic: you just built it out of window → multiply → reduce.
+
+8. There is another paper you may be remembering
+
+I also found “Neural Networks” material that gives ordinary 2-D convolution explicitly as a double sum:
+
+$$ C_j(m,n)= \sum_{a=1}^{M_W} \sum_{b=1}^{N_W} X(a-m,b-n)W_j(a,b) $$
+
+which is another very plausible candidate for the formula you recall.
+
+And general teaching material often gives the even cleaner form
+
+$$ Y(i,j)= \sum_m\sum_n X(i-m,j-n)W(m,n). $$
+
+But the Zhao et al. triple-sum equation is more useful for your purpose, because it includes the input-channel dimension and therefore represents the operation found in a real multi-channel CNN layer rather than just image filtering.
+
+9. I think this deserves its own MLPL demo
+
+Something like:
+
+demo-cnn-from-equations
+
+or, probably better given your existing learning structure,
+
+demo-ml-foundations/
+    cnn/
+        01-dot-product.mlpl
+        02-convolution-1d.mlpl
+        03-convolution-2d.mlpl
+        04-multichannel-convolution.mlpl
+        05-convolution-layer.mlpl
+        06-cnn.mlpl
+
+And this is a particularly nice use of the annotation facility you already added:
+
+@formula "y[r,x,y] = sum_q sum_u sum_v W[r,q,u,v] X[q,x+u,y+v]"
+def u:cnn_cell(kernel, patch) {
+    reduce(:add, kernel * patch)
+}
+
+MLPL currently preserves arbitrary annotations such as @formula, so the source itself can carry the mathematical definition alongside the implementation.
+
+That could become a broader convention:
+
+paper equation
+       ↓
+@formula
+       ↓
+literal MLPL implementation
+       ↓
+array-oriented simplification
+       ↓
+optimized implementation
+
+That is a very compelling demonstration of why sw-MLPL exists: not “Python can't implement CNNs”—obviously it can—but that an array-oriented language can preserve the relationship between mathematical notation and executable code much more directly.
+
+The next thing I would investigate is whether existing MLPL primitives can construct the complete sliding-window tensor cleanly without adding a new builtin. If not, windows/stencil/neighborhoods may be a high-value language primitive, because the same abstraction applies to CNNs, image processing, cellular automata, finite-difference methods, signal processing, and moving-window statistics.
+

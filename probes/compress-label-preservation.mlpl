@@ -1,0 +1,14 @@
+# compress removes slices along one axis and changes no axis identity, so axis
+# labels must survive it as they survive rotate. They do not, which erases the
+# named axes a windowed convolution depends on.
+X : [image_y, image_x] = reshape(range(16), [4, 4])
+rotated = rotate(X, 1, 0)
+kept = compress(lt(range(4), 3), X, 0)
+print("rotate labels:", labels(rotated))
+print("compress labels:", labels(kept))
+if str_eq(labels(kept), labels(rotated)) {
+  0
+} else {
+  print("compress dropped axis labels that rotate preserves")
+  exit(1)
+}

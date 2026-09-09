@@ -1,0 +1,6 @@
+# The paper's inner product wants patches[oy,ox,c,kh,kw] * W[c,kh,kw].
+# Trailing-axis rank broadcasting is unsupported, so the shared kernel must be
+# materialized at full patch shape before elementwise multiplication.
+patches = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
+kernel = reshape(range(9), [3, 3])
+patches * kernel
