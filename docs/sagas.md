@@ -308,7 +308,34 @@ collapse to a single reduction over three axes.
 Gate: open. The demo was prototyped end to end on build `7a9c4ceb` and
 reproduces `conv2d` exactly on integers and to 1.42e-13 on floats, so no
 upstream capability is required to start. Capability claims here pin the build
-commit rather than the version string; see the blocker record for why. Five verified
+commit rather than the version string; see the blocker record for why.
+
+### Upstream capability timeline
+
+Recorded so the saga history matches what was actually observed, including the
+version walkback.
+
+| Build | Observed as | Event | Probe state |
+|---|---|---|---|
+| `7a9c4ceb` | 0.21.0 | Baseline when C1-C5 were promoted | C1-C5 all nonzero |
+| `274c9133` | 0.21.0 | C5 shipped; scheduled as 0.21.1 but rode 0.21.0 | C5 zero |
+| `7f2c4e99` | 0.21.0 | C1 shipped with the frozen `[out_y, out_x, C, kh, kw]` order | C5, C1 zero |
+| `476e9bf4` | 0.22.0 | Released carrying C5 + C1; **bump later identified as premature and withdrawn** | C5, C1 zero |
+| `f4485823` | 0.21.0 | Dev-channel rebuild of identical content, nightly bundle `611565424bb13b08` | C5, C1 zero |
+
+The walkback changed no behavior. `476e9bf4` and `f4485823` produce an
+identical probe state, and no downstream documentation needed editing when the
+version was rolled back, because every capability claim in this repository
+pins a build commit. Two independent label movements — one version spanning
+different behavior (`7a9c4ceb` versus `274c9133`), one behavior spanning
+different versions (`476e9bf4` versus `f4485823`) — are why.
+
+`476e9bf4` is retained above as the build on which C1 was first observed even
+though it was withdrawn, because deleting it would make the record disagree
+with what the probes actually saw. C2, C3, and C4 remain open at `f4485823`.
+
+Upstream `CHANGES.md` is not maintained from this repository; `../sw-mlpl` is
+not modified during downstream work. Five verified
 `LANGUAGE_EXPRESSIVENESS_GAP` items block the *readable* spelling and are
 recorded in [the blocker record](sw-mlpl-blocker.md); they govern how each rung
 is rewritten, not whether the saga can begin. Positioning against
