@@ -37,9 +37,12 @@ Commit: 476e9bf4
 Probe state at this pin: C5 and C1 exit zero, C2/C3/C4 exit nonzero, and
 `probes/convolution-reference.mlpl` exits zero.
 
-This build reported `0.22.0` when observed. That bump was premature and is
-being backed down to 0.21.x with identical content, so the version string is
-deliberately omitted from the pin above. The commit is the identity.
+That bump was premature and was backed down. The dev channel rebuilt the same
+content as `0.21.0` commit `f4485823`, re-verified here with an identical probe
+state — C5 and C1 zero, C2/C3/C4 nonzero, reference zero. `476e9bf4` is
+retained above as the commit on which C1 was first observed; `f4485823` is the
+current build carrying it. The version string is deliberately omitted from both
+pins: the commit is the identity.
 
 Upstream reported the C5 fix as commit `c85cff0d`. The locally built binary
 resolves to `274c9133`, which is a later build carrying the fix. This record
