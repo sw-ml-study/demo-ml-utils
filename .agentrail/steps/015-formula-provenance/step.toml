@@ -1,0 +1,8 @@
+number = 15
+slug = "formula-provenance"
+status = "pending"
+description = "Make the mathematics durable and renderable without LaTeX in terminal output...."
+role = "production"
+context_files = []
+created_at = "2026-09-09T15:50:35"
+commits = []

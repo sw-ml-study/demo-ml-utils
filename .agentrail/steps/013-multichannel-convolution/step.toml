@@ -1,0 +1,8 @@
+number = 13
+slug = "multichannel-convolution"
+status = "pending"
+description = "Build rung 4 of demos/cnn: the Zhao, Wang, Wang and Liu (2018) section 2.1 mu..."
+role = "production"
+context_files = []
+created_at = "2026-09-09T15:50:16"
+commits = []

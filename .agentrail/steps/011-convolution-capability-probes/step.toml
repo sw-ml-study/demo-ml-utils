@@ -1,0 +1,8 @@
+number = 11
+slug = "convolution-capability-probes"
+status = "pending"
+description = "Pin the array-expressiveness capability surface for the convolution-from-equa..."
+role = "production"
+context_files = []
+created_at = "2026-09-09T15:50:16"
+commits = []

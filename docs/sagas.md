@@ -282,7 +282,7 @@ help-drift-aware behavior. GLM-5.x is an external teacher because its roughly
 745B-parameter MoE is not a 12 GiB local candidate. See the
 [distillation plan](plan-agentrail-distillation.md).
 
-## Saga 13 — `convolution-from-equations` (planned)
+## Saga 13 — `convolution-from-equations` (queued as steps 011-016)
 
 Carry one published convolution equation down to executable MLPL and back up to
 the native `conv2d` oracle, showing at each rung that the mathematics and the
@@ -291,6 +291,13 @@ convolution, the Zhao et al. multi-channel triple sum, and a full layer with
 bias and activation. Each rung shows the equation, the mechanical
 transliteration with one nested `reduce` per sigma, and the array-oriented
 collapse to a single reduction over three axes.
+
+Queued into the active `agentrail-adversarial-evaluation` saga as steps
+011-016, placed after the 010 acceptance report so the current saga's closeout
+does not wait on convolution work. That saga has already carried adjacent
+maintenance (GGUF parsing, MLPL formatting, instruction policy), so it serves
+as the repository's working queue; the alternative — archive, then `init` a
+dedicated saga — remains available if the block is deferred instead.
 
 1. `convolution-capability-probes` — pin C1-C5 with probes and catalog entries;
    record measured broadcast-replication and runtime costs.
