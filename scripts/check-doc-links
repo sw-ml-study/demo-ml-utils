@@ -36,5 +36,18 @@ while IFS="$tab" read -r document target; do
   fi
 done < "$links_file"
 
+# An empty tracked document is almost always an editing accident rather than an
+# intentional placeholder, and it passes every other check here: no broken
+# links, no bad formatting, nothing to validate. Catch it explicitly.
+# Saga state under .agentrail/ and .agentrail-archive/ is append-only history
+# written by agentrail, and some historical prompts are legitimately empty.
+# Only authored documentation is checked.
+for document in $(git -C "$repo_root" ls-files '*.md' ':!:.agentrail/**' ':!:.agentrail-archive/**'); do
+  if [ ! -s "$repo_root/$document" ]; then
+    echo "empty tracked document: $document" >&2
+    failed=1
+  fi
+done
+
 [ "$failed" -eq 0 ] || exit 1
 echo "PASS documentation links"

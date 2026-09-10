@@ -89,10 +89,16 @@ and acceptance evidence once the capabilities ship.
 
 ## The equation under test
 
-Zhao, Wang, Wang & Liu (2018), §2.1, defines one convolutional-layer output as
+Zhao, Wang, Wang & Liu, *Algorithms* **11**(10):159, 2018, Section 2.1,
+Equation (1), verified against the paper:
 
 $$ y_{r,x,y} = \sum_{q=1}^{Q} \sum_{u=1}^{M_w} \sum_{v=1}^{N_w}
-   w_{r,q,u,v}\; x_{q,x+u,y+v} $$
+   w_{r,q,u,v}\, x_{q,x+u,y+v} $$
+
+Limits are 1-based and the kernel is unflipped, so Equation (1) defines
+cross-correlation and contains no bias or activation. Symbol definitions,
+attribution terms, and the notation rules every displayed equation must follow
+are in [the math notation rules](math-notation.md).
 
 The array-language reading is that the three summations are not three
 concepts. They are one reduction over three axes of one product. The target
