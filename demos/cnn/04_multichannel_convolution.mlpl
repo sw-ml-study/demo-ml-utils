@@ -24,7 +24,7 @@ while lt(r, 3) {
 };
 oracle = u:conv_oracle(x, weights);
 drift = reduce(:max, abs(all_filters - oracle));
-print("DEMO: rung 4 of 5 — the multi-channel convolution, straight from the paper");
+print("DEMO: rung 4 of 6 — the multi-channel convolution, straight from the paper");
 print("");
 print("Scenario: this is the equation a convolutional layer is actually defined by. A third summation appears, over the input channels, and it changes nothing structurally: it is one more axis to collapse. The demo shows four spellings of the same contraction and proves they agree, then checks all of them against the native conv2d builtin.");
 print("Native boundary: windows rearranges and matmul contracts in the fourth spelling. conv2d appears only as an independent oracle, never as the implementation.");

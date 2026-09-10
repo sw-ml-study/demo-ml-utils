@@ -8,7 +8,7 @@ def u:dot_from_equation(w, x) {
 w = [1, 2, 3];
 x = [4, 5, 6];
 result = u:dot_from_equation(w, x);
-print("DEMO: rung 1 of 5 — the dot product, where every convolution starts");
+print("DEMO: rung 1 of 6 — the dot product, where every convolution starts");
 print("");
 print("Scenario: read one summation as an array operation. Multiply the two vectors elementwise, then collapse the single axis. Nothing about this changes as the rank grows in later rungs.");
 print("Native boundary: none. MLPL owns the multiply and the reduction; no builtin performs the contraction.");

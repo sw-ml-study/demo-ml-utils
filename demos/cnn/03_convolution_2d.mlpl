@@ -11,7 +11,7 @@ kernel = reshape([1, 0, 0 - 1, 1, 0, 0 - 1, 1, 0, 0 - 1], [3, 3]);
 patches = windows(reshape(image, [1, 4, 4]), [3, 3]);
 result = u:convolve_2d(image, kernel)?;
 upper_left = take(take(take(patches, 0, 0), 0, 0), 0, 0);
-print("DEMO: rung 3 of 5 — two-dimensional convolution");
+print("DEMO: rung 3 of 6 — two-dimensional convolution");
 print("");
 print("Scenario: two summations now, over the kernel's rows and columns. They are adjacent and interchangeable in the mathematics, and they collapse together in one reduction here. The receptive field is a patch rather than a strip, but nothing else changes.");
 print("Native boundary: none for the arithmetic. windows rearranges; the multiply and reduction are MLPL.");

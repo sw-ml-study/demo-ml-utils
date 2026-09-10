@@ -9,7 +9,7 @@ signal = range(8) + 1;
 kernel = [1, 0, 0 - 1];
 patches = windows(signal, [3]);
 result = u:convolve_1d(signal, kernel);
-print("DEMO: rung 2 of 5 — one-dimensional convolution");
+print("DEMO: rung 2 of 6 — one-dimensional convolution");
 print("");
 print("Scenario: the equation gains a shifted index, x[x+u]. That offset arithmetic is the loop an imperative implementation writes by hand. Here windows turns it into structure: every overlapping neighbourhood becomes a row, and the contraction from rung 1 is unchanged.");
 print("Native boundary: none for the arithmetic. The windows builtin performs the rearrangement; the multiply and reduction remain MLPL.");
