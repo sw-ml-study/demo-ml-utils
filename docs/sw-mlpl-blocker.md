@@ -3,9 +3,10 @@
 ## Status
 
 Partially shipped on build `2b365ab1`. C5, C1, and C3 are verified fixed. C2 is
-**demoted from a blocker to `ERGONOMICS_ONLY`** (see below). C4 is **partially
-shipped**: a single axis name is accepted, a vector of names is not, and the
-documented target line needs the vector.
+**demoted from a blocker to `ERGONOMICS_ONLY`** (see below). C4 is **reclassified from
+`LANGUAGE_EXPRESSIVENESS_GAP` to `LIBRARY_GAP`**: a single axis name is
+accepted, a vector of names is not, but the vector form can be built in
+ordinary MLPL downstream.
 
 `just array-capabilities` reports the live state, and the same check runs in the
 default gate. `catalog/probes.tsv` declares each probe's expected result, so a
@@ -264,6 +265,38 @@ asymmetry. A vector of axis *names* does not:
 | `reduce(:add, P, ["channel", "kernel_y", "kernel_x"])` | **open** |
 | `reduce_add(P, ["kernel_y", "kernel_x"])` | **open** |
 
+### Reclassified to `LIBRARY_GAP`: this repository can fix it
+
+The repository's escalation contract reserves `LANGUAGE_EXPRESSIVENESS_GAP`
+for what ordinary MLPL cannot express. Name-to-index resolution is expressible,
+so C4 does not qualify. A helper resolves labels against `labels(x)` and hands
+`reduce` the integer vector it already accepts:
+
+```mlpl
+idx = u:axis_indices(patches, "channel,kernel_y,kernel_x")?;
+y   = reduce(:add, weighted, idx)
+```
+
+Verified downstream: resolves to `[2, 3, 4]`, agrees exactly with the integer
+form, and an unknown name returns
+`Err("unknown axis name 'nope' in out_y,out_x,channel,kernel_y,kernel_x")`.
+
+Two constraints shape that helper, both worth reporting upstream as
+`ERGONOMICS_ONLY` observations rather than requirements:
+
+- A **string list cannot be a user-defined function parameter**, already noted
+  in [the upstream contract](upstream-contract.md). The names therefore arrive
+  comma-joined and are split inside.
+- **`tally` rejects a string list** (`expected an array value, got a string`),
+  so a string list's length cannot be measured. Both walks instead terminate on
+  the `Err` from an out-of-range `list_get`. String lists are consequently
+  second-class: indexable but not measurable.
+
+Neither blocks the demo. Shipping C4 upstream would still be worth it for
+consistency — `reduce_add` and `reduce` should agree, and an axis-name vector
+is the spelling the equation deserves — but this record no longer asks for it
+as a prerequisite.
+
 ### The first version of this probe was wrong
 
 It tested only the single-name form. When that shipped, the gate reported C4
@@ -352,7 +385,7 @@ named rungs are rewritten in the same step.
 | 1 | `476e9bf4` | C5 | `compress-label-preservation` | Labeled-axis trimming stops needing a `relabel` after every `compress` | **shipped** |
 | 2 | `476e9bf4` | C1 | `sliding-windows` | `u:conv_windows` (25 lines) collapses to one `windows` call | **shipped** |
 | 3a | `2b365ab1` | C3 | `multi-axis-reduce` | Three nested reduces collapse to one call over `[2, 3, 4]` | **shipped** |
-| 3b | next | C4 | `named-axis-reduce` | That one call takes axis names instead of integers | partial: single name shipped, vector open |
+| 3b | optional | C4 | `named-axis-reduce` | That one call takes axis names instead of integers | reclassified `LIBRARY_GAP`; fixed downstream |
 | 4 | later | C2 | `rank-broadcast` | The transliteration rung spells its product directly | open, ergonomic |
 
 The demo's headline line needs C1, C2, C3, and C4 together, so it reaches its
