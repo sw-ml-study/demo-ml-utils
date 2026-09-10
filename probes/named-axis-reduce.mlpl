@@ -1,4 +1,10 @@
-# reduce_add(x, "name") accepts a labeled axis but higher-order reduce does not,
-# so a named-axis convolution cannot be written with a quoted operator.
-patches : [out_y, out_x, kernel_y, kernel_x] = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
-reduce(:add, patches, "kernel_x")
+# The target spelling reduces a vector of AXIS NAMES in one call, so the source
+# says "sum over channel, kernel_y, kernel_x" and the reader never has to
+# recover what q, u and v meant.
+#
+# A single name is accepted, and a vector of integer axes is accepted, but the
+# combination the blocker record asks for is not. An earlier version of this
+# probe tested only the single-name form and therefore reported C4 as shipped
+# while the documented target line still failed; it now pins the real target.
+patches : [out_y, out_x, channel, kernel_y, kernel_x] = reshape(range(72), [2, 2, 2, 3, 3])
+reduce(:add, patches, ["channel", "kernel_y", "kernel_x"])

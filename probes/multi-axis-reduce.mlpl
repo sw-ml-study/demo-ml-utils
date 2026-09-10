@@ -1,4 +1,11 @@
-# The three nested summations are one reduction over three axes. Higher-order
-# reduce accepts a single scalar axis only, so the insight cannot be spelled.
-patches = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
-reduce(:add, patches, [2, 3])
+# The three nested summations are one reduction over three axes. A vector of
+# integer axes now expresses that in a single call.
+patches = reshape(range(72), [2, 2, 2, 3, 3])
+nested = reduce(:add, reduce(:add, reduce(:add, patches, 4), 3), 2)
+one_call = reduce(:add, patches, [2, 3, 4])
+if eq(reduce(:max, abs(nested - one_call)), 0) {
+  0
+} else {
+  print("multi-axis reduce disagrees with nested single-axis reduction")
+  exit(1)
+}

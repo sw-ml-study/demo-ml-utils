@@ -2,8 +2,10 @@
 
 ## Status
 
-Partially shipped. C5 and C1 are verified fixed. C2 is **demoted from a blocker
-to `ERGONOMICS_ONLY`** (see below). C3 and C4 remain open.
+Partially shipped on build `2b365ab1`. C5, C1, and C3 are verified fixed. C2 is
+**demoted from a blocker to `ERGONOMICS_ONLY`** (see below). C4 is **partially
+shipped**: a single axis name is accepted, a vector of names is not, and the
+documented target line needs the vector.
 
 `just array-capabilities` reports the live state, and the same check runs in the
 default gate. `catalog/probes.tsv` declares each probe's expected result, so a
@@ -220,10 +222,16 @@ shapes.
 Acceptance must cover rank-1 against rank-2, size-1 axes expanding, an
 incompatible trailing axis, and a label collision between aligned axes.
 
-## C3 — multi-axis reduction
+## C3 — multi-axis reduction — SHIPPED
 
-Probe: `probes/multi-axis-reduce.mlpl`. Current behavior:
-`error: unsupported: reduce: axis must be a scalar, got rank 1`.
+Probe: `probes/multi-axis-reduce.mlpl`, exits zero as of build `2b365ab1`.
+Behavior when promoted: `error: unsupported: reduce: axis must be a scalar,
+got rank 1`. The probe now asserts that the one-call form agrees with nested
+single-axis reduction rather than merely running.
+
+```mlpl
+reduce(:add, patches, [2, 3, 4])
+```
 
 Today the triple sum must be written as three nested calls:
 
@@ -242,15 +250,30 @@ reducing all named axes in one pass, with the result rank reduced by the count
 of distinct axes. Duplicate or out-of-range axes must error loudly. The same
 extension applies to `reduce_add` and `reduce_mul`.
 
-## C4 — named-axis parity for higher-order reduce
+## C4 — named-axis parity for higher-order reduce — PARTIALLY SHIPPED
 
-Probe: `probes/named-axis-reduce.mlpl`. Current behavior:
-`error: expected an array value, got a string`.
+Probe: `probes/named-axis-reduce.mlpl`, still exits nonzero.
 
-`reduce_add(M, "feat")` accepts a labeled axis. `reduce(:add, M, "feat")` does
-not. This is an inconsistency between a shorthand and the general form it is
-documented as equivalent to, and it forces the demo to choose between quoted
-operators and readable axis names.
+`reduce(:add, M, "feat")` now works, closing the original single-name
+asymmetry. A vector of axis *names* does not:
+
+| Spelling | State |
+|---|---|
+| `reduce(:add, P, [2, 3, 4])` | shipped with C3 |
+| `reduce(:add, P, "channel")` | shipped |
+| `reduce(:add, P, ["channel", "kernel_y", "kernel_x"])` | **open** |
+| `reduce_add(P, ["kernel_y", "kernel_x"])` | **open** |
+
+### The first version of this probe was wrong
+
+It tested only the single-name form. When that shipped, the gate reported C4
+as met while the target line this record actually asks for still failed. The
+probe has been rewritten to pin the vector-of-names form.
+
+The lesson generalizes: a probe must encode the requirement, not a weaker
+proxy for it, or it will report success at the moment it stops being useful.
+Every probe in `catalog/probes.tsv` should be readable as the sentence the
+blocker record is asking upstream to make true.
 
 Combined with C3, the target is a rank-1 string vector of axis names:
 
@@ -309,8 +332,8 @@ identity, and `reshape_labeled` already covers the deliberate case.
 |---|---|---|
 | C1 | `probes/sliding-windows.mlpl` | **Met at `7f2c4e99`**; matches the `rotate`/`compress` reference construction exactly |
 | C2 | `probes/rank-broadcast.mlpl` | Exits zero; product equals the im2col `matmul` reference. Ergonomic only: no rung is gated on it |
-| C3 | `probes/multi-axis-reduce.mlpl` | Exits zero; equals nested single-axis reduction |
-| C4 | `probes/named-axis-reduce.mlpl` | Exits zero; equals the integer-axis form |
+| C3 | `probes/multi-axis-reduce.mlpl` | **Met at `2b365ab1`**; asserts equality with nested single-axis reduction |
+| C4 | `probes/named-axis-reduce.mlpl` | Exits zero for a vector of axis names; equals the integer-axis form |
 | C5 | `probes/compress-label-preservation.mlpl` | **Met at `274c9133`**; labels match `rotate` |
 
 C2, C3, and C4 currently exit nonzero, so an upstream implementation announces
@@ -328,7 +351,8 @@ named rungs are rewritten in the same step.
 |---|---|---|---|---|---|
 | 1 | `476e9bf4` | C5 | `compress-label-preservation` | Labeled-axis trimming stops needing a `relabel` after every `compress` | **shipped** |
 | 2 | `476e9bf4` | C1 | `sliding-windows` | `u:conv_windows` (25 lines) collapses to one `windows` call | **shipped** |
-| 3 | next | C3, C4 | `multi-axis-reduce`, `named-axis-reduce` | Three nested integer-axis reduces collapse to one named-axis reduction | open |
+| 3a | `2b365ab1` | C3 | `multi-axis-reduce` | Three nested reduces collapse to one call over `[2, 3, 4]` | **shipped** |
+| 3b | next | C4 | `named-axis-reduce` | That one call takes axis names instead of integers | partial: single name shipped, vector open |
 | 4 | later | C2 | `rank-broadcast` | The transliteration rung spells its product directly | open, ergonomic |
 
 The demo's headline line needs C1, C2, C3, and C4 together, so it reaches its
