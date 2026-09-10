@@ -1,10 +1,23 @@
 # Shipped Upstream Capability Contract
 
-Status: fulfilled and conformance-tested against `mlpl-repl 0.20.0`, commit
-`6156e869` (2026-08-08). This document records the downstream contract that
-originally blocked large-file Safetensors work and distinguishes shipped
-behavior from remaining optional hardening. No upstream source is modified by
-this repository.
+Status: fulfilled and conformance-tested against commit `6156e869`
+(2026-08-08, reported as `mlpl-repl 0.20.0`). This document records the
+downstream contract that originally blocked large-file Safetensors work and
+distinguishes shipped behavior from remaining optional hardening. No upstream
+source is modified by this repository.
+
+A second contract, covering array expressiveness rather than binary-format
+I/O, is tracked separately in [the blocker record](sw-mlpl-blocker.md) and
+enforced by `just array-capabilities`. Its shipped surface is summarized under
+"Array expressiveness" below.
+
+Capability claims in this repository pin the **build commit**, never the
+version string. Version labels moved independently of content twice during the
+convolution work: a fix scheduled as 0.21.1 rode inside 0.21.0, and a build
+released as 0.22.0 was withdrawn and rebuilt as 0.21.0 with identical content.
+Two binaries reporting the same version can differ in observable semantics, and
+one behavior can carry two version strings, so probe exit codes are the
+authority.
 
 ## Bounded filesystem API
 
@@ -117,3 +130,45 @@ of core. This repository consumes the shipped builtin directly and keeps the
   statistics; bounded reads already permit an explicit fixed-memory loop.
 - User-defined function parameters currently reject string-list values, so the
   catalog keeps its `record_keys` walk in one visible `while` loop.
+- `tally` also rejects string lists (`expected an array value, got a string`),
+  so a string list's length cannot be measured at all. String lists are
+  therefore indexable but not measurable: `list_get(parts, i)` works and
+  returns a `Result`, so a loop over one must terminate on the `Err` from an
+  out-of-range index rather than on a length. Both limitations are
+  `ERGONOMICS_ONLY` — downstream code works around them in ordinary MLPL — but
+  together they make string lists visibly second-class next to numeric arrays.
+
+## Array expressiveness
+
+Observed on build `2b365ab1` and enforced by `catalog/probes.tsv` through
+`scripts/check-capability-probes`, which runs in the default gate. A capability
+change in either direction fails the gate and forces reconciliation, rather
+than silently invalidating this document.
+
+| Capability | Contract | State |
+|---|---|---|
+| `windows(x, sizes)` | Sliding-window rearrangement emitting `[out_y, out_x, C, kh, kw]`; a `[channel, kernel_y, kernel_x]` kernel aligns by trailing position with no `transpose_axes`, pinned upstream by a test | shipped |
+| `compress` label propagation | Axis labels survive filtering as they survive `rotate` | shipped |
+| `reduce(:op, a, axes)` | Reduction over a vector of integer axes in one call | shipped |
+| `reduce(:op, a, "name")` | Reduction over a single labeled axis | shipped |
+| `reduce(:op, a, [names])` | Reduction over a vector of axis *names* | open, `LIBRARY_GAP` |
+| Trailing-axis rank broadcasting | Elementwise operators still require identical shapes | open, `ERGONOMICS_ONLY` |
+| `svg(text, "equation")` | Renders a line of Unicode math to self-contained SVG with no LaTeX toolchain, MathJax, or network | shipped |
+
+Neither open item blocks work here. The axis-name vector is expressible in
+ordinary MLPL by resolving labels against `labels(x)` and passing the resulting
+integer vector. Rank broadcasting is unnecessary for convolution because the
+im2col spelling contracts with `matmul`:
+
+```mlpl
+cols = reshape(windows(x, [kh, kw]), [oy * ox, c * kh * kw]);
+y    = matmul(cols, flatten(kernel))
+```
+
+Measured on build `f4485823`, `[8, 32, 32]` input against `[16, 8, 3, 3]`
+filters: that form runs in 1.198 ms against native `conv2d` at 1.230 ms and
+agrees exactly, while a broadcast-workaround formulation of the same result
+takes 211.3 ms, replicates 1,036,800 cells, and agrees only to 1.42e-13.
+Array-expressed convolution is at parity with the native builtin; earlier
+drafts of this repository's documentation reported a 172x deficit, which
+described one workaround rather than the language, and has been withdrawn.
