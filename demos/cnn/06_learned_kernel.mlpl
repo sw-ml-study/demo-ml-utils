@@ -1,0 +1,74 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "k* = argmin_k mean( ( ∑(q=1..Q) ∑(u=1..Mw) ∑(v=1..Nw) k[q,u,v] · X[q,x+u,y+v] − T[x,y] )² )"
+@ascii "k* = argmin_k mean( ( SUM(q=1..Q) SUM(u=1..Mw) SUM(v=1..Nw) k[q,u,v] * X[q,x+u,y+v] - T[x,y] )^2 )"
+@note "Training is not part of Equation (1). This rung learns the kernel the earlier rungs were given."
+def u:recovery_error(learned, teacher) {
+  "Report how far a learned kernel sits from the one that generated the targets.";
+  reduce(:max, abs(learned - teacher))
+}
+teacher = reshape([1, 0, 0 - 1, 1, 0, 0 - 1, 1, 0, 0 - 1], [1, 3, 3]);
+ramp = reshape(range(36) + 1, [1, 6, 6]) / 10;
+noise = randn(7, [1, 6, 6]);
+ramp_patches = windows(ramp, [3, 3]);
+noise_patches = windows(noise, [3, 3]);
+ramp_target = reduce(:add, ramp_patches * teacher, [2, 3, 4]);
+noise_target = reduce(:add, noise_patches * teacher, [2, 3, 4]);
+kr = param[1, 3, 3];
+kn = param[1, 3, 3];
+start_loss = mean((reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target) * (reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target));
+step = 0;
+while lt(step, 400) {
+  adam(mean((reduce(:add, ramp_patches * kr, [2, 3, 4]) - ramp_target) * (reduce(:add, ramp_patches * kr, [2, 3, 4]) - ramp_target)), kr, 0.05, 0.9, 0.999, 0.00000001);
+  adam(mean((reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target) * (reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target)), kn, 0.05, 0.9, 0.999, 0.00000001);
+  step = step + 1
+};
+ramp_loss = mean((reduce(:add, ramp_patches * kr, [2, 3, 4]) - ramp_target) * (reduce(:add, ramp_patches * kr, [2, 3, 4]) - ramp_target));
+noise_loss = mean((reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target) * (reduce(:add, noise_patches * kn, [2, 3, 4]) - noise_target));
+print("DEMO: rung 6 of 6 — learning the kernel instead of being given it");
+print("");
+print("Scenario: rungs 1 to 5 applied a kernel someone chose. This rung recovers one from examples, by making the same contraction differentiable and descending on squared error. It also shows the case where that fails, which is the more useful half.");
+print("Native boundary: adam is the optimizer and grad supplies gradients through windows and the broadcast multiply. The convolution itself is still the MLPL contraction from rung 4, unchanged.");
+print("Budgets: one 6x6 single-channel image, a 3x3 kernel, 400 Adam steps at learning rate 0.05.");
+print("");
+print("What is being minimized:");
+print("");
+print("                          Q     Mw     Nw                                   2");
+print("  k* = argmin  mean( (    ∑     ∑      ∑    k[q,u,v] · X[q, x+u, y+v]  −  T[x,y] )  )");
+print("          k            q=1    u=1    v=1");
+print("");
+print("HONESTY NOTE: training is not in Equation (1). The paper defines the forward");
+print("computation; recovering k from examples is what a network does with it.");
+print("");
+print("Two runs, identical except for the input image:");
+print("");
+print({teacher_kernel: flatten(teacher)});
+print("");
+print({run: "ramp input",final_loss: ramp_loss,learned: flatten(kr),max_kernel_error: u:recovery_error(kr,teacher)});
+print("");
+print({run: "random input",initial_loss: start_loss,final_loss: noise_loss,learned: flatten(kn),max_kernel_error: u:recovery_error(kn,teacher)});
+print("");
+print("Interpretation: both runs drive the loss to machine precision, but only one");
+print("recovers the teacher. On the ramp the loss is zero and the kernel is wrong.");
+print("");
+print("That is not an optimizer failure, it is the problem being underdetermined. A");
+print("linear ramp makes neighbouring receptive fields linearly dependent, so many");
+print("kernels reproduce the targets exactly and gradient descent has no reason to");
+print("prefer the teacher's. Random input makes the fields independent, the solution");
+print("unique, and the teacher is recovered to about 1e-9.");
+print("");
+print("A demo that trained only on the ramp could honestly report a loss near zero");
+print("and quietly have learned the wrong filter. Low loss is evidence about the");
+print("data you fitted, not proof that you recovered the function behind it.");
+if gt(noise_loss, 0.000000001) {
+  err("random-input training failed to converge")
+} else {
+  if gt(u:recovery_error(kn, teacher), 0.00001) {
+    err("random-input training converged without recovering the teacher kernel")
+  } else {
+    if gt(u:recovery_error(kr, teacher), 0.00001) {
+      ok(1)
+    } else {
+      err("the ramp fixture no longer demonstrates an underdetermined recovery")
+    }
+  }
+}

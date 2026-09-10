@@ -12,7 +12,8 @@ for rung in \
   02_convolution_1d \
   03_convolution_2d \
   04_multichannel_convolution \
-  05_convolution_layer
+  05_convolution_layer \
+  06_learned_kernel
 do
   "$mlpl" --source-dir "$repo_root" "$repo_root/demos/cnn/$rung.mlpl"
   echo

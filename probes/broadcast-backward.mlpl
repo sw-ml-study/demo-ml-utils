@@ -1,17 +1,41 @@
-# C6. Rank broadcasting (C2) shipped forward but has no backward, and the tape
-# PANICS rather than reporting an unsupported operation:
+# C6. Rank broadcasting (C2) shipped forward before the tape had a backward for
+# it, and grad() panicked rather than reporting an unsupported operation:
 #
-#   thread 'main' panicked at mlpl-autograd-tape/src/ops.rs:124:17:
+#   panicked at mlpl-autograd-tape/src/ops.rs:124:17:
 #   index out of bounds: the len is 4 but the index is 4
 #
-# This is the minimal case: any rank-mismatched elementwise multiply inside
-# grad(). It is not specific to windows or to rank 5. Same-rank multiplication
-# differentiates correctly, and the same broadcast evaluates fine forward-only.
-#
-# It matters because the natural convolution loss,
-#   grad(mean(reduce(:add, windows(x, [kh, kw]) * kernel, [2, 3, 4])), x)
-# broadcasts a rank-3 kernel against rank-5 patches and therefore panics.
-k = reshape(range(4), [2, 2])
-y = param[2, 2, 2]
-y = reshape(range(8) + 1, [2, 2, 2])
-grad(mean(y * k), y)
+# A first upstream fix removed the panic while still producing wrong values, so
+# this probe verifies the GRADIENT, not the absence of a crash. Checking only
+# that it runs would report success at the moment it stopped being useful.
+kernel = (reshape(range(1 * 2 * 2), [1, 2, 2]) * 0.5) - 0.5
+base = reshape(range(9) + 1, [1, 3, 3]) / 10
+x = param[1, 3, 3]
+x = base
+analytic = flatten(grad(mean(reduce(:add, windows(x, [2, 2]) * kernel, [2, 3, 4])), x))
+h = 0.0001
+index = 0
+worst = 0
+while lt(index, 9) {
+  bump = reshape(eq(range(9), index) * h, [1, 3, 3])
+  high = mean(reduce(:add, windows(base + bump, [2, 2]) * kernel, [2, 3, 4]))
+  low = mean(reduce(:add, windows(base - bump, [2, 2]) * kernel, [2, 3, 4]))
+  difference = abs(at(analytic, index) - ((high - low) / (2 * h)))
+  if gt(difference, worst) {
+    worst = difference
+  } else {
+    0
+  }
+  index = index + 1
+}
+if gt(worst, 0.000001) {
+  print("broadcast backward disagrees with central differences by", worst)
+  exit(1)
+} else {
+  0
+}
+if eq(reduce(:max, abs(analytic)), 0) {
+  print("broadcast backward returned an all-zero gradient; the check would pass vacuously")
+  exit(1)
+} else {
+  0
+}

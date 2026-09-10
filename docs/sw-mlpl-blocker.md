@@ -278,6 +278,21 @@ asymmetry. A vector of axis *names* does not:
 | `reduce(:add, P, ["channel", "kernel_y", "kernel_x"])` | **open** |
 | `reduce_add(P, ["kernel_y", "kernel_x"])` | **open** |
 
+### Still open on build `06575219`, and repeatedly reported as shipped
+
+Upstream has three times summarized C4 as delivered. Each time the shipped
+thing was `reduce(:add, M, "name")`, a single axis name. The vector form this
+record asks for still fails:
+
+```text
+reduce(:add, P, ["b", "c"])     error: expected an array value, got a string
+reduce_add(P, ["b", "c"])       error: expected an array value, got a string
+```
+
+The distinction is not pedantic: the whole-layer code sample in upstream's own
+draft blog post uses the vector form and therefore does not run. `catalog/probes.tsv`
+exists so this is settled by an exit code rather than by recollection.
+
 ### Reclassified to `LIBRARY_GAP`: this repository can fix it
 
 The repository's escalation contract reserves `LANGUAGE_EXPRESSIVENESS_GAP`
@@ -360,10 +375,21 @@ Shipped behavior: `compress` propagates the input's axis labels unchanged.
 `reshape` clearing labels is correct and separate — it genuinely changes axis
 identity, and `reshape_labeled` already covers the deliberate case.
 
-## C6 — rank-broadcast multiply panics on the autograd tape (defect)
+## C6 — rank-broadcast multiply panics on the autograd tape (defect) — SHIPPED
 
-Probe: `probes/broadcast-backward.mlpl`. Found on build `a1280d82`, after
-`autograd(windows)` shipped.
+Probe: `probes/broadcast-backward.mlpl`, exits zero as of build `06575219`.
+Found on build `a1280d82`, after `autograd(windows)` shipped.
+
+Verified downstream against central differences, not merely for the absence of
+a crash: the analytic gradient of a real convolution loss agrees to 8.2e-13,
+and the probe additionally rejects an all-zero gradient that would satisfy the
+comparison vacuously. Upstream reported that a first fix removed the panic
+while still producing wrong values, which is exactly why the probe checks
+values.
+
+Trainable convolution now works end to end in both spellings, verified here:
+the windowed-reduction form and the im2col `matmul` form each recover a known
+teacher kernel to about 1e-9 from random input.
 
 C2 shipped rank broadcasting for the forward pass, but the tape has no backward
 for it, and rather than reporting an unsupported operation it **panics**:
@@ -407,10 +433,10 @@ loss broadcasts a rank-3 kernel against rank-5 patches:
 grad(mean(reduce(:add, windows(x, [kh, kw]) * kernel, [2, 3, 4])), x)
 ```
 
-The im2col spelling does not broadcast, but it needs `flatten` on the tape,
-which reports a clean `not supported inside grad()`. Either path would unblock
-training; the broadcast backward is the one that matches how the equation
-reads.
+The im2col spelling does not broadcast, but needed `flatten` on the tape. That
+shipped too, and both paths are now verified here: `grad(sum(flatten(M)), M)`
+returns the correct gradient, and im2col training recovers the teacher kernel
+to about 1e-9.
 
 Forward-only work, including all five rungs of the demo ladder, is unaffected.
 
@@ -436,9 +462,8 @@ Forward-only work, including all five rungs of the demo ladder, is unaffected.
 | C4 | `probes/named-axis-reduce.mlpl` | Exits zero for a vector of axis names; equals the integer-axis form |
 | C5 | `probes/compress-label-preservation.mlpl` | **Met at `274c9133`**; labels match `rotate` |
 
-C4 and C6 still exit nonzero. C4 is a `LIBRARY_GAP` closed downstream; C6 is a
-new upstream defect found while testing the shipped `autograd(windows)` work.
-C1, C2, C3, and C5 have flipped. `catalog/probes.tsv`
+Only C4 still exits nonzero, and it is a `LIBRARY_GAP` closed downstream. C1,
+C2, C3, C5, and C6 have flipped. Observed on build `06575219`. `catalog/probes.tsv`
 encodes each expectation and `scripts/check-capability-probes` enforces it in
 the default gate, so a flip cannot pass unnoticed in either direction.
 

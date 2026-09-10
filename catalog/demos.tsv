@@ -54,3 +54,4 @@ cnn-convolution-1d	demos/cnn/02_convolution_1d.mlpl	equation	windowed-signal-con
 cnn-convolution-2d	demos/cnn/03_convolution_2d.mlpl	equation	windowed-image-convolution	mlpl-native	not-applicable	yes	windows,reduce,rank-broadcast	runnable
 cnn-multichannel	demos/cnn/04_multichannel_convolution.mlpl	equation	multi-channel-triple-sum	mlpl-native	not-applicable	yes	windows,reduce,multi-axis-reduce,rank-broadcast,axis-labels,matmul,conv2d	runnable
 cnn-layer	demos/cnn/05_convolution_layer.mlpl	equation	bias-and-activation-layer	mlpl-native	not-applicable	yes	windows,reduce,multi-axis-reduce,rank-broadcast,relu,pool2d,conv2d	runnable
+cnn-learned-kernel	demos/cnn/06_learned_kernel.mlpl	equation	gradient-recovered-kernel	mlpl-native	not-applicable	yes	windows,reduce,multi-axis-reduce,rank-broadcast,grad,adam,randn	runnable

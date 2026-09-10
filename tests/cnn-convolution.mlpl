@@ -65,5 +65,30 @@ post = relu(pre);
 u:cnn_require(eq(reduce_add(lt(post, 0)), 0), "relu must leave no negative cells")?;
 u:cnn_require(gt(reduce_add(lt(pre, 0)), 0), "the fixture must actually exercise relu by producing negatives")?;
 
-print("cnn convolution contract: hand-checked -6, four bit-identical spellings, oracle parity, and named rejections");
+# The contraction is differentiable, and the gradient is verified against
+# central differences rather than merely running without error.
+gk = (reshape(range(1 * 2 * 2), [1, 2, 2]) * 0.5) - 0.5;
+gbase = reshape(range(9) + 1, [1, 3, 3]) / 10;
+gx = param[1, 3, 3];
+gx = gbase;
+ganalytic = flatten(grad(mean(reduce(:add, windows(gx, [2, 2]) * gk, [2, 3, 4])), gx));
+gh = 0.0001;
+gi = 0;
+gworst = 0;
+while lt(gi, 9) {
+  gbump = reshape(eq(range(9), gi) * gh, [1, 3, 3]);
+  ghigh = mean(reduce(:add, windows(gbase + gbump, [2, 2]) * gk, [2, 3, 4]));
+  glow = mean(reduce(:add, windows(gbase - gbump, [2, 2]) * gk, [2, 3, 4]));
+  gdiff = abs(at(ganalytic, gi) - ((ghigh - glow) / (2 * gh)));
+  if gt(gdiff, gworst) {
+    gworst = gdiff
+  } else {
+    0
+  };
+  gi = gi + 1
+};
+u:cnn_require(lt(gworst, 0.000001), "the convolution gradient must agree with central differences")?;
+u:cnn_require(gt(reduce(:max, abs(ganalytic)), 0), "a zero gradient would satisfy the finite-difference check vacuously")?;
+
+print("cnn convolution contract: hand-checked -6, four bit-identical spellings, oracle parity, and named rejections, and a finite-difference-verified gradient");
 ok(1)

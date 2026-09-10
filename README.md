@@ -24,7 +24,7 @@ Each area below has runnable demos with narrated output. The
 | [Restricted checkpoints](docs/README.md#restricted-checkpoints) | Passive pickle risk inventory, allow-listed primitive parsing, tensor-only extraction | Constrained slice |
 | [Adaptation](docs/README.md#adaptation) | Fine-tuning, low-rank adapters, in-context learning, in-context RL | Accepted |
 | [Experiments](docs/README.md#experiments) | Split, Lift, Ensemble, Feed, and Tune as inspectable MLPL | Accepted |
-| [Convolution from equations](docs/README.md#convolution-from-equations) | A paper's convolution equation carried down to executable MLPL in five rungs, checked against `conv2d` | Runnable |
+| [Convolution from equations](docs/README.md#convolution-from-equations) | A paper's convolution equation carried down to executable MLPL in six rungs, checked against `conv2d`, ending in a kernel learned by gradient descent | Runnable |
 | [Model training](docs/README.md#model-training-gated-opt-in) | Agentrail coding-model fine-tuning and distillation | Gated, opt-in |
 
 ## Running the project

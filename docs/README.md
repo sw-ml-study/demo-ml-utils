@@ -119,6 +119,9 @@ Run the whole ladder with `just cnn-ladder`, or one rung at a time:
 - `demos/cnn/04_multichannel_convolution.mlpl` — the paper's triple sum, shown
   in four spellings that are bit-identical to each other and match `conv2d`
 - `demos/cnn/05_convolution_layer.mlpl` — bias and activation on top
+- `demos/cnn/06_learned_kernel.mlpl` — the same contraction made differentiable,
+  recovering a teacher kernel from examples, and the case where a loss reaches
+  machine precision while learning the wrong filter
 
 `just cnn-contract` runs the contract test: the hand-derived golden, agreement
 between all four spellings, oracle parity for integer and float inputs, and
