@@ -1,0 +1,55 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "Y[r] = relu( ∑(q=1..Q) ∑(u=1..Mw) ∑(v=1..Nw) W[r,q,u,v] · X[q,x+u,y+v] + b[r] )"
+@ascii "Y[r] = relu( SUM(q=1..Q) SUM(u=1..Mw) SUM(v=1..Nw) W[r,q,u,v] * X[q,x+u,y+v] + b[r] )"
+@note "Bias and activation are NOT part of Equation (1); this rung goes beyond the paper's definition and says so."
+def u:convolution_layer(x, weights, biases) {
+  "Apply a filter bank with per-filter bias and a rectified activation, the complete layer a network actually contains.";
+  ok(relu(u:conv_layer(x, weights, biases)?))
+}
+x = reshape(range(2 * 5 * 5) + 1, [2, 5, 5]) / 25;
+weights = (reshape(range(3 * 2 * 2 * 2), [3, 2, 2, 2]) * 0.4) - 2;
+biases = [0.5, 0 - 1, 2];
+pre = u:conv_layer(x, weights, biases)?;
+post = u:convolution_layer(x, weights, biases)?;
+oracle = u:conv_oracle(x, weights);
+bias_planes = concat(concat(fill([1, 4, 4], 0.5), fill([1, 4, 4], 0 - 1), 0), fill([1, 4, 4], 2), 0);
+drift = reduce(:max, abs(pre - (oracle + bias_planes)));
+negatives_before = reduce_add(lt(pre, 0));
+negatives_after = reduce_add(lt(post, 0));
+pooled = pool2d(reshape(post, [1, 3, 4, 4]), [2, 2], 1);
+print("DEMO: rung 5 of 5 — the convolution layer");
+print("");
+print("Scenario: a real layer is the contraction from rung 4 plus a per-filter bias and an activation. This rung shows that conv2d is not magic: once window, multiply and reduce are understood, the layer is those three steps with two more lines.");
+print("Native boundary: conv2d is the oracle for the contraction only. relu and pool2d are ordinary builtins used as themselves, not hiding the convolution.");
+print("Budgets: a 2-channel 5x5 input, three 2x2x2 filters, three biases, 4x4 output per filter.");
+print("");
+print("What this rung computes:");
+print("");
+print("                        Q      Mw     Nw");
+print("  Y[r] = relu(          ∑      ∑      ∑    W[r,q,u,v] · X[q, x+u, y+v]  +  b[r]  )");
+print("                       q=1    u=1    v=1");
+print("");
+print("HONESTY NOTE: Equation (1) of the paper is the triple sum alone. It contains");
+print("no bias and no activation. The +b[r] and the relu above are what a layer in a");
+print("network adds; they are standard practice, not part of the cited definition.");
+print("");
+print({input_shape: shape(x),filter_bank: shape(weights),biases: biases,output_shape: shape(post)});
+print("");
+print("Pre-activation against the conv2d oracle plus bias, maximum absolute difference:", drift);
+print("");
+print({negative_cells_before_relu: negatives_before,negative_cells_after_relu: negatives_after,pooled_shape: shape(pooled)});
+print("");
+print("First filter, before and after the activation:");
+print(take(pre, 0, 0));
+print(take(post, 0, 0));
+print("");
+print("Interpretation: the layer is the rung-4 contraction, a bias broadcast per filter, and a pointwise clamp. relu zeroed", negatives_before, "negative cells, and pool2d then halves each spatial axis. The convolution itself was never a builtin here — it is window, multiply, reduce, exactly as the equation reads.");
+if gt(drift, 0.000000001) {
+  err("rung 5 pre-activation disagrees with the conv2d oracle plus bias")
+} else {
+  if eq(negatives_after, 0) {
+    ok(1)
+  } else {
+    err("relu left negative cells in the layer output")
+  }
+}

@@ -1,0 +1,69 @@
+include "../src/cnn/convolution.mlpl";
+def u:cnn_require(condition, message) {
+  "Return Ok when a convolution invariant holds and a named Err when it does not.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:cnn_close(a, b, tolerance) {
+  "Report whether two arrays agree within a stated tolerance rather than claiming bit-exactness across different accumulation orders.";
+  lt(reduce(:max, abs(a - b)), tolerance)
+}
+
+# The hand-computed golden from the research note: a 4x4 ramp against a vertical
+# edge kernel gives -6 at every valid position.
+image = reshape(range(16) + 1, [1, 4, 4]);
+edge = reshape([1, 0, 0 - 1, 1, 0, 0 - 1, 1, 0, 0 - 1], [1, 3, 3]);
+edge_patches = u:conv_windows(image, 3, 3)?;
+edge_out = u:conv_reduce(edge_patches, edge)?;
+u:cnn_require(eq(reduce(:max, abs(edge_out + 6)), 0), "hand-checked 4x4 ramp must give -6 everywhere")?;
+u:cnn_require(eq(tally(flatten(edge_out)), 4), "a 4x4 input with a 3x3 kernel must give four valid positions")?;
+
+# All four spellings must be bit-identical to each other.
+x = reshape(range(2 * 5 * 5) + 1, [2, 5, 5]) / 10;
+weights = (reshape(range(3 * 2 * 2 * 2), [3, 2, 2, 2]) * 0.5) - 3;
+kernel0 = take(weights, 0, 0);
+patches = u:conv_windows(x, 2, 2)?;
+labeled = label(patches, ["out_y", "out_x", "channel", "kernel_y", "kernel_x"]);
+collapsed = u:conv_reduce(patches, kernel0)?;
+u:cnn_require(eq(reduce(:max, abs(u:conv_nested(patches, kernel0) - collapsed)), 0), "nested transliteration must equal the collapsed reduction exactly")?;
+u:cnn_require(eq(reduce(:max, abs(u:conv_im2col(patches, kernel0) - collapsed)), 0), "im2col must equal the collapsed reduction exactly")?;
+u:cnn_require(eq(reduce(:max, abs(u:conv_named(labeled, kernel0, "channel,kernel_y,kernel_x")? - collapsed)), 0), "named-axis reduction must equal the collapsed reduction exactly")?;
+
+# Independent oracle agreement, inside a stated tolerance.
+bank = fill([0, 4, 4], 0);
+r = 0;
+while lt(r, 3) {
+  bank = concat(bank, reshape(u:conv_reduce(patches, take(weights, 0, r))?, [1, 4, 4]), 0);
+  r = r + 1
+};
+u:cnn_require(u:cnn_close(bank, u:conv_oracle(x, weights), 0.000000001), "filter bank must match the native conv2d oracle inside tolerance")?;
+
+# Integer inputs leave no accumulation residue at all.
+xi = reshape(range(2 * 5 * 5) + 1, [2, 5, 5]);
+wi = reshape(range(2 * 2 * 2 * 2), [2, 2, 2, 2]) - 3;
+banki = concat(reshape(u:conv_reduce(u:conv_windows(xi, 2, 2)?, take(wi, 0, 0))?, [1, 4, 4]), reshape(u:conv_reduce(u:conv_windows(xi, 2, 2)?, take(wi, 0, 1))?, [1, 4, 4]), 0);
+u:cnn_require(eq(reduce(:max, abs(banki - u:conv_oracle(xi, wi))), 0), "integer inputs must match the conv2d oracle exactly")?;
+
+# Adversarial and boundary cases must fail closed with named errors.
+u:cnn_require(is_err(u:conv_windows(x, 9, 9)), "a window larger than the input must be rejected")?;
+u:cnn_require(is_err(u:conv_windows(reshape(range(4), [2, 2]), 2, 2)), "a rank-2 input must be rejected")?;
+u:cnn_require(is_err(u:conv_reduce(patches, reshape(range(4), [2, 2]))), "a rank-2 kernel must be rejected")?;
+u:cnn_require(is_err(u:conv_axis_indices(labeled, "nope")), "an unknown axis name must be rejected")?;
+u:cnn_require(str_find(err_message(u:conv_axis_indices(labeled, "nope")), "kernel_y") > 0 - 1, "the unknown-axis error must name the available labels")?;
+
+# A window exactly the size of the input is a boundary, not an error.
+exact = u:conv_windows(reshape(range(1 * 2 * 2), [1, 2, 2]), 2, 2)?;
+u:cnn_require(eq(take(shape(exact), 0, 0), 1) * eq(take(shape(exact), 0, 1), 1), "a window matching the input exactly must give one position")?;
+
+# Layer bias and activation.
+biases = [0.5, 0 - 1, 2];
+pre = u:conv_layer(x, weights, biases)?;
+post = relu(pre);
+u:cnn_require(eq(reduce_add(lt(post, 0)), 0), "relu must leave no negative cells")?;
+u:cnn_require(gt(reduce_add(lt(pre, 0)), 0), "the fixture must actually exercise relu by producing negatives")?;
+
+print("cnn convolution contract: hand-checked -6, four bit-identical spellings, oracle parity, and named rejections");
+ok(1)

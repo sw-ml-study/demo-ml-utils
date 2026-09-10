@@ -68,6 +68,14 @@ capabilities:
 array-capabilities:
     ./scripts/check-capability-probes
 
+# Carry the paper's convolution equation down to executable MLPL, rung by rung.
+cnn-ladder:
+    ./scripts/run-cnn-ladder
+
+# Contract test for the convolution module: goldens, spellings, oracle, rejections.
+cnn-contract:
+    $(./scripts/select-mlpl) --source-dir . tests/cnn-convolution.mlpl
+
 # Probe callable composition, mapping laws, and the tiny fit/predict contract.
 lefts-capabilities:
     ./scripts/run-lefts-capability-contract

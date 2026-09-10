@@ -49,3 +49,8 @@ checkpoint-tensor-metadata	demos/checkpoint/tensor_metadata.mlpl	pytorch-checkpo
 checkpoint-to-safetensors	demos/checkpoint/to_safetensors.mlpl	pytorch-checkpoint,safetensors	tensor-only-atomic-extraction	mlpl-native	whole-file	yes	bounded-range-io,file-size,write-atomic,to_json,parse_json,budgeted-parser	runnable
 checkpoint-security-acceptance	demos/checkpoint/security_acceptance.mlpl	pytorch-checkpoint,safetensors	adversarial-security-acceptance	mlpl-native	whole-file	yes	bounded-range-io,file-size,to_json,parse_json,budgeted-parser	runnable
 checkpoint-extract	demos/checkpoint/extract_tensors.mlpl	pytorch-checkpoint	tensor-only-extraction	mlpl-native	chunk-bounded	no	bounded-range-io,budgeted-parser	gated
+cnn-dot-product	demos/cnn/01_dot_product.mlpl	equation	single-axis-contraction	mlpl-native	not-applicable	yes	reduce	runnable
+cnn-convolution-1d	demos/cnn/02_convolution_1d.mlpl	equation	windowed-signal-convolution	mlpl-native	not-applicable	yes	windows,reduce	runnable
+cnn-convolution-2d	demos/cnn/03_convolution_2d.mlpl	equation	windowed-image-convolution	mlpl-native	not-applicable	yes	windows,reduce,rank-broadcast	runnable
+cnn-multichannel	demos/cnn/04_multichannel_convolution.mlpl	equation	multi-channel-triple-sum	mlpl-native	not-applicable	yes	windows,reduce,multi-axis-reduce,rank-broadcast,axis-labels,matmul,conv2d	runnable
+cnn-layer	demos/cnn/05_convolution_layer.mlpl	equation	bias-and-activation-layer	mlpl-native	not-applicable	yes	windows,reduce,multi-axis-reduce,rank-broadcast,relu,pool2d,conv2d	runnable

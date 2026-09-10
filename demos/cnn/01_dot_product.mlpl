@@ -1,0 +1,39 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "y = ∑(i=1..N) w[i] · x[i]"
+@ascii "y = SUM(i=1..N) w[i] * x[i]"
+def u:dot_from_equation(w, x) {
+  "Contract two vectors by multiplying elementwise and reducing, the smallest case of the pattern every later rung repeats.";
+  reduce(:add, w * x)
+}
+w = [1, 2, 3];
+x = [4, 5, 6];
+result = u:dot_from_equation(w, x);
+print("DEMO: rung 1 of 5 — the dot product, where every convolution starts");
+print("");
+print("Scenario: read one summation as an array operation. Multiply the two vectors elementwise, then collapse the single axis. Nothing about this changes as the rank grows in later rungs.");
+print("Native boundary: none. MLPL owns the multiply and the reduction; no builtin performs the contraction.");
+print("Budgets: three-element vectors, chosen so the result can be verified by hand.");
+print("");
+print("The equation:");
+print("");
+print("                 N");
+print("       y   =     ∑     w[i] · x[i]");
+print("                i=1");
+print("");
+print("  i indexes the vector position, N is its length. The source counts from 1;");
+print("  MLPL arrays count from 0, so the implementation walks 0..N-1 over the same values.");
+print("");
+print("The implementation:");
+print("");
+print("       reduce(:add, w * x)");
+print("");
+print({w: w,x: x,products: w * x,y: result});
+print("");
+print("Hand check: 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32. Computed:", result);
+print("");
+print("Interpretation: one summation sign became one reduction over one axis. The whole ladder is this statement at higher rank — the sums never become anything else, only the number of axes collapsed changes.");
+if eq(result, 32) {
+  ok(1)
+} else {
+  err("rung 1 disagrees with the hand-computed dot product")
+}

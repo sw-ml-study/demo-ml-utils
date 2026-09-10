@@ -104,38 +104,40 @@ deliberately constrained, non-PyTorch-deserializing path:
 The constrained restricted-checkpoint slice is complete. It does not claim
 general PyTorch/pickle compatibility.
 
-### Convolution from equations (in progress)
+### Convolution from equations
 
-Runnable today: the array-expressiveness capability surface and a known-good
-convolution.
+Zhao, Wang, Wang & Liu, *Algorithms* **11**(10):159, 2018, Section 2.1,
+Equation (1) carried down to executable MLPL and back up to the native `conv2d`
+builtin, which is used only as an independent oracle.
 
-- `just array-capabilities` reports which array capabilities the configured
-  binary ships, driven by [`catalog/probes.tsv`](../catalog/probes.tsv). Probe
-  expectations fail closed in both directions, so a capability appearing is
-  treated as drift needing reconciliation, not as good news to absorb quietly.
-- `probes/convolution-reference.mlpl` asserts a hand-computed output cell,
-  exact agreement with the native `conv2d` oracle on integer input, and float
-  agreement inside a stated tolerance, for both the windowed-reduction and
-  im2col spellings.
+Run the whole ladder with `just cnn-ladder`, or one rung at a time:
 
-Not yet built: the demo ladder itself — dot product, 1-D convolution, 2-D
-convolution, the multi-channel triple sum, and a full layer — queued as steps
-012 through 016 in the [saga queue](sagas.md). Nothing in this section
-claims a runnable CNN demo yet.
+- `demos/cnn/01_dot_product.mlpl` — one summation, one reduction
+- `demos/cnn/02_convolution_1d.mlpl` — a shifted index becomes a windowed axis
+- `demos/cnn/03_convolution_2d.mlpl` — two summations, one reduction over two
+  axes; asserts the hand-computed `-6` edge response
+- `demos/cnn/04_multichannel_convolution.mlpl` — the paper's triple sum, shown
+  in four spellings that are bit-identical to each other and match `conv2d`
+- `demos/cnn/05_convolution_layer.mlpl` — bias and activation on top
 
-The demo carries Zhao, Wang, Wang & Liu, *Algorithms* **11**(10):159, 2018,
-Section 2.1, Equation (1) into executable MLPL and checks it against `conv2d`.
-Only that definitional equation is implemented; the paper's Winograd and
+`just cnn-contract` runs the contract test: the hand-derived golden, agreement
+between all four spellings, oracle parity for integer and float inputs, and
+named rejections for oversized windows, wrong ranks, and unknown axis names.
+
+Bias and activation are **not** part of Equation (1). Rung 5 adds what a real
+layer has and says so rather than implying the paper defines it that way. Only
+the definitional equation is implemented here; the paper's Winograd and
 Strassen contribution is not.
 
-- [Demo plan and positioning](plan-cnn-from-equations.md)
-- [Array-expressiveness blocker record](sw-mlpl-blocker.md)
-- [Mathematical notation rules](math-notation.md)
+Supporting material:
 
-Every displayed equation must be complete: explicit summation limits, a symbol
-table, the paper's 1-based indices translated to MLPL's 0-based ones, and the
-fact that Equation (1) defines cross-correlation rather than flipped-kernel
-convolution stated rather than inherited silently.
+- [Demo plan and positioning](plan-cnn-from-equations.md)
+- [Array-expressiveness blocker record](sw-mlpl-blocker.md) — the C1-C5 gaps
+  this demo forced, four of which have shipped
+- [Mathematical notation rules](math-notation.md) — every displayed equation
+  carries explicit summation limits, a symbol table, the 1-based-to-0-based
+  translation, and names cross-correlation rather than inheriting it silently
+- `just array-capabilities` reports which array capabilities the binary ships
 
 ### Adaptation
 

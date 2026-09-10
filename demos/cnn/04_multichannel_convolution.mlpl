@@ -1,0 +1,74 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "y[r,x,y] = ∑(q=1..Q) ∑(u=1..Mw) ∑(v=1..Nw) W[r,q,u,v] · X[q,x+u,y+v]"
+@ascii "y[r,x,y] = SUM(q=1..Q) SUM(u=1..Mw) SUM(v=1..Nw) W[r,q,u,v] * X[q,x+u,y+v]"
+@source "Zhao, Wang, Wang and Liu, Algorithms 11(10):159, 2018, Section 2.1, Equation (1)"
+def u:convolve_multichannel(x, kernel) {
+  "Contract one multi-channel kernel against every receptive field, collapsing the channel and both kernel axes in a single reduction: the paper's triple sum read as one array operation.";
+  patches = u:conv_windows(x, take(shape(kernel), 0, 1), take(shape(kernel), 0, 2))?;
+  ok(u:conv_reduce(patches, kernel)?)
+}
+x = reshape(range(2 * 5 * 5) + 1, [2, 5, 5]) / 10;
+weights = (reshape(range(3 * 2 * 2 * 2), [3, 2, 2, 2]) * 0.5) - 3;
+kernel0 = take(weights, 0, 0);
+patches = u:conv_windows(x, 2, 2)?;
+labeled = label(patches, ["out_y", "out_x", "channel", "kernel_y", "kernel_x"]);
+collapsed = u:conv_reduce(patches, kernel0)?;
+nested = u:conv_nested(patches, kernel0);
+im2col = u:conv_im2col(patches, kernel0);
+named = u:conv_named(labeled, kernel0, "channel,kernel_y,kernel_x")?;
+all_filters = fill([0, 4, 4], 0);
+r = 0;
+while lt(r, 3) {
+  all_filters = concat(all_filters, reshape(u:convolve_multichannel(x, take(weights, 0, r))?, [1, 4, 4]), 0);
+  r = r + 1
+};
+oracle = u:conv_oracle(x, weights);
+drift = reduce(:max, abs(all_filters - oracle));
+print("DEMO: rung 4 of 5 — the multi-channel convolution, straight from the paper");
+print("");
+print("Scenario: this is the equation a convolutional layer is actually defined by. A third summation appears, over the input channels, and it changes nothing structurally: it is one more axis to collapse. The demo shows four spellings of the same contraction and proves they agree, then checks all of them against the native conv2d builtin.");
+print("Native boundary: windows rearranges and matmul contracts in the fourth spelling. conv2d appears only as an independent oracle, never as the implementation.");
+print("Budgets: a 2-channel 5x5 input, three 2x2x2 filters, four output positions per filter.");
+print("");
+print("The equation, Zhao, Wang, Wang and Liu (2018), Section 2.1, Equation (1):");
+print("");
+print("                    Q      Mw     Nw");
+print("   y[r,x,y]  =      ∑      ∑      ∑     W[r,q,u,v] · X[q, x+u, y+v]");
+print("                   q=1    u=1    v=1");
+print("");
+print("  Q input feature maps sized Mx by Nx; R output feature maps sized My by Ny;");
+print("  kernel Mw by Nw. q indexes the input map, r the output map, u and v the");
+print("  position inside the kernel, x and y the position in the feature map.");
+print("");
+print("  Two things the notation does not say out loud. The source counts from 1 and");
+print("  MLPL counts from 0, so q=1..Q becomes channel indices 0..Q-1. And the index");
+print("  is x+u, not x-u: the kernel is not flipped, so Equation (1) defines");
+print("  cross-correlation. Every mainstream framework calls that convolution, and");
+print("  the conv2d oracle below computes the same thing.");
+print("");
+print("Four spellings of one contraction:");
+print("");
+print("  transliteration   reduce(:add, reduce(:add, reduce(:add, W * P, 4), 3), 2)");
+print("  array collapse    reduce(:add, W * P, [2, 3, 4])");
+print("  by axis name      reduce(:add, W * P, <channel, kernel_y, kernel_x>)");
+print("  im2col            matmul(reshape(P, [oy*ox, Q*Mw*Nw]), flatten(W))");
+print("");
+print({patch_shape: shape(patches),patch_labels: labels(labeled),kernel_shape: shape(kernel0),first_filter_output: collapsed});
+print("");
+print({transliteration_vs_collapse: reduce(:max,abs(nested-collapsed)),named_vs_collapse: reduce(:max,abs(named-collapsed)),im2col_vs_collapse: reduce(:max,abs(im2col-collapsed))});
+print("");
+print("All three filters against the native conv2d oracle, maximum absolute difference:", drift);
+print("That is float accumulation order, not disagreement: the four MLPL spellings");
+print("are bit-identical to each other, and conv2d sums in a different order. The");
+print("check is a stated tolerance of 1e-9, not a claim of bit-exactness.");
+print("");
+print("Interpretation: three nested summations are one reduction over three axes. The transliteration reads inside-out with bare integers; the collapsed form states the same thing once; the named form says which axes without the reader reconstructing an axis order. All four spellings are bit-identical to each other and match the native builtin inside a stated tolerance, so the readable spelling is not an approximation of the fast one — it is the same computation, and the residual is only the order the additions happen in.");
+if gt(drift, 0.000000001) {
+  err("rung 4 disagrees with the native conv2d oracle")
+} else {
+  if (eq(reduce(:max, abs(nested - collapsed)), 0)) * (eq(reduce(:max, abs(named - collapsed)), 0)) * (eq(reduce(:max, abs(im2col - collapsed)), 0)) {
+    ok(1)
+  } else {
+    err("rung 4 spellings disagree with each other")
+  }
+}

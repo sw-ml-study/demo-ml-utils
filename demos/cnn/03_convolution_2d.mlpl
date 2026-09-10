@@ -1,0 +1,45 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "y[x,y] = ∑(u=1..Mw) ∑(v=1..Nw) w[u,v] · x[x+u,y+v]"
+@ascii "y[x,y] = SUM(u=1..Mw) SUM(v=1..Nw) w[u,v] * x[x+u,y+v]"
+def u:convolve_2d(image, kernel) {
+  "Convolve a single-channel image by extracting every receptive field and collapsing both kernel axes in one reduction.";
+  patches = u:conv_windows(reshape(image, concat([1], shape(image))), take(shape(kernel), 0, 0), take(shape(kernel), 0, 1))?;
+  ok(u:conv_reduce(patches, reshape(kernel, concat([1], shape(kernel))))?)
+}
+image = reshape(range(16) + 1, [4, 4]);
+kernel = reshape([1, 0, 0 - 1, 1, 0, 0 - 1, 1, 0, 0 - 1], [3, 3]);
+patches = windows(reshape(image, [1, 4, 4]), [3, 3]);
+result = u:convolve_2d(image, kernel)?;
+upper_left = take(take(take(patches, 0, 0), 0, 0), 0, 0);
+print("DEMO: rung 3 of 5 — two-dimensional convolution");
+print("");
+print("Scenario: two summations now, over the kernel's rows and columns. They are adjacent and interchangeable in the mathematics, and they collapse together in one reduction here. The receptive field is a patch rather than a strip, but nothing else changes.");
+print("Native boundary: none for the arithmetic. windows rearranges; the multiply and reduction are MLPL.");
+print("Budgets: a 4x4 ramp and a 3x3 kernel, giving four output positions that can all be checked by hand.");
+print("");
+print("The equation:");
+print("");
+print("                  Mw     Nw");
+print("     y[x,y]  =    ∑      ∑     w[u,v] · x[x+u, y+v]");
+print("                 u=1    v=1");
+print("");
+print("  u and v index the kernel row and column, Mw by Nw is the kernel size,");
+print("  and x,y is the output position. The source counts from 1, MLPL from 0.");
+print("");
+print("This is a vertical edge detector: it subtracts the right column from the left.");
+print("");
+print("The implementation:");
+print("");
+print("       reduce(:add, windows(image, [Mw, Nw]) * kernel, [kernel axes])");
+print("");
+print({image_shape: shape(image),kernel: kernel,patch_shape: shape(patches),upper_left_patch: upper_left,y: result});
+print("");
+print("Hand check of the upper-left cell, from the patch above:");
+print("  (1 - 3) + (5 - 7) + (9 - 11) = -2 + -2 + -2 = -6.  Computed:", take(take(result,0,0),0,0));
+print("");
+print("Interpretation: two summation signs, one reduction over two axes. Every output cell is -6 because the ramp's horizontal slope is constant, so a horizontal difference kernel sees the same gradient everywhere.");
+if eq(reduce(:max, abs(result + 6)), 0) {
+  ok(1)
+} else {
+  err("rung 3 disagrees with the hand-computed -6 edge response")
+}

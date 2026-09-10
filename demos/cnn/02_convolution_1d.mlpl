@@ -1,0 +1,46 @@
+include "../../src/cnn/convolution.mlpl";
+@formula "y[x] = ∑(u=1..Mw) w[u] · x[x+u]"
+@ascii "y[x] = SUM(u=1..Mw) w[u] * x[x+u]"
+def u:convolve_1d(signal, kernel) {
+  "Slide a kernel along a signal by making every overlapping window a value, then contracting each window against the kernel in one reduction.";
+  reduce(:add, windows(signal, [tally(kernel)]) * kernel, [1])
+}
+signal = range(8) + 1;
+kernel = [1, 0, 0 - 1];
+patches = windows(signal, [3]);
+result = u:convolve_1d(signal, kernel);
+print("DEMO: rung 2 of 5 — one-dimensional convolution");
+print("");
+print("Scenario: the equation gains a shifted index, x[x+u]. That offset arithmetic is the loop an imperative implementation writes by hand. Here windows turns it into structure: every overlapping neighbourhood becomes a row, and the contraction from rung 1 is unchanged.");
+print("Native boundary: none for the arithmetic. The windows builtin performs the rearrangement; the multiply and reduction remain MLPL.");
+print("Budgets: an eight-element ramp and a three-tap kernel, small enough to print every window.");
+print("");
+print("The equation:");
+print("");
+print("                 Mw");
+print("      y[x]  =    ∑     w[u] · x[x+u]");
+print("                u=1");
+print("");
+print("  u indexes the kernel tap, Mw is the kernel length, x the output position.");
+print("  The source counts from 1; MLPL counts from 0 over the same taps.");
+print("");
+print("The implementation:");
+print("");
+print("       reduce(:add, windows(signal, [Mw]) * kernel, [1])");
+print("");
+print({signal: signal,kernel: kernel,windows_shape: shape(patches),first_window: take(patches,0,0),last_window: take(patches,0,5),y: result});
+print("");
+print("Hand check: every window is three consecutive ramp values [a, a+1, a+2].");
+print("The kernel [1, 0, -1] computes a - (a+2) = -2 at every position, so the");
+print("output is -2 six times. Computed:", result);
+print("");
+print("Interpretation: a shifted index became a windowed axis. The kernel is a discrete first difference, so a constant-slope ramp gives a constant response — a correct answer that is easy to verify without trusting the implementation.");
+if eq(reduce(:max, abs(result + 2)), 0) + (1 - eq(tally(result), 6)) {
+  if eq(reduce(:max, abs(result + 2)), 0) {
+    ok(1)
+  } else {
+    err("rung 2 disagrees with the hand-computed constant response")
+  }
+} else {
+  err("rung 2 produced the wrong number of valid positions")
+}

@@ -1,0 +1,19 @@
+#!/bin/sh
+# Run the convolution ladder in order. Each rung prints its equation with
+# explicit summation limits, its implementation, a hand-derived check, and an
+# interpretation; the later rungs also check against the native conv2d oracle.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+
+for rung in \
+  01_dot_product \
+  02_convolution_1d \
+  03_convolution_2d \
+  04_multichannel_convolution \
+  05_convolution_layer
+do
+  "$mlpl" --source-dir "$repo_root" "$repo_root/demos/cnn/$rung.mlpl"
+  echo
+done

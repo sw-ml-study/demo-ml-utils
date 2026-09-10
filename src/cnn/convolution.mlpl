@@ -1,0 +1,102 @@
+def u:conv_windows(x, kh, kw) {
+  "Extract every overlapping receptive field of a [channel, image_y, image_x] input as a [out_y, out_x, channel, kernel_y, kernel_x] value, so the equation's x[q, x+u, y+v] index arithmetic becomes array structure.";
+  if lt(rank(x), 3) {
+    err("conv windows expects a [channel, image_y, image_x] input")
+  } else {
+    height = take(shape(x), 0, 1);
+    width = take(shape(x), 0, 2);
+    if (lt(height, kh)) + (lt(width, kw)) {
+      err("conv window is larger than the input it slides over")
+    } else {
+      ok(windows(x, [kh, kw]))
+    }
+  }
+}
+
+def u:conv_reduce(patches, kernel) {
+  "Contract one [channel, kernel_y, kernel_x] kernel against every receptive field by collapsing the three trailing axes in a single reduction, the direct reading of the paper's triple sum.";
+  if (1 - eq(rank(patches), 5)) + (1 - eq(rank(kernel), 3)) {
+    err("conv reduce expects rank-5 patches and a rank-3 kernel")
+  } else {
+    ok(reduce(:add, patches * kernel, [2, 3, 4]))
+  }
+}
+
+def u:conv_nested(patches, kernel) {
+  "Contract the same kernel with one reduction per summation sign, the mechanical transliteration retained so the collapsed form above can be shown to agree with it.";
+  weighted = patches * kernel;
+  reduce(:add, reduce(:add, reduce(:add, weighted, 4), 3), 2)
+}
+
+def u:conv_im2col(patches, kernel) {
+  "Contract by flattening every receptive field into a row and letting one matmul compute all output positions, the optimized spelling whose per-row dot product is exactly the equation's triple sum.";
+  out_h = take(shape(patches), 0, 0);
+  out_w = take(shape(patches), 0, 1);
+  columns = reshape(patches, [out_h * out_w, size(kernel)]);
+  reshape(matmul(columns, flatten(kernel)), [out_h, out_w])
+}
+
+def u:conv_axis_indices(x, names) {
+  "Resolve a comma-separated list of axis labels to the integer axis vector a reduction accepts, failing loudly when a name is absent; string lists cannot be function parameters so the names arrive joined.";
+  have = str_split(labels(x), ",");
+  want = str_split(names, ",");
+  out = fill([0], 0);
+  w = 0;
+  while is_ok(list_get(want, w)) {
+    target = list_get(want, w)?;
+    found = 0 - 1;
+    h = 0;
+    while is_ok(list_get(have, h)) {
+      if str_eq(list_get(have, h)?, target) {
+        found = h
+      } else {
+        0
+      };
+      h = h + 1
+    };
+    if lt(found, 0) {
+      return err(str_concat(str_concat("unknown axis name '", target), str_concat("' in ", labels(x))))
+    } else {
+      0
+    };
+    out = concat(out, found);
+    w = w + 1
+  };
+  ok(out)
+}
+
+def u:conv_named(patches, kernel, names) {
+  "Contract by naming the axes to collapse instead of numbering them, so the source states the equation's meaning rather than transliterating its symbols.";
+  indices = u:conv_axis_indices(patches, names)?;
+  ok(reduce(:add, patches * kernel, indices))
+}
+
+def u:conv_layer(x, weights, biases) {
+  "Apply every filter of a [out_channel, channel, kernel_y, kernel_x] bank to one input and add a per-filter bias, returning [out_channel, out_y, out_x] before activation.";
+  out_channels = take(shape(weights), 0, 0);
+  kh = take(shape(weights), 0, 2);
+  kw = take(shape(weights), 0, 3);
+  patches = u:conv_windows(x, kh, kw)?;
+  out_h = take(shape(patches), 0, 0);
+  out_w = take(shape(patches), 0, 1);
+  out = fill([0, out_h, out_w], 0);
+  r = 0;
+  while lt(r, out_channels) {
+    plane = u:conv_reduce(patches, take(weights, 0, r))? + take(biases, 0, r);
+    out = concat(out, reshape(plane, [1, out_h, out_w]), 0);
+    r = r + 1
+  };
+  ok(out)
+}
+
+def u:conv_oracle(x, weights) {
+  "Compute the same convolution with the native conv2d builtin, used only as an independent check and never as the implementation.";
+  channels = take(shape(x), 0, 0);
+  height = take(shape(x), 0, 1);
+  width = take(shape(x), 0, 2);
+  out_channels = take(shape(weights), 0, 0);
+  kh = take(shape(weights), 0, 2);
+  kw = take(shape(weights), 0, 3);
+  batched = conv2d(reshape(x, [1, channels, height, width]), weights, 1, 0);
+  reshape(batched, [out_channels, height - kh + 1, width - kw + 1])
+}

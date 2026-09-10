@@ -8,12 +8,21 @@ the code are the same object.
 
 ```text
 demos/cnn/
-    01_dot_product.mlpl            y = sum_i w_i x_i
-    02_convolution_1d.mlpl         y_x = sum_u w_u x_{x+u}
-    03_convolution_2d.mlpl         y_{x,y} = sum_u sum_v w_{u,v} x_{x+u,y+v}
-    04_multichannel_convolution.mlpl   the Zhao et al. triple sum
-    05_convolution_layer.mlpl      Y = relu(W * X + b), checked against conv2d
+    01_dot_product.mlpl
+        y = ∑(i=1..N) w[i] · x[i]
+    02_convolution_1d.mlpl
+        y[x] = ∑(u=1..Mw) w[u] · x[x+u]
+    03_convolution_2d.mlpl
+        y[x,y] = ∑(u=1..Mw) ∑(v=1..Nw) w[u,v] · x[x+u,y+v]
+    04_multichannel_convolution.mlpl
+        y[r,x,y] = ∑(q=1..Q) ∑(u=1..Mw) ∑(v=1..Nw) w[r,q,u,v] · x[q,x+u,y+v]
+    05_convolution_layer.mlpl
+        Y = σ(W ⊛ X + b), checked against conv2d
 ```
+
+Rung 5's bias and activation are not part of Equation (1); the `⊛` there is the
+layer's convolution operator, and the rung says explicitly that it goes beyond
+what the paper defines.
 
 The source equation is Zhao, Wang, Wang & Liu, "A Faster Algorithm for Reducing
 the Computational Complexity of Convolutional Neural Networks", *Algorithms*
@@ -77,8 +86,9 @@ four. The demo carries it in one place and derives the rest.
 during planning:
 
 ```mlpl
-@formula "y[r,x,y] = \\sum_q \\sum_u \\sum_v W[r,q,u,v] X[q,x+u,y+v]"
-@ascii   "y[r,x,y] = SUM_q SUM_u SUM_v W[r,q,u,v] * X[q,x+u,y+v]"
+@formula "y[r,x,y] = ∑(q=1..Q) ∑(u=1..Mw) ∑(v=1..Nw) W[r,q,u,v] · X[q,x+u,y+v]"
+@ascii   "y[r,x,y] = SUM(q=1..Q) SUM(u=1..Mw) SUM(v=1..Nw) W[r,q,u,v] * X[q,x+u,y+v]"
+@source  "Zhao, Wang, Wang & Liu, Algorithms 11(10):159, 2018, Section 2.1, Equation (1)"
 def u:cnn_cell(kernel, patch) {
     "Contract one kernel against one patch.";
     reduce(:add, kernel * patch)
@@ -89,9 +99,15 @@ The LaTeX round-trips intact. Because it lives next to the implementation and
 is readable at runtime, the equation cannot silently drift from the code, and
 the demo can print both together as its own evidence of correspondence.
 
-**Terminal output: Unicode, not LaTeX.** A UTF-8 terminal renders
-`y[r,x,y] = Σ_q Σ_u Σ_v  W[r,q,u,v] · X[q,x+u,y+v]` correctly, verified from
-MLPL `print`. Bracket-index notation is used rather than typeset subscripts,
+**Terminal output: Unicode, not LaTeX.** A UTF-8 terminal renders the stacked
+form correctly, verified from MLPL `print`:
+
+```text
+               Q      Mw     Nw
+  y[r,x,y]  =  ∑      ∑      ∑     W[r,q,u,v] · X[q, x+u, y+v]
+              q=1    u=1    v=1
+```
+ Bracket-index notation is used rather than typeset subscripts,
 because bracket indices are what the array language actually does — the
 notation degrades toward the code rather than away from it. The `@ascii`
 annotation is the fallback for a terminal that cannot render `Σ`.
