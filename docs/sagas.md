@@ -337,10 +337,13 @@ next local refresh, with probe state as the authority.
 Two positions were settled after the table above. C2 is demoted from a blocker
 to `ERGONOMICS_ONLY`: the im2col `matmul` spelling needs no rank broadcasting,
 matches native `conv2d` on the measured case, and is exact rather than
-tolerance-bounded, so no rung is gated on C2. Ownership is settled too — this
-repository owns the `demos/cnn/` sources and documentation, and the upstream
-live site renders them through a vendored, sync-checked copy rather than a
-second implementation.
+tolerance-bounded, so no rung is gated on C2. Convolution demos belong in both
+repositories, deliberately: the upstream live demos and literate docs show the
+primitives earning their place for someone evaluating the language, and
+`demos/cnn/` here shows what the tensors in a model artifact compute. The
+shared equation, the hand-checked -6 golden, and the `conv2d` oracle must agree
+across both; exclusivity is not the goal and an earlier claim of it is
+withdrawn.
 
 The walkback changed no behavior. `476e9bf4` and `f4485823` produce an
 identical probe state, and no downstream documentation needed editing when the

@@ -450,13 +450,28 @@ That is exactly the progression the research note asked for — paper equation,
 literal implementation, array-oriented simplification, optimized
 implementation — with every step checked against the next.
 
-### Ownership boundary — resolved
+### Both repositories build convolution demos, deliberately
 
-Upstream and this repository have agreed: `demo-ml-utils` owns the
-`demos/cnn/` sources and their documentation, and the live site renders them
-through a vendored, sync-checked copy rather than a second implementation. One
-set of goldens, one attribution. A short `windows` example such as the moving
-average remains upstream's, as the primitive's own documentation.
+An earlier version of this section recorded an exclusive ownership boundary —
+this repository owning `demos/cnn/` with the live site rendering a vendored
+copy. That was proposed here and relayed between agents; the repository owner
+did not agree to it, and it is withdrawn.
+
+The settled position is that convolution demos belong in **both** places,
+because they answer different questions:
+
+| | `sw-mlpl` live demos and literate docs | `demo-ml-utils` `demos/cnn/` |
+|---|---|---|
+| Audience | Someone evaluating the language | Someone working with model artifacts |
+| Shows | `windows`, `reshape`, `matmul`, `svg` earning their place | What the tensors in a checkpoint actually compute |
+| Form | Browser-runnable, literate derivation | Terminal demos in the repository gate |
+| Ends at | The im2col one-liner | Quantization drift and kernels read from real files |
+
+Duplication of the equation and the im2col spelling is expected and fine. The
+thing to protect is not exclusivity but agreement: both sides use Zhao et al.
+(2018) section 2.1, the hand-checked -6 edge-filter cell, and `conv2d` as the
+oracle. If those ever disagree, one of them is wrong.
+`probes/convolution-reference.mlpl` pins them on this side.
 
 ### Phases outside this record
 
