@@ -1,0 +1,17 @@
+# C6. Rank broadcasting (C2) shipped forward but has no backward, and the tape
+# PANICS rather than reporting an unsupported operation:
+#
+#   thread 'main' panicked at mlpl-autograd-tape/src/ops.rs:124:17:
+#   index out of bounds: the len is 4 but the index is 4
+#
+# This is the minimal case: any rank-mismatched elementwise multiply inside
+# grad(). It is not specific to windows or to rank 5. Same-rank multiplication
+# differentiates correctly, and the same broadcast evaluates fine forward-only.
+#
+# It matters because the natural convolution loss,
+#   grad(mean(reduce(:add, windows(x, [kh, kw]) * kernel, [2, 3, 4])), x)
+# broadcasts a rank-3 kernel against rank-5 patches and therefore panics.
+k = reshape(range(4), [2, 2])
+y = param[2, 2, 2]
+y = reshape(range(8) + 1, [2, 2, 2])
+grad(mean(y * k), y)

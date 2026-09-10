@@ -360,6 +360,60 @@ Shipped behavior: `compress` propagates the input's axis labels unchanged.
 `reshape` clearing labels is correct and separate — it genuinely changes axis
 identity, and `reshape_labeled` already covers the deliberate case.
 
+## C6 — rank-broadcast multiply panics on the autograd tape (defect)
+
+Probe: `probes/broadcast-backward.mlpl`. Found on build `a1280d82`, after
+`autograd(windows)` shipped.
+
+C2 shipped rank broadcasting for the forward pass, but the tape has no backward
+for it, and rather than reporting an unsupported operation it **panics**:
+
+```text
+thread 'main' panicked at
+  components/autograd/crates/mlpl-autograd-tape/src/ops.rs:124:17:
+  index out of bounds: the len is 4 but the index is 4
+```
+
+Minimal reproducer — not specific to `windows`, and not specific to rank 5:
+
+```mlpl
+k = reshape(range(4), [2, 2]);
+y = param[2, 2, 2];
+y = reshape(range(8) + 1, [2, 2, 2]);
+grad(mean(y * k), y)
+```
+
+What works, which narrows it to broadcasting alone:
+
+| Expression inside `grad()` | Result |
+|---|---|
+| `mean(y * k)` with equal ranks | correct gradient |
+| `mean(windows(x, [2, 2]))` | correct gradient (verified against window-overlap counts) |
+| `mean(reduce(:add, y, [1, 2]))` | correct gradient |
+| `mean(reduce(:add, windows(x, [2, 2]), [2, 3, 4]))` | correct gradient |
+| `windows(x, [2, 2]) * k` forward only | correct |
+| `mean(y * k)` with mismatched ranks | **panic** |
+
+Required behavior: the backward for a broadcast elementwise operation sums the
+upstream gradient over the axes that were broadcast, so the gradient matches
+the shape of each operand. Failing that, an unsupported combination must return
+a loud error rather than panicking — a panic cannot be caught, names no
+operation, and gives the user nothing to act on.
+
+This blocks the trainable-convolution saga specifically, because the natural
+loss broadcasts a rank-3 kernel against rank-5 patches:
+
+```mlpl
+grad(mean(reduce(:add, windows(x, [kh, kw]) * kernel, [2, 3, 4])), x)
+```
+
+The im2col spelling does not broadcast, but it needs `flatten` on the tape,
+which reports a clean `not supported inside grad()`. Either path would unblock
+training; the broadcast backward is the one that matches how the equation
+reads.
+
+Forward-only work, including all five rungs of the demo ladder, is unaffected.
+
 ## What is explicitly not requested
 
 - No CNN-specific builtin. `conv2d` already exists and the demo uses it as an
@@ -382,8 +436,9 @@ identity, and `reshape_labeled` already covers the deliberate case.
 | C4 | `probes/named-axis-reduce.mlpl` | Exits zero for a vector of axis names; equals the integer-axis form |
 | C5 | `probes/compress-label-preservation.mlpl` | **Met at `274c9133`**; labels match `rotate` |
 
-Only C4 still exits nonzero, and it is a `LIBRARY_GAP` closed downstream. C1,
-C2, C3, and C5 have flipped. `catalog/probes.tsv`
+C4 and C6 still exit nonzero. C4 is a `LIBRARY_GAP` closed downstream; C6 is a
+new upstream defect found while testing the shipped `autograd(windows)` work.
+C1, C2, C3, and C5 have flipped. `catalog/probes.tsv`
 encodes each expectation and `scripts/check-capability-probes` enforces it in
 the default gate, so a flip cannot pass unnoticed in either direction.
 
