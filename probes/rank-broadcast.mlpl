@@ -4,3 +4,16 @@
 patches = reshape(range(2 * 2 * 3 * 3), [2, 2, 3, 3])
 kernel = reshape(range(9), [3, 3])
 patches * kernel
+
+# Shipped at build 60dd94af. The headline line the blocker record was written
+# toward now runs directly, and agrees with the conv2d oracle exactly.
+x = reshape(range(2 * 5 * 5) + 1, [2, 5, 5])
+w = (reshape(range(8), [2, 2, 2]) * 0.5) - 3
+y = reduce(:add, windows(x, [2, 2]) * w, [2, 3, 4])
+oracle = reshape(conv2d(reshape(x, [1, 2, 5, 5]), reshape(w, [1, 2, 2, 2]), 1, 0), [4, 4])
+if eq(reduce(:max, abs(y - oracle)), 0) {
+  0
+} else {
+  print("broadcast convolution disagrees with the conv2d oracle")
+  exit(1)
+}

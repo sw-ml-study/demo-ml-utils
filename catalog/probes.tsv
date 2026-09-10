@@ -1,6 +1,6 @@
 id	path	gap	expectation	meaning	state
 c1-sliding-windows	probes/sliding-windows.mlpl	C1	pass	General sliding-window rearrangement is available	shipped
-c2-rank-broadcast	probes/rank-broadcast.mlpl	C2	fail	Trailing-axis rank broadcasting for elementwise operators	open
+c2-rank-broadcast	probes/rank-broadcast.mlpl	C2	pass	Trailing-axis rank broadcasting for elementwise operators	shipped
 c3-multi-axis-reduce	probes/multi-axis-reduce.mlpl	C3	pass	Higher-order reduce over a vector of integer axes	shipped
 c4-named-axis-reduce	probes/named-axis-reduce.mlpl	C4	fail	Higher-order reduce over a vector of axis NAMES	open
 c5-compress-labels	probes/compress-label-preservation.mlpl	C5	pass	compress preserves axis labels as rotate does	shipped

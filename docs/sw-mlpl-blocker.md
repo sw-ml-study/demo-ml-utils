@@ -160,10 +160,17 @@ The same abstraction serves cellular automata, finite-difference stencils,
 moving-window statistics, and signal processing, so this is not a CNN
 convenience.
 
-## C2 — trailing-axis rank broadcasting — DEMOTED TO `ERGONOMICS_ONLY`
+## C2 — trailing-axis rank broadcasting — SHIPPED
 
-Probe: `probes/rank-broadcast.mlpl`, still exits nonzero. Current behavior:
-`error: mul: expected [2, 2, 3, 3], got [3, 3]`.
+Probe: `probes/rank-broadcast.mlpl`, exits zero as of build `60dd94af`, and
+now asserts oracle parity for the broadcast convolution rather than merely
+running. Behavior when promoted: `error: mul: expected [2, 2, 3, 3], got
+[3, 3]`.
+
+It shipped after this record had already demoted it to `ERGONOMICS_ONLY`, so
+it was never on the critical path. The demotion analysis below is retained
+because it is what made the demo shippable while C2 was still open, and
+because the im2col spelling it identified remains the faster of the two.
 
 ### Correction: the original cost analysis was wrong
 
@@ -364,13 +371,13 @@ identity, and `reshape_labeled` already covers the deliberate case.
 | Gap | Probe | Expected once shipped |
 |---|---|---|
 | C1 | `probes/sliding-windows.mlpl` | **Met at `7f2c4e99`**; matches the `rotate`/`compress` reference construction exactly |
-| C2 | `probes/rank-broadcast.mlpl` | Exits zero; product equals the im2col `matmul` reference. Ergonomic only: no rung is gated on it |
+| C2 | `probes/rank-broadcast.mlpl` | **Met at `60dd94af`**; asserts the broadcast convolution equals the `conv2d` oracle |
 | C3 | `probes/multi-axis-reduce.mlpl` | **Met at `2b365ab1`**; asserts equality with nested single-axis reduction |
 | C4 | `probes/named-axis-reduce.mlpl` | Exits zero for a vector of axis names; equals the integer-axis form |
 | C5 | `probes/compress-label-preservation.mlpl` | **Met at `274c9133`**; labels match `rotate` |
 
-C2, C3, and C4 currently exit nonzero, so an upstream implementation announces
-itself by changing the gate. C5 and C1 have flipped. `catalog/probes.tsv`
+Only C4 still exits nonzero, and it is a `LIBRARY_GAP` closed downstream. C1,
+C2, C3, and C5 have flipped. `catalog/probes.tsv`
 encodes each expectation and `scripts/check-capability-probes` enforces it in
 the default gate, so a flip cannot pass unnoticed in either direction.
 
@@ -386,7 +393,7 @@ named rungs are rewritten in the same step.
 | 2 | `476e9bf4` | C1 | `sliding-windows` | `u:conv_windows` (25 lines) collapses to one `windows` call | **shipped** |
 | 3a | `2b365ab1` | C3 | `multi-axis-reduce` | Three nested reduces collapse to one call over `[2, 3, 4]` | **shipped** |
 | 3b | optional | C4 | `named-axis-reduce` | That one call takes axis names instead of integers | reclassified `LIBRARY_GAP`; fixed downstream |
-| 4 | later | C2 | `rank-broadcast` | The transliteration rung spells its product directly | open, ergonomic |
+| 4 | `60dd94af` | C2 | `rank-broadcast` | The transliteration rung spells its product directly | **shipped** |
 
 The demo's headline line needs C1, C2, C3, and C4 together, so it reaches its
 target spelling only once Phase 4 lands, not before:

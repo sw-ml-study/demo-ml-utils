@@ -140,7 +140,7 @@ of core. This repository consumes the shipped builtin directly and keeps the
 
 ## Array expressiveness
 
-Observed on build `2b365ab1` and enforced by `catalog/probes.tsv` through
+Observed on build `60dd94af` and enforced by `catalog/probes.tsv` through
 `scripts/check-capability-probes`, which runs in the default gate. A capability
 change in either direction fails the gate and forces reconciliation, rather
 than silently invalidating this document.
@@ -152,13 +152,23 @@ than silently invalidating this document.
 | `reduce(:op, a, axes)` | Reduction over a vector of integer axes in one call | shipped |
 | `reduce(:op, a, "name")` | Reduction over a single labeled axis | shipped |
 | `reduce(:op, a, [names])` | Reduction over a vector of axis *names* | open, `LIBRARY_GAP` |
-| Trailing-axis rank broadcasting | Elementwise operators still require identical shapes | open, `ERGONOMICS_ONLY` |
+| Trailing-axis rank broadcasting | A rank-3 kernel broadcasts against rank-5 patches by trailing position | shipped |
 | `svg(text, "equation")` | Renders a line of Unicode math to self-contained SVG with no LaTeX toolchain, MathJax, or network | shipped |
 
-Neither open item blocks work here. The axis-name vector is expressible in
-ordinary MLPL by resolving labels against `labels(x)` and passing the resulting
-integer vector. Rank broadcasting is unnecessary for convolution because the
-im2col spelling contracts with `matmul`:
+The one open item does not block work here: the axis-name vector is expressible
+in ordinary MLPL by resolving labels against `labels(x)` and passing the
+resulting integer vector.
+
+With broadcasting shipped, the convolution equation is now writable as one
+line, verified exact against the `conv2d` oracle by
+`probes/rank-broadcast.mlpl`:
+
+```mlpl
+y = reduce(:add, windows(x, [kh, kw]) * w, [2, 3, 4])
+```
+
+The im2col spelling remains the faster of the two and needs no broadcasting at
+all:
 
 ```mlpl
 cols = reshape(windows(x, [kh, kw]), [oy * ox, c * kh * kw]);
