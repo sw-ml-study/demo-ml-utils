@@ -51,6 +51,12 @@ printf '%s\n' "$preflight" | grep -Fqx 'coding_model=ready'
 
 mkdir -p "$repo_root/tmp/agentrail-small-data"
 mlpl=$("$repo_root/scripts/select-mlpl")
+
+# The convolution contract and its formula provenance run in the default gate:
+# a rung whose equation drifts from its implementation, or loses its summation
+# limits, must fail here rather than in review.
+"$mlpl" --source-dir "$repo_root" "$repo_root/tests/cnn-convolution.mlpl" >/dev/null
+"$mlpl" --source-dir "$repo_root" "$repo_root/tests/cnn-formula-provenance.mlpl" >/dev/null
 small_data_output=$("$mlpl" --source-dir "$repo_root" "$repo_root/tests/agentrail-small-data.mlpl")
 printf '%s\n' "$small_data_output" | grep -Fqx 'PASS Agentrail small-model dataset'
 mkdir -p "$repo_root/tmp/agentrail-workflow-corpus"

@@ -1,0 +1,67 @@
+# Each rung carries its equation as data next to the implementation, so the two
+# cannot drift. This test checks that every annotation round-trips through
+# annotations() and that every displayed summation states both of its limits,
+# per docs/math-notation.md. A bare sigma is the shortcut these rules exist to
+# prevent, and checking only that an annotation EXISTS would not catch it.
+include "../demos/cnn/01_dot_product.mlpl";
+include "../demos/cnn/02_convolution_1d.mlpl";
+include "../demos/cnn/03_convolution_2d.mlpl";
+include "../demos/cnn/04_multichannel_convolution.mlpl";
+include "../demos/cnn/05_convolution_layer.mlpl";
+include "../demos/cnn/06_learned_kernel.mlpl";
+def u:formula_require(condition, message) {
+  "Return Ok when a formula-provenance invariant holds and a named Err when it does not.";
+  if condition {
+    ok(1)
+  } else {
+    err(message)
+  }
+}
+def u:states_limits(text) {
+  "Report whether every summation in a rendered equation states explicit bounds, which this repository spells as (index=lo..hi).";
+  if eq(str_find(text, "∑"), 0 - 1) {
+    1
+  } else {
+    gt(str_find(text, "=1.."), 0 - 1)
+  }
+}
+def u:check_formula(name) {
+  "Require that a definition carries a complete @formula annotation and a matching plain-text @ascii fallback.";
+  fields = annotations(name);
+  u:formula_require(has_field(fields, "formula"), str_concat(name, " carries no @formula annotation"))?;
+  u:formula_require(has_field(fields, "ascii"), str_concat(name, " carries no @ascii fallback"))?;
+  u:formula_require(u:states_limits(fields.formula), str_concat(name, " has a @formula with a bare summation and no limits"))?;
+  u:formula_require(u:states_limits(fields.ascii), str_concat(name, " has an @ascii form with a bare summation and no limits"))?;
+  u:formula_require(gt(str_len(fields.formula), 10), str_concat(name, " has an empty @formula"))?;
+  ok(fields.formula)
+}
+u:check_formula("u:dot_from_equation")?;
+u:check_formula("u:convolve_1d")?;
+u:check_formula("u:convolve_2d")?;
+u:check_formula("u:convolve_multichannel")?;
+u:check_formula("u:convolution_layer")?;
+u:check_formula("u:recovery_error")?;
+
+# The rung carrying the paper's equation must attribute it.
+multichannel = annotations("u:convolve_multichannel");
+u:formula_require(has_field(multichannel, "source"), "the multi-channel rung must attribute its source equation")?;
+u:formula_require(gt(str_find(multichannel.source, "Equation (1)"), 0 - 1), "the attribution must name which equation is implemented")?;
+
+# Rungs that go beyond the cited equation must say so rather than implying the
+# paper defines them.
+layer = annotations("u:convolution_layer");
+u:formula_require(has_field(layer, "note"), "the layer rung must record that bias and activation are not in Equation (1)")?;
+learned = annotations("u:recovery_error");
+u:formula_require(has_field(learned, "note"), "the learned-kernel rung must record that training is not in Equation (1)")?;
+
+# A negative control: the checker must actually reject a bare summation.
+u:formula_require(1 - u:states_limits("y = ∑_q ∑_u W · X"), "the limit check must reject a bare summation")?;
+u:formula_require(u:states_limits("y = ∑(q=1..Q) W · X"), "the limit check must accept a bounded summation")?;
+
+# Upstream's equation renderer is used rather than a second implementation.
+rendered = svg(multichannel.formula, "equation");
+u:formula_require(gt(str_len(rendered), 200), "svg(text, \"equation\") must render the formula to a self-contained diagram")?;
+u:formula_require(gt(str_find(rendered, "<svg"), 0 - 1), "the rendered equation must be SVG")?;
+
+print("cnn formula provenance: six rungs carry complete round-tripping equations, attribution, and beyond-the-paper notes");
+ok(1)

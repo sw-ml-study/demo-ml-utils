@@ -76,6 +76,10 @@ cnn-ladder:
 cnn-contract:
     $(./scripts/select-mlpl) --source-dir . tests/cnn-convolution.mlpl
 
+# Check every rung carries a complete, round-tripping equation and attribution.
+cnn-formula:
+    $(./scripts/select-mlpl) --source-dir . tests/cnn-formula-provenance.mlpl
+
 # Probe callable composition, mapping laws, and the tiny fit/predict contract.
 lefts-capabilities:
     ./scripts/run-lefts-capability-contract
