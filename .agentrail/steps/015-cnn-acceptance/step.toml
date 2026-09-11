@@ -1,8 +1,9 @@
-number = 17
+number = 15
 slug = "cnn-acceptance"
-status = "pending"
+status = "completed"
 description = "Consolidate acceptance for the convolution-from-equations demo. Cover adversa..."
 role = "meta"
 context_files = []
 created_at = "2026-09-09T15:50:35"
-commits = []
+completed_at = "2026-09-11T06:44:25"
+commits = ["ec0fbb223372dd5a4a6926d64b52f46262ce5731"]
