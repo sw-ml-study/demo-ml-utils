@@ -1,8 +1,9 @@
-number = 14
+number = 12
 slug = "convolution-layer"
-status = "pending"
+status = "completed"
 description = "Build rung 5 of demos/cnn: a full convolution layer, Y = relu(W * X + b), so ..."
 role = "production"
 context_files = []
 created_at = "2026-09-09T15:50:35"
-commits = []
+completed_at = "2026-09-10T17:36:18"
+commits = ["4f244192fdfaaa792d311ba4a110595d97f140cf"]
