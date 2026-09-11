@@ -1,0 +1,9 @@
+number = 13
+slug = "learned-kernel-rung"
+status = "completed"
+description = "Build rung 6 of demos/cnn: recover a convolution kernel from examples by maki..."
+role = "production"
+context_files = []
+created_at = "2026-09-10T17:36:36"
+completed_at = "2026-09-10T17:36:49"
+commits = ["3cc83553b24e5d0871c7d001e295ae291750a9d6"]

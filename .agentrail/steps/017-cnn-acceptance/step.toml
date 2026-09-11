@@ -1,4 +1,4 @@
-number = 16
+number = 17
 slug = "cnn-acceptance"
 status = "pending"
 description = "Consolidate acceptance for the convolution-from-equations demo. Cover adversa..."
