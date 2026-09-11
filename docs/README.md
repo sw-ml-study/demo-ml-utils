@@ -123,7 +123,8 @@ Run the whole ladder with `just cnn-ladder`, or one rung at a time:
   recovering a teacher kernel from examples, and the case where a loss reaches
   machine precision while learning the wrong filter
 
-`just cnn-contract` runs the contract test: the hand-derived golden, agreement
+`just cnn-contract` runs the contract test, and `just cnn-formula` checks that
+every rung's equation round-trips and states its summation limits: the hand-derived golden, agreement
 between all four spellings, oracle parity for integer and float inputs, and
 named rejections for oversized windows, wrong ranks, and unknown axis names.
 
@@ -134,6 +135,8 @@ Strassen contribution is not.
 
 Supporting material:
 
+- [Acceptance report](cnn-acceptance.md) — what each rung proves, oracle policy,
+  adversarial cases, the C1-C6 capability trail, attribution, and limitations
 - [Demo plan and positioning](plan-cnn-from-equations.md)
 - [Array-expressiveness blocker record](sw-mlpl-blocker.md) — the C1-C5 gaps
   this demo forced, four of which have shipped

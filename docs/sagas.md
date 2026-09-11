@@ -282,7 +282,7 @@ help-drift-aware behavior. GLM-5.x is an external teacher because its roughly
 745B-parameter MoE is not a 12 GiB local candidate. See the
 [distillation plan](plan-agentrail-distillation.md).
 
-## Saga 13 — `convolution-from-equations` (queued as steps 011-016)
+## Saga 13 — `convolution-from-equations` (acceptance complete)
 
 Carry one published convolution equation down to executable MLPL and back up to
 the native `conv2d` oracle, showing at each rung that the mathematics and the

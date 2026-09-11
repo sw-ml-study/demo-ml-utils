@@ -2,7 +2,7 @@
 
 ## The demo
 
-A five-rung ladder that carries one published equation down to executable MLPL
+A six-rung ladder that carries one published equation down to executable MLPL
 and back up to a native oracle, showing at each rung that the mathematics and
 the code are the same object.
 
@@ -161,13 +161,15 @@ corresponding capability lands. The gap between them is itself the demo's
 argument for why the language work matters, so the scaffolding is retained as
 an exhibit rather than deleted.
 
-Upstream has scheduled the five gaps across four phases, so the rewrite is
+Upstream scheduled the original five gaps across four phases, and a sixth (C6,
+the broadcast backward) was found later while testing the autograd work. The
+rewrite was therefore
 staged rather than a single flip. C5 and C1 shipped together in commit
 `476e9bf4`: labeled trimming no longer needs a `relabel`, and the 25-line
 window construction is now one `windows` call. C3 and C4 collapse the nested
 reduces to one named-axis reduction; C2 removes the kernel replication.
 
-All five rungs, including the weighted triple sum, are implementable at
+All six rungs, including the weighted triple sum and gradient recovery, are implementable at
 `476e9bf4`. C2 and C3/C4 change how they read, not whether they run. Phase
 state is pinned by build commit rather than version string, because C5 shipped
 inside 0.21.0 rather than the scheduled 0.21.1, and commit `476e9bf4` was
