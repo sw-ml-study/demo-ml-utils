@@ -1,8 +1,9 @@
-number = 13
+number = 11
 slug = "multichannel-convolution"
-status = "pending"
+status = "completed"
 description = "Build rung 4 of demos/cnn: the Zhao, Wang, Wang and Liu (2018) section 2.1 mu..."
 role = "production"
 context_files = []
 created_at = "2026-09-09T15:50:16"
-commits = []
+completed_at = "2026-09-10T17:35:24"
+commits = ["c6b56634484b4d5b1cdac593637f8c668faaa6f8"]
