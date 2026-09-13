@@ -1,10 +1,26 @@
-# The target spelling reduces a vector of AXIS NAMES in one call, so the source
-# says "sum over channel, kernel_y, kernel_x" and the reader never has to
-# recover what q, u and v meant.
+# C4. Reduction over a vector of AXIS NAMES, so the source says "sum over
+# channel, kernel_y, kernel_x" and the reader never has to recover what q, u
+# and v meant.
 #
-# A single name is accepted, and a vector of integer axes is accepted, but the
-# combination the blocker record asks for is not. An earlier version of this
-# probe tested only the single-name form and therefore reported C4 as shipped
-# while the documented target line still failed; it now pins the real target.
+# This probe has been wrong twice, each time by pinning a subset of the
+# requirement and so reporting success while the spelling actually wanted still
+# failed. First it tested only a single name, which shipped early. Then it
+# tested only the higher-order reduce, which shipped next. The requirement in
+# docs/sw-mlpl-blocker.md is that EVERY form accepting one axis accepts a
+# vector, so both spellings are checked here, and against the integer form.
 patches : [out_y, out_x, channel, kernel_y, kernel_x] = reshape(range(72), [2, 2, 2, 3, 3])
-reduce(:add, patches, ["channel", "kernel_y", "kernel_x"])
+by_integers = reduce(:add, patches, [2, 3, 4])
+by_names = reduce(:add, patches, ["channel", "kernel_y", "kernel_x"])
+if eq(reduce(:max, abs(by_names - by_integers)), 0) {
+  0
+} else {
+  print("reduce over axis names disagrees with the integer form")
+  exit(1)
+}
+shorthand = reduce_add(patches, ["channel", "kernel_y", "kernel_x"])
+if eq(reduce(:max, abs(shorthand - by_integers)), 0) {
+  0
+} else {
+  print("reduce_add over axis names disagrees with the integer form")
+  exit(1)
+}

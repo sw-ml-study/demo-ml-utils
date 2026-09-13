@@ -280,18 +280,35 @@ asymmetry. A vector of axis *names* does not:
 
 ### Still open on build `06575219`, and repeatedly reported as shipped
 
-Upstream has three times summarized C4 as delivered. Each time the shipped
-thing was `reduce(:add, M, "name")`, a single axis name. The vector form this
-record asks for still fails:
+Delivered in two stages, and still incomplete on build `fc3fd185`:
 
 ```text
-reduce(:add, P, ["b", "c"])     error: expected an array value, got a string
-reduce_add(P, ["b", "c"])       error: expected an array value, got a string
+reduce(:add, P, "b")                  works (shipped first)
+reduce(:add, P, ["b", "c"])           works (shipped later)
+reduce_add(P, ["b", "c"])             error: expected an array value, got a string
 ```
 
-The distinction is not pedantic: the whole-layer code sample in upstream's own
-draft blog post uses the vector form and therefore does not run. `catalog/probes.tsv`
-exists so this is settled by an exit code rather than by recollection.
+The higher-order form now takes a vector of names. The `reduce_add` shorthand
+does not, even though the language reference documents it as *"Equivalent to
+`reduce(:add, a[, axis])`; kept as a direct shorthand"*. Either the shorthand
+should accept what the general form accepts, or the reference should stop
+claiming equivalence.
+
+### This probe has now been wrong twice, the same way each time
+
+Both times it pinned a subset of the requirement and so went green while the
+spelling actually wanted still failed:
+
+1. It tested a single axis name. That shipped, and the probe passed while the
+   vector form still errored.
+2. It tested only the higher-order `reduce` with a vector. That shipped, and
+   the probe passed while `reduce_add` still errored.
+
+It now checks both spellings and compares each against the integer form, which
+is what this record asks for. The general lesson is stronger than the specific
+fix: a probe that encodes a convenient subset of a requirement reports success
+at the exact moment it stops being useful, and a capability summarized as
+"delivered" is not evidence — the exit code is.
 
 ### Reclassified to `LIBRARY_GAP`: this repository can fix it
 
